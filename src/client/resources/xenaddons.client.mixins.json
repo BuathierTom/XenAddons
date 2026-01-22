@@ -3,7 +3,7 @@
 	"package": "xenus.xenaddons.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ExampleClientMixin"
+		"MixinItemInHandRenderer"
 	],
 	"injectors": {
 		"defaultRequire": 1
