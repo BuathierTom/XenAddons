@@ -19,6 +19,18 @@ object XenAddonsConfig {
     var noEquipReset: Boolean = false
     var noSwing: Boolean = false
     var noTerminatorSwing: Boolean = false
+    
+    // Dungeons
+    var autoRequeue: Boolean = false
+    var secretsSound: Boolean = false
+    var dungeonDeathsDisplay: Boolean = false
+    
+    // Solvers
+    var lividSolver: Boolean = false
+    var lividBoxColor: Int = 0x00FFFF
+    var lividLineWidth: Float = 3f
+    var lividTracer: Boolean = true
+    var lividHideWrong: Boolean = false
 
     private val file: File
         get() = FabricLoader.getInstance().configDir.resolve("xenaddons.properties").toFile()
@@ -39,6 +51,16 @@ object XenAddonsConfig {
         props.setProperty("noEquipReset", noEquipReset.toString())
         props.setProperty("noSwing", noSwing.toString())
         props.setProperty("noTerminatorSwing", noTerminatorSwing.toString())
+        
+        props.setProperty("autoRequeue", autoRequeue.toString())
+        props.setProperty("secretsSound", secretsSound.toString())
+        props.setProperty("dungeonDeathsDisplay", dungeonDeathsDisplay.toString())
+        
+        props.setProperty("lividSolver", lividSolver.toString())
+        props.setProperty("lividBoxColor", lividBoxColor.toString())
+        props.setProperty("lividLineWidth", lividLineWidth.toString())
+        props.setProperty("lividTracer", lividTracer.toString())
+        props.setProperty("lividHideWrong", lividHideWrong.toString())
 
         try {
             if (!file.parentFile.exists()) file.parentFile.mkdirs()
@@ -71,6 +93,16 @@ object XenAddonsConfig {
             noEquipReset = props.getProperty("noEquipReset", "false").toBoolean()
             noSwing = props.getProperty("noSwing", "false").toBoolean()
             noTerminatorSwing = props.getProperty("noTerminatorSwing", "false").toBoolean()
+
+            autoRequeue = props.getProperty("autoRequeue", "false").toBoolean()
+            secretsSound = props.getProperty("secretsSound", "false").toBoolean()
+            dungeonDeathsDisplay = props.getProperty("dungeonDeathsDisplay", "false").toBoolean()
+            
+            lividSolver = props.getProperty("lividSolver", "false").toBoolean()
+            lividBoxColor = props.getProperty("lividBoxColor", "65535").toIntOrNull() ?: 0x00FFFF
+            lividLineWidth = props.getProperty("lividLineWidth", "3.0").toFloatOrNull() ?: 3f
+            lividTracer = props.getProperty("lividTracer", "true").toBoolean()
+            lividHideWrong = props.getProperty("lividHideWrong", "false").toBoolean()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -90,6 +122,17 @@ object XenAddonsConfig {
         noEquipReset = false
         noSwing = false
         noTerminatorSwing = false
+        
+        autoRequeue = false
+        secretsSound = false
+        dungeonDeathsDisplay = false
+        
+        lividSolver = false
+        lividBoxColor = 0x00FFFF
+        lividLineWidth = 3f
+        lividTracer = false
+        lividHideWrong = false
+        
         save()
     }
 }

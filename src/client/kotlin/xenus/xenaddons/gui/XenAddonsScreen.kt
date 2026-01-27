@@ -31,7 +31,8 @@ class XenAddonsScreen(private val parent: Screen?) : Screen(Component.literal("X
 
         // --- State ---
         private enum class Category {
-                MISC
+                MISC,
+                DUNGEONS
         }
 
         private var selectedCategory = Category.MISC
@@ -68,6 +69,52 @@ class XenAddonsScreen(private val parent: Screen?) : Screen(Component.literal("X
         // --- Features ---
         private val allFeatures =
                 listOf(
+                        Feature(
+                                "General",
+                                Category.DUNGEONS,
+                                "General Dungeon Settings",
+                                listOf(
+                                        HeaderItem("QOL"),
+                                        ToggleItem(
+                                                "Auto Requeue",
+                                                { XenAddonsConfig.autoRequeue },
+                                                { XenAddonsConfig.autoRequeue = it }
+                                        ),
+                                        ToggleItem(
+                                                "Secrets Sound",
+                                                { XenAddonsConfig.secretsSound },
+                                                { XenAddonsConfig.secretsSound = it }
+                                        ),
+                                        ToggleItem(
+                                                "Deaths Display",
+                                                { XenAddonsConfig.dungeonDeathsDisplay },
+                                                { XenAddonsConfig.dungeonDeathsDisplay = it }
+                                        )
+                                )
+                        ),
+                        Feature(
+                                "Solvers",
+                                Category.DUNGEONS,
+                                "Dungeon Solvers",
+                                listOf(
+                                        HeaderItem("Livid"),
+                                        ToggleItem(
+                                                "Livid Solver",
+                                                { XenAddonsConfig.lividSolver },
+                                                { XenAddonsConfig.lividSolver = it }
+                                        ),
+                                        ToggleItem(
+                                                "Hide Wrong Livid",
+                                                { XenAddonsConfig.lividHideWrong },
+                                                { XenAddonsConfig.lividHideWrong = it }
+                                        ),
+                                        ToggleItem(
+                                                "Tracer",
+                                                { XenAddonsConfig.lividTracer },
+                                                { XenAddonsConfig.lividTracer = it }
+                                        )
+                                )
+                        ),
                         Feature(
                                 "Animation",
                                 Category.MISC,

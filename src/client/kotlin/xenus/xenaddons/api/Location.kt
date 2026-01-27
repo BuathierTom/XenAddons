@@ -1,0 +1,73 @@
+package xenus.xenaddons.api
+
+import xenus.xenaddons.api.events.*
+import xenus.xenaddons.api.utils.BasicState
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
+import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket
+
+object Location {
+    val teamRegex = "^team_(\\d+)$".toRegex()
+    val emoteRegex = "[^\\u0000-\\u007F]".toRegex()
+    val areaRegex = "^(?:Area|Dungeon): ([\\w ]+)\$".toRegex()
+    val subAreaRegex = "^ (⏣|ф) .*".toRegex()
+    var area: String? = null
+    var subarea: String? = null
+    val stateArea = BasicState<String?>(null)
+    val stateSubarea = BasicState<String?>(null)
+    
+    fun stateInArea(vararg area: String?) = stateArea.map { area.contains(it) }
+    fun stateInSubarea(vararg subarea: String?) = stateSubarea.map { subarea.contains(it) }
+
+    fun changeArea(loc: String) {
+        val old = area
+        val l = loc.lowercase()
+        if (old === l) return
+
+        AreaEvent(l).post()
+        area = l
+        stateArea.value = l
+    }
+
+    fun changeSubarea(loc: String) {
+        val old = subarea
+        val l = loc.lowercase()
+        if (old == l) return
+
+        SubAreaEvent(l).post()
+        subarea = l
+        stateSubarea.value = l
+    }
+
+    fun initialize() {
+        EventBus.on<PacketReceivedEvent> { event ->
+            when (val packet = event.packet) {
+                // TabList - Requires processing logic similar to Devonian (which I will add to EventBus next)
+                is ClientboundPlayerInfoUpdatePacket -> {
+                    packet.entries().forEach {
+                        val name = it.displayName ?: return@forEach
+                        val line = name.string.replace(emoteRegex, "")
+                        if (!line.matches(areaRegex)) return@forEach
+                        val newArea = areaRegex.matchEntire(line)?.groupValues?.get(1) ?: return@forEach
+
+                        changeArea(newArea)
+                    }
+                }
+                // Scoreboard
+                is ClientboundSetPlayerTeamPacket -> {
+                    if (packet.parameters.isEmpty) return@on
+                    val team = packet.parameters.get() ?: return@on
+                    val teamPrefix = team.playerPrefix.string
+                    val teamSuffix = team.playerSuffix.string
+                    if (teamPrefix.isEmpty()) return@on
+                    val teamName = packet.name
+                    if (!teamName.matches(teamRegex)) return@on
+
+                    val line = "${teamPrefix}${teamSuffix}"
+                    if (!line.matches(subAreaRegex)) return@on
+
+                    changeSubarea(line.drop(3))
+                }
+            }
+        }
+    }
+}
