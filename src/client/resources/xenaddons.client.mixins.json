@@ -3,7 +3,8 @@
 	"package": "xenus.xenaddons.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"MixinItemInHandRenderer"
+		"MixinHandledScreen",
+		"HandledScreenAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

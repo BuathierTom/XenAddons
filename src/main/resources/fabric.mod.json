@@ -3,9 +3,9 @@
 	"id": "xenaddons",
 	"version": "${version}",
 	"name": "XenAddons",
-	"description": "XenusAddons is a Fabric mod for Minecraft 1.21.10, mostly designed to reduce the number of mods you use.",
+	"description": "This is an example description! Tell everyone what your mod is about!",
 	"authors": [
-		"Xenus"
+		"Me!"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
@@ -16,16 +16,10 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			{
-				"value": "xenus.xenaddons.XenAddons",
-				"adapter": "kotlin"
-			}
+			"xenus.xenaddons.XenAddons"
 		],
 		"client": [
-			{
-				"value": "xenus.xenaddons.XenAddonsClient",
-				"adapter": "kotlin"
-			}
+			"xenus.xenaddons.XenAddonsClient"
 		]
 	},
 	"mixins": [
@@ -36,10 +30,9 @@
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.18.4",
-		"minecraft": "~1.21.10",
+		"fabricloader": ">=0.16.9",
+		"minecraft": "~1.21.1",
 		"java": ">=21",
-		"fabric-api": "*",
-		"fabric-language-kotlin": "*"
+		"fabric-api": "*"
 	}
 }
