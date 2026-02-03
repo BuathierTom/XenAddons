@@ -47,6 +47,7 @@ public class XenAddons implements ModInitializer {
 	public boolean showTooltips = true;
 	public boolean gridSnap = false;
 	public boolean hideInCreative = false;
+	public boolean hideRecipeBook = false;
 
 	public List<CustomButtonData> buttons = new ArrayList<>();
 

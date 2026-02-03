@@ -80,7 +80,7 @@ public abstract class MixinHandledScreen extends Screen {
             if (btn.anchorBottom) y += ySize;
 
             context.drawTexture(BUTTONS_TEXTURE, x, y,
-                    (float)(btn.backgroundIndex * 18), 18.0F, 18, 18, 128, 128);
+                    (float)(btn.backgroundIndex * 18), 18.0F, 18, 18, 90, 36);
 
             Identifier customTex = null;
             if (btn.itemId != null) {

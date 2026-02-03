@@ -74,6 +74,10 @@ public class GuiInvButtonConfig extends Screen {
 
         addGeneralSetting(boxX + 10, startY, btnX, btnW, btnH, "Grid Snap Default",
                 () -> XenAddons.instance.gridSnap, v -> XenAddons.instance.gridSnap = v);
+        startY += spacing;
+
+        addGeneralSetting(boxX + 10, startY, btnX, btnW, btnH, "Hide Recipe Book",
+                () -> XenAddons.instance.hideRecipeBook, v -> XenAddons.instance.hideRecipeBook = v);
 
         // --- Profiles Tab ---
         // TextField

@@ -24,24 +24,32 @@ public class XenAddonsClient implements ClientModInitializer {
 		// Register commands
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 
-			// Command: /invbuttons
-			dispatcher.register(literal("invbuttons")
+			// Command: /xa
+			dispatcher.register(literal("xa")
 					.executes(context -> {
 						openMenuNextTick = true;
 						return 1;
 					})
+					.then(literal("buttons").executes(context -> {
+						openMenuNextTick = true;
+						return 1;
+					}))
 					.then(literal("edit").executes(context -> {
 						openEditorNextTick = true;
 						return 1;
 					}))
 			);
 
-			// Command: /inventorybuttons
-			dispatcher.register(literal("inventorybuttons")
+			// Command: /xenaddons
+			dispatcher.register(literal("xenaddons")
 					.executes(context -> {
 						openMenuNextTick = true;
 						return 1;
 					})
+					.then(literal("buttons").executes(context -> {
+						openMenuNextTick = true;
+						return 1;
+					}))
 					.then(literal("edit").executes(context -> {
 						openEditorNextTick = true;
 						return 1;
@@ -61,6 +69,6 @@ public class XenAddonsClient implements ClientModInitializer {
 			}
 		});
 
-		XenAddons.LOGGER.info("InventoryButtons loaded successfully!");
+		XenAddons.LOGGER.info("XenAddons loaded successfully!");
 	}
 }
