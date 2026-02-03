@@ -6,6 +6,10 @@ import xenus.xenaddons.XenAddons;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import xenus.xenaddons.utils.HypixelItemManager;
 import xenus.xenaddons.utils.RenderUtils;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.input.CharInput;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -133,7 +137,7 @@ public class GuiInvButtonEditor extends Screen {
     private record TextureResult(String name, Identifier textureId) implements IconResult {
         @Override
         public void render(DrawContext context, int x, int y) {
-            context.drawTexture(textureId, x, y, 0, 0, 16, 16, 16, 16);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, textureId, x, y, 0, 0, 16, 16, 16, 16);
         }
         @Override
         public String getDisplayName() { return name; }
@@ -268,12 +272,12 @@ public class GuiInvButtonEditor extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
+        this.renderInGameBackground(context);
 
         guiLeft = (this.width - xSize) / 2;
         guiTop = (this.height - ySize) / 2;
 
-        context.drawTexture(INVENTORY_TEXTURE, guiLeft, guiTop, 0.0f, 0.0f, xSize, ySize, 256, 256);
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, INVENTORY_TEXTURE, guiLeft, guiTop, 0.0f, 0.0f, xSize, ySize, 256, 256);
 
         for (XenAddons.CustomButtonData button : XenAddons.instance.buttons) {
             int x = guiLeft + button.x;
@@ -285,7 +289,7 @@ public class GuiInvButtonEditor extends Screen {
                 context.fill(x, y, x + 18, y + 18, 0x8000FF00);
                 RenderUtils.drawBorder(context, x, y, 18, 18, 0xFFFFFFFF);
             } else {
-                context.drawTexture(BUTTONS_TEXTURE, x, y,
+                context.drawTexture(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, x, y,
                         (float)(button.backgroundIndex * 18), 18.0F, 18, 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
             }
 
@@ -299,7 +303,7 @@ public class GuiInvButtonEditor extends Screen {
                 }
 
                 if (customTex != null) {
-                    context.drawTexture(customTex, x + 1, y + 1, 0, 0, 16, 16, 16, 16);
+                    context.drawTexture(RenderPipelines.GUI_TEXTURED, customTex, x + 1, y + 1, 0, 0, 16, 16, 16, 16);
                 } else {
                     ItemStack stack = button.getItemStack();
                     if (!stack.isEmpty()) {
@@ -313,10 +317,9 @@ public class GuiInvButtonEditor extends Screen {
 
         if (editingButton != null && isEditorOpen) {
             updateEditorCoordinates();
-            // context.getMatrices().push(); // FIXME: Matrix stack issues in 1.21.10
-            // context.getMatrices().translate(0.0, 0.0, 500.0);
+            context.getMatrices().pushMatrix();
             renderEditorPanel(context, mouseX, mouseY, delta);
-            // context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         }
 
         if (editingButton == null) {
@@ -337,10 +340,9 @@ public class GuiInvButtonEditor extends Screen {
         }
 
         if (isSavePanelOpen) {
-            // context.getMatrices().push();
-            // context.getMatrices().translate(0.0, 0.0, 500.0);
+            context.getMatrices().pushMatrix();
             renderSaveProfilePanel(context, mouseX, mouseY, delta);
-            // context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         }
     }
 
@@ -463,7 +465,7 @@ public class GuiInvButtonEditor extends Screen {
             int bx = editorLeft + 7 + (i * 20);
             int by = editorTop + 52;
 
-            context.drawTexture(BUTTONS_TEXTURE, bx, by,
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, bx, by,
                     (float)(i * 18), 0.0F,
                     18, 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
@@ -514,7 +516,7 @@ public class GuiInvButtonEditor extends Screen {
             int infoIconX = titleX + textRenderer.getWidth(infoText) + 5;
             int infoIconY = titleY - 1;
 
-            context.drawTexture(INFO_ICON_TEXTURE, infoIconX, infoIconY, 0.0f, 0.0f, iconSize, iconSize, iconSize, iconSize);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, INFO_ICON_TEXTURE, infoIconX, infoIconY, 0.0f, 0.0f, iconSize, iconSize, iconSize, iconSize);
 
             // Highlight on hover
             if (mouseX >= infoIconX && mouseX < infoIconX + iconSize && mouseY >= infoIconY && mouseY < infoIconY + iconSize) {
@@ -692,7 +694,11 @@ public class GuiInvButtonEditor extends Screen {
         );
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    @Override
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
         if (isSavePanelOpen) {
             int panelW = 200;
             int panelH = 100;
@@ -708,7 +714,7 @@ public class GuiInvButtonEditor extends Screen {
                 return true;
             }
 
-            boolean fieldClicked = saveProfileField.mouseClicked(mouseX, mouseY, button);
+            boolean fieldClicked = saveProfileField.mouseClicked(click, doubled);
             saveProfileField.setFocused(fieldClicked);
             if(fieldClicked) return true;
 
@@ -819,9 +825,9 @@ public class GuiInvButtonEditor extends Screen {
                 iconTextField.setFocused(inIcon);
                 addSkullField.setFocused(inSkull);
 
-                if (inCmd) commandTextField.mouseClicked(mouseX, mouseY, button);
-                if (inIcon) iconTextField.mouseClicked(mouseX, mouseY, button);
-                if (inSkull) addSkullField.mouseClicked(mouseX, mouseY, button);
+                if (inCmd) commandTextField.mouseClicked(click, doubled);
+                if (inIcon) iconTextField.mouseClicked(click, doubled);
+                if (inSkull) addSkullField.mouseClicked(click, doubled);
 
                 if (mouseY >= editorTop + 52 && mouseY <= editorTop + 52 + 18) {
                     for(int i=0; i<5; i++) {
@@ -920,7 +926,7 @@ public class GuiInvButtonEditor extends Screen {
         isDragging = false;
         isEditorOpen = false;
         isInfoPanelOpen = false;
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     private void handleListClick(double mouseX, double mouseY) {
@@ -949,9 +955,10 @@ public class GuiInvButtonEditor extends Screen {
         }
     }
 
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    @Override
+    public boolean mouseReleased(Click click) {
         isDragging = false;
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     // --- Helper to check overlap ---
@@ -969,7 +976,10 @@ public class GuiInvButtonEditor extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(Click click, double deltaX, double deltaY) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
         if (isDragging && editingButton != null) {
             int newScreenX = (int)mouseX - dragOffsetX;
             int newScreenY = (int)mouseY - dragOffsetY;
@@ -1092,10 +1102,9 @@ public class GuiInvButtonEditor extends Screen {
         }
 
         if (editingButton != null && isEditorOpen && mouseX >= editorLeft && mouseX <= editorLeft + editorWidth) {
-            int scroll = (int)(-deltaY * 10);
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, deltaX, deltaY);
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
@@ -1114,16 +1123,19 @@ public class GuiInvButtonEditor extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    @Override
+    public boolean keyPressed(KeyInput input) {
+        int keyCode = input.key();
+        int scanCode = input.scancode();
+        int modifiers = input.modifiers();
+
         // Toggle Grid Snap
         boolean inputsFocused = isEditorOpen && (commandTextField.isFocused() || iconTextField.isFocused() || addSkullField.isFocused());
         if (keyCode == GLFW.GLFW_KEY_S && !inputsFocused) {
-            // CHANGED: Toggle local state only
             this.localGridSnap = !this.localGridSnap;
             return true;
         }
 
-        // --- Save Panel Logic ---
         if (isSavePanelOpen) {
             if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                 isSavePanelOpen = false;
@@ -1141,8 +1153,8 @@ public class GuiInvButtonEditor extends Screen {
                 }
                 return true;
             }
-            if (saveProfileField.keyPressed(keyCode, scanCode, modifiers)) return true;
-            return super.keyPressed(keyCode, scanCode, modifiers);
+            if (saveProfileField.keyPressed(input)) return true;
+            return super.keyPressed(input);
         }
 
         if (editingButton != null) {
@@ -1155,10 +1167,10 @@ public class GuiInvButtonEditor extends Screen {
                             return true;
                         }
                     }
-                    return commandTextField.keyPressed(keyCode, scanCode, modifiers);
+                    return commandTextField.keyPressed(input);
                 }
-                if (iconTextField.isFocused()) return iconTextField.keyPressed(keyCode, scanCode, modifiers);
-                if (addSkullField.isFocused()) return addSkullField.keyPressed(keyCode, scanCode, modifiers);
+                if (iconTextField.isFocused()) return iconTextField.keyPressed(input);
+                if (addSkullField.isFocused()) return addSkullField.keyPressed(input);
             }
             if (keyCode == GLFW.GLFW_KEY_DELETE || keyCode == GLFW.GLFW_KEY_BACKSPACE) {
                 if (!isEditorOpen || (!commandTextField.isFocused() && !iconTextField.isFocused() && !addSkullField.isFocused())) {
@@ -1171,27 +1183,41 @@ public class GuiInvButtonEditor extends Screen {
                 }
             }
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE && isEditorOpen) {
+            closeEditor();
+            return true;
+        }
+
+        return super.keyPressed(input);
     }
 
-    public boolean charTyped(char chr, int modifiers) {
+    private void closeEditor() {
+        isEditorOpen = false;
+        commandTextField.setFocused(false);
+        iconTextField.setFocused(false);
+        addSkullField.setFocused(false);
+    }
+
+    @Override
+    public boolean charTyped(CharInput input) {
         if (isSavePanelOpen) {
-            if (saveProfileField.charTyped(chr, modifiers)) return true;
-            return super.charTyped(chr, modifiers);
+            if (saveProfileField.charTyped(input)) return true;
+            return super.charTyped(input);
         }
         if (editingButton != null && isEditorOpen) {
-            if (commandTextField.isFocused() && commandTextField.charTyped(chr, modifiers)) {
+            if (commandTextField.isFocused() && commandTextField.charTyped(input)) {
                 return true;
             }
-            if (iconTextField.isFocused() && iconTextField.charTyped(chr, modifiers)) {
+            if (iconTextField.isFocused() && iconTextField.charTyped(input)) {
                 search(iconTextField.getText());
                 return true;
             }
-            if (addSkullField.isFocused() && addSkullField.charTyped(chr, modifiers)) {
+            if (addSkullField.isFocused() && addSkullField.charTyped(input)) {
                 return true;
             }
         }
-        return super.charTyped(chr, modifiers);
+        return super.charTyped(input);
     }
 
     @Override

@@ -1,6 +1,9 @@
 package xenus.xenaddons.gui;
 
 import xenus.xenaddons.XenAddons;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.input.CharInput;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import xenus.xenaddons.utils.RenderUtils;
@@ -9,6 +12,7 @@ import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.client.gl.RenderPipelines;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -140,16 +144,16 @@ public class GuiInvButtonConfig extends Screen {
     }
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
+        this.renderInGameBackground(context);
 
-        context.getMatrices().push();
-        context.getMatrices().translate(this.width / 2.0f, boxY - 25, 0.0f);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(this.width / 2.0f, (float)boxY - 25);
         float scale = 1.5f;
-        context.getMatrices().scale(scale, scale, 1.0f);
+        context.getMatrices().scale(scale, scale);
         String titleText = "Configuration";
         int tW = this.textRenderer.getWidth(titleText);
         context.drawText(this.textRenderer, titleText, -tW / 2, -this.textRenderer.fontHeight / 2, 0xFFFFFFFF, true);
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
 
         // Background
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xAA000000);
@@ -163,13 +167,13 @@ public class GuiInvButtonConfig extends Screen {
         boolean hoverGen = (mouseX >= boxX && mouseX < boxX + tabW && mouseY >= boxY && mouseY < boxY + tabH);
         int colorGen = (currentTab == Tab.GENERAL) ? 0xCC404040 : (hoverGen ? 0xAA303030 : 0x88202020);
         context.fill(boxX, boxY, boxX + tabW, boxY + tabH, colorGen);
-        context.drawCenteredTextWithShadow(textRenderer, "General", boxX + tabW / 2, boxY + 4, (currentTab == Tab.GENERAL) ? 0xFFFFFF : 0xAAAAAA);
+        context.drawTextWithShadow(textRenderer, "General", boxX + tabW / 2 - textRenderer.getWidth("General") / 2, boxY + 4, (currentTab == Tab.GENERAL) ? 0xFFFFFF : 0xAAAAAA);
 
         // Tab 2: Profiles
         boolean hoverProf = (mouseX >= boxX + tabW && mouseX < boxX + boxW && mouseY >= boxY && mouseY < boxY + tabH);
         int colorProf = (currentTab == Tab.PROFILES) ? 0xCC404040 : (hoverProf ? 0xAA303030 : 0x88202020);
         context.fill(boxX + tabW, boxY, boxX + boxW, boxY + tabH, colorProf);
-        context.drawCenteredTextWithShadow(textRenderer, "Profiles", boxX + tabW + tabW / 2, boxY + 4, (currentTab == Tab.PROFILES) ? 0xFFFFFF : 0xAAAAAA);
+        context.drawTextWithShadow(textRenderer, "Profiles", boxX + tabW + tabW / 2 - textRenderer.getWidth("Profiles") / 2, boxY + 4, (currentTab == Tab.PROFILES) ? 0xFFFFFF : 0xAAAAAA);
 
         context.fill(boxX, boxY + tabH, boxX + boxW, boxY + tabH + 1, 0xFF808080);
 
@@ -253,7 +257,7 @@ public class GuiInvButtonConfig extends Screen {
             context.fill(delBtn.x, drawY, delBtn.x + delBtn.w, drawY + delBtn.h, isDelHovered ? 0xA0000000 : 0x80000000);
 
             // Draw Trashcan Icon
-            context.drawTexture(TRASH_ICON, delBtn.x + 1, drawY + 1, 0.0f, 0.0f, 16, 16, 16, 16);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, TRASH_ICON, delBtn.x + 1, drawY + 1, 0.0f, 0.0f, 16, 16, 16, 16);
 
             currentY += btn.h + 2;
         }
@@ -271,7 +275,11 @@ public class GuiInvButtonConfig extends Screen {
         }
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    @Override
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
         if (button == 0) {
             int tabW = boxW / 2;
             if (mouseY >= boxY && mouseY < boxY + 16) {
@@ -297,7 +305,7 @@ public class GuiInvButtonConfig extends Screen {
                     }
                 }
             } else {
-                boolean fieldClicked = profileNameField.mouseClicked(mouseX, mouseY, button);
+                boolean fieldClicked = profileNameField.mouseClicked(click, doubled);
                 profileNameField.setFocused(fieldClicked);
                 if (fieldClicked) return true;
 
@@ -332,7 +340,7 @@ public class GuiInvButtonConfig extends Screen {
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
@@ -352,22 +360,25 @@ public class GuiInvButtonConfig extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    @Override
+    public boolean keyPressed(KeyInput input) {
+        int keyCode = input.key();
         if (keyCode == GLFW.GLFW_KEY_ESCAPE && !profileNameField.isFocused()) {
             this.close();
             return true;
         }
         if (currentTab == Tab.PROFILES && profileNameField.isFocused()) {
-            if (profileNameField.keyPressed(keyCode, scanCode, modifiers)) return true;
+            if (profileNameField.keyPressed(input)) return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
-    public boolean charTyped(char chr, int modifiers) {
+    @Override
+    public boolean charTyped(CharInput input) {
         if (currentTab == Tab.PROFILES && profileNameField.isFocused()) {
-            if (profileNameField.charTyped(chr, modifiers)) return true;
+            if (profileNameField.charTyped(input)) return true;
         }
-        return super.charTyped(chr, modifiers);
+        return super.charTyped(input);
     }
 
     @Override

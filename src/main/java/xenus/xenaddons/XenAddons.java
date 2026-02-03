@@ -101,13 +101,15 @@ public class XenAddons implements ModInitializer {
 			try {
 				String textureId = skullStr.substring("skull:".length());
 				ItemStack head = new ItemStack(Items.PLAYER_HEAD);
-				String textureUrl = "http://textures.minecraft.net/texture/" + textureId;
+				String textureUrl = "https://textures.minecraft.net/texture/" + textureId;
 				String json = "{\"textures\":{\"SKIN\":{\"url\":\"" + textureUrl + "\"}}}";
 				String base64 = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 				UUID uuid = UUID.nameUUIDFromBytes(textureId.getBytes(StandardCharsets.UTF_8));
-				GameProfile profile = new GameProfile(uuid, "Skull");
-				profile.getProperties().put("textures", new Property("textures", base64));
-				head.set(DataComponentTypes.PROFILE, new ProfileComponent(profile));
+				com.google.common.collect.Multimap<String, com.mojang.authlib.properties.Property> map = com.google.common.collect.HashMultimap.create();
+				map.put("textures", new com.mojang.authlib.properties.Property("textures", base64));
+				com.mojang.authlib.properties.PropertyMap properties = new com.mojang.authlib.properties.PropertyMap(map);
+				GameProfile profile = new GameProfile(uuid, "Skull", properties);
+				head.set(DataComponentTypes.PROFILE, ProfileComponent.ofStatic(profile));
 				return head;
 			} catch (Exception e) {
 				LOGGER.error("Failed to create skull stack", e);

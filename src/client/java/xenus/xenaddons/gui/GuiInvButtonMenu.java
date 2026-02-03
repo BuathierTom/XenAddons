@@ -6,6 +6,8 @@ import net.minecraft.client.gui.screen.Screen;
 import xenus.xenaddons.utils.RenderUtils;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 
@@ -58,15 +60,15 @@ public class GuiInvButtonMenu extends Screen {
     }
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
+        this.renderInGameBackground(context);
 
         // --- Render Title ---
-        context.getMatrices().push();
-        context.getMatrices().translate(this.width / 2.0f, 60.0f, 0.0f);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(this.width / 2.0f, 60.0f);
         float scale = 2.0f;
-        context.getMatrices().scale(scale, scale, 1.0f);
+        context.getMatrices().scale(scale, scale);
         context.drawText(this.textRenderer, title, -this.textRenderer.getWidth(title) / 2, 0, 0xFFFFFFFF, true);
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
 
         // --- Render Custom Buttons ---
         // draw each button in list
@@ -92,7 +94,11 @@ public class GuiInvButtonMenu extends Screen {
         // Do NOT call super.render() to avoid drawing default widget layers if any exist
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    @Override
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
         if (button == 0) { // Left Click
             for (MenuButton btn : menuButtons) {
                 if (mouseX >= btn.x && mouseX < btn.x + btn.width &&
@@ -108,7 +114,7 @@ public class GuiInvButtonMenu extends Screen {
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     // Helper Record for Custom Buttons

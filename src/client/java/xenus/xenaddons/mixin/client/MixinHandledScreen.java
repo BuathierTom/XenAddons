@@ -7,8 +7,10 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.render.RenderLayer;
 import xenus.xenaddons.utils.RenderUtils;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import net.minecraft.client.gui.Click;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,9 +29,8 @@ public abstract class MixinHandledScreen extends Screen {
 
     protected MixinHandledScreen(Text title) { super(title); }
 
-    @Inject(method = "render", at = @At("TAIL"))
+    @Inject(method = "renderMain", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;drawForeground(Lnet/minecraft/client/gui/DrawContext;II)V", shift = At.Shift.BEFORE))
     private void renderInvButtons(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (!((Object)this instanceof HandledScreen)) return;
 
         if (!XenAddons.instance.enabled) return;
 
@@ -38,10 +39,10 @@ public abstract class MixinHandledScreen extends Screen {
         }
 
         HandledScreenAccessor accessor = (HandledScreenAccessor) this;
-        int guiLeft = accessor.getXPosition();
-        int guiTop = accessor.getYPosition();
         int xSize = accessor.getBackgroundWidth();
         int ySize = accessor.getBackgroundHeight();
+        int guiLeft = accessor.getXPosition();
+        int guiTop = accessor.getYPosition();
 
         boolean isPlayerInventory = ((Object)this instanceof InventoryScreen);
         int containerOffset = ySize - STANDARD_INV_HEIGHT;
@@ -73,14 +74,14 @@ public abstract class MixinHandledScreen extends Screen {
                 }
             }
 
-            int x = guiLeft + btn.x;
-            int y = guiTop + btn.y + renderOffsetY;
+            int x = btn.x;
+            int y = btn.y + renderOffsetY;
 
             if (btn.anchorRight) x += xSize;
             if (btn.anchorBottom) y += ySize;
 
-            context.drawTexture(BUTTONS_TEXTURE, x, y,
-                    (float)(btn.backgroundIndex * 18), 18.0F, 18, 18, 90, 36);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, x, y,
+                    (float)(btn.backgroundIndex * 18), 18.0f, 18, 18, 90, 36);
 
             Identifier customTex = null;
             if (btn.itemId != null) {
@@ -93,14 +94,14 @@ public abstract class MixinHandledScreen extends Screen {
             }
 
             if (customTex != null) {
-                context.drawTexture(customTex, x + 1, y + 1, 0.0f, 0.0f, 16, 16, 16, 16);
+                context.drawTexture(RenderPipelines.GUI_TEXTURED, customTex, x + 1, y + 1, 0.0f, 0.0f, 16, 16, 16, 16);
             } else {
                 ItemStack stack = btn.getItemStack();
                 if (!stack.isEmpty()) context.drawItem(stack, x + 1, y + 1);
-                else context.drawCenteredTextWithShadow(textRenderer, "?", x + 9, y + 5, 0xFFFFFFFF);
+                else context.drawTextWithShadow(textRenderer, "?", x + 9 - textRenderer.getWidth("?") / 2, y + 5, 0xFFFFFFFF);
             }
 
-            if (mouseX >= x && mouseX <= x + 18 && mouseY >= y && mouseY <= y + 18) {
+            if (mouseX >= guiLeft + x && mouseX <= guiLeft + x + 18 && mouseY >= guiTop + y && mouseY <= guiTop + y + 18) {
                 hoveredBtn = btn;
             }
         }
@@ -111,8 +112,8 @@ public abstract class MixinHandledScreen extends Screen {
                 renderOffsetY = containerOffset;
             }
 
-            int finalX = guiLeft + hoveredBtn.x + (hoveredBtn.anchorRight ? xSize : 0);
-            int finalY = guiTop + hoveredBtn.y + renderOffsetY + (hoveredBtn.anchorBottom ? ySize : 0);
+            int finalX = hoveredBtn.x + (hoveredBtn.anchorRight ? xSize : 0);
+            int finalY = hoveredBtn.y + renderOffsetY + (hoveredBtn.anchorBottom ? ySize : 0);
 
             RenderUtils.drawBorder(context, finalX, finalY, 18, 18, 0xFFFFFFFF);
 
@@ -123,8 +124,12 @@ public abstract class MixinHandledScreen extends Screen {
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    private void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+    private void onMouseClicked(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
         if (!XenAddons.instance.enabled) return;
+
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
 
         if (XenAddons.instance.hideInCreative && this.client != null && this.client.interactionManager != null && this.client.interactionManager.getCurrentGameMode().isCreative()) {
             return;
