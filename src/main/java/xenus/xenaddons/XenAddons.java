@@ -32,9 +32,9 @@ public class XenAddons implements ModInitializer {
 		load();
 		LOGGER.info("XenAddons initialized!");
 	}
-	public static final Logger LOGGER = LoggerFactory.getLogger("InventoryButtons");
+	public static final Logger LOGGER = LoggerFactory.getLogger("XenAddons");
 
-	private static final Path BASE_DIR = FabricLoader.getInstance().getConfigDir().resolve("inventorybuttons");
+	private static final Path BASE_DIR = FabricLoader.getInstance().getConfigDir().resolve("xenaddons");
 	private static final Path CONFIG_PATH = BASE_DIR.resolve("invbuttons.json");
 	private static final Path PROFILES_DIR = BASE_DIR.resolve("profiles");
 

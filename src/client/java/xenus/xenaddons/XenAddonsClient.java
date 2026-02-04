@@ -45,6 +45,6 @@ public class XenAddonsClient implements ClientModInitializer {
 			}
 		});
 
-		XenAddons.LOGGER.info("InventoryButtons loaded successfully!");
+		XenAddons.LOGGER.info("XenAddons loaded successfully!");
 	}
 }

@@ -50,7 +50,7 @@ public class GuiInvButtonMenu extends Screen {
 
         // Open Config Folder Button
         menuButtons.add(new MenuButton(centerX, startY + spacing * 2, btnWidth, btnHeight, "Open Config Folder", () -> {
-            Path configDir = FabricLoader.getInstance().getConfigDir().resolve("inventorybuttons");
+            Path configDir = FabricLoader.getInstance().getConfigDir().resolve("xenaddons");
             File file = configDir.toFile();
             if (!file.exists()) {
                 file.mkdirs();

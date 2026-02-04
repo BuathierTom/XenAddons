@@ -26,12 +26,14 @@ public abstract class MixinHandledScreen extends Screen {
     private static final Identifier BUTTONS_TEXTURE = Identifier.of("xenaddons", "textures/gui/buttons.png");
     private static final int STANDARD_INV_HEIGHT = 166;
     private static final int STANDARD_INV_WIDTH = 176;
+    private XenAddons.CustomButtonData currentHoveredBtn = null;
 
     protected MixinHandledScreen(Text title) { super(title); }
 
     @Inject(method = "renderMain", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;drawForeground(Lnet/minecraft/client/gui/DrawContext;II)V", shift = At.Shift.BEFORE))
     private void renderInvButtons(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
 
+        currentHoveredBtn = null;
         if (!XenAddons.instance.enabled) return;
 
         if (XenAddons.instance.hideInCreative && this.client != null && this.client.interactionManager != null && this.client.interactionManager.getCurrentGameMode().isCreative()) {
@@ -47,38 +49,23 @@ public abstract class MixinHandledScreen extends Screen {
         boolean isPlayerInventory = ((Object)this instanceof InventoryScreen);
         int containerOffset = ySize - STANDARD_INV_HEIGHT;
 
-        XenAddons.CustomButtonData hoveredBtn = null;
-
         for (XenAddons.CustomButtonData btn : XenAddons.instance.buttons) {
             int renderOffsetY = 0;
 
             if (!isPlayerInventory) {
                 if (!btn.anchorBottom) {
-                    // --- Logic for Top Buttons (Y < 80) ---
                     if (btn.y < 80) {
-                        // Check if it's an "Internal" button (Crafting/Armor/Player Model)
-
                         boolean isInsideX = (btn.x >= 0 && btn.x <= STANDARD_INV_WIDTH);
                         boolean isInsideY = (btn.y >= 0);
-
-                        if (!btn.anchorRight && isInsideX && isInsideY) {
-                            continue; // hide
-                        }
-                        // If it's above (y < 0) or to the side, it stays visible at renderOffsetY = 0 (pinned to top)
-                    }
-                    // --- Logic for Inventory Buttons (Y >= 80) ---
-                    else {
-                        // Shift down to align with the player inventory in this container
+                        if (!btn.anchorRight && isInsideX && isInsideY) continue;
+                    } else {
                         renderOffsetY = containerOffset;
                     }
                 }
             }
 
-            int x = btn.x;
-            int y = btn.y + renderOffsetY;
-
-            if (btn.anchorRight) x += xSize;
-            if (btn.anchorBottom) y += ySize;
+            int x = btn.x + (btn.anchorRight ? xSize : 0);
+            int y = btn.y + renderOffsetY + (btn.anchorBottom ? ySize : 0);
 
             context.drawTexture(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, x, y,
                     (float)(btn.backgroundIndex * 18), 18.0f, 18, 18, 90, 36);
@@ -102,24 +89,16 @@ public abstract class MixinHandledScreen extends Screen {
             }
 
             if (mouseX >= guiLeft + x && mouseX <= guiLeft + x + 18 && mouseY >= guiTop + y && mouseY <= guiTop + y + 18) {
-                hoveredBtn = btn;
+                currentHoveredBtn = btn;
+                RenderUtils.drawBorder(context, x, y, 18, 18, 0xFFFFFFFF);
             }
         }
+    }
 
-        if (hoveredBtn != null) {
-            int renderOffsetY = 0;
-            if (!isPlayerInventory && !hoveredBtn.anchorBottom && hoveredBtn.y >= 80) {
-                renderOffsetY = containerOffset;
-            }
-
-            int finalX = hoveredBtn.x + (hoveredBtn.anchorRight ? xSize : 0);
-            int finalY = hoveredBtn.y + renderOffsetY + (hoveredBtn.anchorBottom ? ySize : 0);
-
-            RenderUtils.drawBorder(context, finalX, finalY, 18, 18, 0xFFFFFFFF);
-
-            if (XenAddons.instance.showTooltips) {
-                context.drawTooltip(textRenderer, Text.literal(hoveredBtn.command), mouseX, mouseY);
-            }
+    @Inject(method = "render", at = @At("TAIL"))
+    private void drawInvTooltips(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        if (currentHoveredBtn != null && XenAddons.instance.showTooltips) {
+            context.drawTooltip(textRenderer, Text.literal(currentHoveredBtn.command), mouseX, mouseY);
         }
     }
 
@@ -153,21 +132,15 @@ public abstract class MixinHandledScreen extends Screen {
                         if (btn.y < 80) {
                             boolean isInsideX = (btn.x >= 0 && btn.x <= STANDARD_INV_WIDTH);
                             boolean isInsideY = (btn.y >= 0);
-
-                            if (!btn.anchorRight && isInsideX && isInsideY) {
-                                continue;
-                            }
+                            if (!btn.anchorRight && isInsideX && isInsideY) continue;
                         } else {
                             renderOffsetY = containerOffset;
                         }
                     }
                 }
 
-                int btnX = guiLeft + btn.x;
-                int btnY = guiTop + btn.y + renderOffsetY;
-
-                if (btn.anchorRight) btnX += xSize;
-                if (btn.anchorBottom) btnY += ySize;
+                int btnX = guiLeft + btn.x + (btn.anchorRight ? xSize : 0);
+                int btnY = guiTop + btn.y + renderOffsetY + (btn.anchorBottom ? ySize : 0);
 
                 if (mouseX >= btnX && mouseX <= btnX + 18 && mouseY >= btnY && mouseY <= btnY + 18) {
                     if (this.client != null && this.client.player != null) {
