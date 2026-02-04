@@ -8,6 +8,7 @@ public abstract class Module {
     public final Category category;
     private boolean enabled = false;
     protected final MinecraftClient mc = MinecraftClient.getInstance();
+    public final java.util.List<xenus.xenaddons.settings.Setting<?>> settings = new java.util.ArrayList<>();
 
     public Module(String name, String description, Category category) {
         this.name = name;
@@ -37,5 +38,9 @@ public abstract class Module {
     // Simple way to handle click action if it's a button-like module
     public void onClick() {
         toggle();
+    }
+
+    protected void registerSetting(xenus.xenaddons.settings.Setting<?> setting) {
+        settings.add(setting);
     }
 }

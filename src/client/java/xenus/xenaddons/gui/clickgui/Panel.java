@@ -42,7 +42,7 @@ public class Panel {
             int currentY = y + HEADER_HEIGHT;
             for (ModuleButton button : buttons) {
                 button.render(context, mouseX, mouseY, x, currentY, WIDTH, 18, textRenderer);
-                currentY += 18;
+                currentY += button.getHeight();
             }
         }
     }
@@ -63,11 +63,17 @@ public class Panel {
         if (open) {
              int currentY = y + HEADER_HEIGHT;
              for (ModuleButton btn : buttons) {
-                 // Check if click is within button bounds
-                 if (mouseX >= x && mouseX <= x + WIDTH && mouseY >= currentY && mouseY < currentY + 18) {
-                     if (btn.mouseClicked(mouseX, mouseY, button)) return true;
+                 int btnHeight = btn.getHeight();
+                 // Check if click is within button bounds (and its settings)
+                 if (mouseX >= x && mouseX <= x + WIDTH && mouseY >= currentY && mouseY < currentY + btnHeight) {
+                     // Check settings click first
+                     if (btn.mouseClickedSettings(mouseX, mouseY, button, x, currentY)) return true;
+                     // Then check button click (only if in the header part area)
+                     if (mouseY < currentY + 18) {
+                         if (btn.mouseClicked(mouseX, mouseY, button)) return true;
+                     }
                  }
-                 currentY += 18;
+                 currentY += btnHeight;
              }
         }
         return false;

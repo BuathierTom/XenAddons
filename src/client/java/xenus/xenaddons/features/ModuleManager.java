@@ -10,7 +10,9 @@ public class ModuleManager {
 
     public static void init() {
         modules.add(new InvButtonsModule());
-        // Add more modules here
+        modules.add(new xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsModule());
+        
+        xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsFeatures.init();
     }
 
     public static List<Module> getModulesByCategory(Category category) {
