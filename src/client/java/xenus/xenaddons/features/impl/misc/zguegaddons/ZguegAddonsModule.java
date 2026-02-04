@@ -5,10 +5,7 @@ import net.minecraft.text.Text;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.BooleanSetting;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-// A module that acts as a container for ZguegAddons features
 public class ZguegAddonsModule extends Module {
     
     public final BooleanSetting chatHider = new BooleanSetting("Chat Hider", false);

@@ -6,12 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import xenus.xenaddons.XenAddons;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ProfileComponent;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 import java.net.URI;
 import java.net.http.HttpClient;

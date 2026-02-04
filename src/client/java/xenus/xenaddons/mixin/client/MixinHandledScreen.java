@@ -5,7 +5,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.render.RenderLayer;
 import xenus.xenaddons.utils.RenderUtils;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.item.ItemStack;

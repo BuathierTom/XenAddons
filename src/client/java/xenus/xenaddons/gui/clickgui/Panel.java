@@ -6,7 +6,6 @@ import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
