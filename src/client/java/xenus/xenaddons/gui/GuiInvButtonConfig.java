@@ -167,13 +167,13 @@ public class GuiInvButtonConfig extends Screen {
         boolean hoverGen = (mouseX >= boxX && mouseX < boxX + tabW && mouseY >= boxY && mouseY < boxY + tabH);
         int colorGen = (currentTab == Tab.GENERAL) ? 0xCC404040 : (hoverGen ? 0xAA303030 : 0x88202020);
         context.fill(boxX, boxY, boxX + tabW, boxY + tabH, colorGen);
-        context.drawTextWithShadow(textRenderer, "General", boxX + tabW / 2 - textRenderer.getWidth("General") / 2, boxY + 4, (currentTab == Tab.GENERAL) ? 0xFFFFFF : 0xAAAAAA);
+        context.drawTextWithShadow(textRenderer, "Général", boxX + tabW / 2 - textRenderer.getWidth("Général") / 2, boxY + 4, (currentTab == Tab.GENERAL) ? 0xFFFFFFFF : 0xFFAAAAAA);
 
         // Tab 2: Profiles
         boolean hoverProf = (mouseX >= boxX + tabW && mouseX < boxX + boxW && mouseY >= boxY && mouseY < boxY + tabH);
         int colorProf = (currentTab == Tab.PROFILES) ? 0xCC404040 : (hoverProf ? 0xAA303030 : 0x88202020);
         context.fill(boxX + tabW, boxY, boxX + boxW, boxY + tabH, colorProf);
-        context.drawTextWithShadow(textRenderer, "Profiles", boxX + tabW + tabW / 2 - textRenderer.getWidth("Profiles") / 2, boxY + 4, (currentTab == Tab.PROFILES) ? 0xFFFFFF : 0xAAAAAA);
+        context.drawTextWithShadow(textRenderer, "Profiles", boxX + tabW + tabW / 2 - textRenderer.getWidth("Profiles") / 2, boxY + 4, (currentTab == Tab.PROFILES) ? 0xFFFFFFFF : 0xFFAAAAAA);
 
         context.fill(boxX, boxY + tabH, boxX + boxW, boxY + tabH + 1, 0xFF808080);
 
