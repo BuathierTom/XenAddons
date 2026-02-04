@@ -76,4 +76,9 @@ public class ClickGUI extends Screen {
         }
         return super.mouseDragged(click, deltaX, deltaY);
     }
+    @Override
+    public void close() {
+        xenus.xenaddons.config.ConfigManager.save();
+        super.close();
+    }
 }

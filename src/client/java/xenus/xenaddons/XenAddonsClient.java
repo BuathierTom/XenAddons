@@ -25,6 +25,12 @@ public class XenAddonsClient implements ClientModInitializer {
 		// Initialize Modules
 		xenus.xenaddons.features.ModuleManager.init();
 
+		// Load Config
+		xenus.xenaddons.config.ConfigManager.load();
+
+		// Save Config on Shutdown
+		Runtime.getRuntime().addShutdownHook(new Thread(xenus.xenaddons.config.ConfigManager::save));
+
 		// Register commands
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 

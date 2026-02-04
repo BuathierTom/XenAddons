@@ -1,7 +1,9 @@
 package xenus.xenaddons.settings;
 
 public class BooleanSetting extends Setting<Boolean> {
-    public BooleanSetting(String name, boolean defaultValue) {
+    public boolean expanded = false; // For GUI expansion state
+
+    public BooleanSetting(String name, Boolean defaultValue) {
         super(name, defaultValue);
     }
     

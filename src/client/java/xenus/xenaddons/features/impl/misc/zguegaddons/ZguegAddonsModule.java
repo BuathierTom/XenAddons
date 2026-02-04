@@ -14,7 +14,18 @@ public class ZguegAddonsModule extends Module {
     public final BooleanSetting chatHider = new BooleanSetting("Chat Hider", false);
     public final BooleanSetting cryptsNotify = new BooleanSetting("Crypts Notify", false);
     public final BooleanSetting classNotify = new BooleanSetting("Class Notify", false);
-    public final BooleanSetting partyCommands = new BooleanSetting("Party Commands", false);
+    public final BooleanSetting commandsEnabled = new BooleanSetting("Commands", false);
+    
+    // Command Settings (Dependent on commandsEnabled)
+    public final BooleanSetting cmdBoom = new BooleanSetting("Cmd: Boom", true);
+    public final BooleanSetting cmdRng = new BooleanSetting("Cmd: RNG", true);
+    public final BooleanSetting cmdGay = new BooleanSetting("Cmd: Gay", true);
+    public final BooleanSetting cmdRacist = new BooleanSetting("Cmd: Racist", true);
+    public final BooleanSetting cmdPy = new BooleanSetting("Cmd: Py", true);
+    public final BooleanSetting cmdGwer = new BooleanSetting("Cmd: Gwer", true);
+    public final BooleanSetting cmdSize = new BooleanSetting("Cmd: Size", true);
+    public final BooleanSetting cmd911 = new BooleanSetting("Cmd: 911", true);
+    public final BooleanSetting cmdHelp = new BooleanSetting("Cmd: Help", true);
     
     private final String[] RADIO_MESSAGES = {
         "Your radio is weak. Find another enjoyer to boost it.",
@@ -29,7 +40,31 @@ public class ZguegAddonsModule extends Module {
         this.registerSetting(chatHider);
         this.registerSetting(cryptsNotify);
         this.registerSetting(classNotify);
-        this.registerSetting(partyCommands);
+        this.registerSetting(commandsEnabled);
+        
+        // Register Command Settings with PARENT dependency
+        cmdBoom.setParent(commandsEnabled);
+        cmdRng.setParent(commandsEnabled);
+        cmdGay.setParent(commandsEnabled);
+        cmdRacist.setParent(commandsEnabled);
+        cmdPy.setParent(commandsEnabled);
+        cmdGwer.setParent(commandsEnabled);
+        cmdSize.setParent(commandsEnabled);
+        cmd911.setParent(commandsEnabled);
+        cmdHelp.setParent(commandsEnabled);
+        
+        // Also keep Functional Visibility for extra safety, though setParent usually handles it in GUI logic
+        // But since we just added setParent logic in Setting.java, we can rely on that primarily.
+        
+        this.registerSetting(cmdBoom);
+        this.registerSetting(cmdRng);
+        this.registerSetting(cmdGay);
+        this.registerSetting(cmdRacist);
+        this.registerSetting(cmdPy);
+        this.registerSetting(cmdGwer);
+        this.registerSetting(cmdSize);
+        this.registerSetting(cmd911);
+        this.registerSetting(cmdHelp);
         
         // Register Event Listeners
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
@@ -63,7 +98,7 @@ public class ZguegAddonsModule extends Module {
         
         // Always Check for Party Commands first (even if hiding is disabled)
         // We use unformatted string for Regex to avoid color code issues
-        if (partyCommands.getValue()) {
+        if (commandsEnabled.getValue()) {
             processPartyMessage(msg);
         }
 
@@ -145,7 +180,7 @@ public class ZguegAddonsModule extends Module {
         String cleanMsg = message.trim().toLowerCase();
         
         // !boom command
-        if (cleanMsg.startsWith("!boom")) {
+        if (cleanMsg.startsWith("!boom") && cmdBoom.getValue()) {
              String[] SOURATES = {
                 "Inna ma'al usri yusra.",
                 "Hasbuna Allahu wa ni'mal wakeel.",
@@ -164,7 +199,7 @@ public class ZguegAddonsModule extends Module {
             mc.player.networkHandler.sendChatCommand("pc " + SOURATES[random]);
         }
         // !rng command
-        else if (cleanMsg.startsWith("!rng")) {
+        else if (cleanMsg.startsWith("!rng") && cmdRng.getValue()) {
             String target = sender;
             String[] args = message.trim().split(" ");
             if (args.length > 1) target = args[1];
@@ -173,13 +208,13 @@ public class ZguegAddonsModule extends Module {
             mc.player.networkHandler.sendChatCommand("pc " + target + " got " + roll + "% of rng this run!");
         } 
         // !gay command
-        else if (cleanMsg.startsWith("!gay")) {
+        else if (cleanMsg.startsWith("!gay") && cmdGay.getValue()) {
              String target = sender;
              String[] args = message.trim().split(" ");
              if (args.length > 1) target = args[1];
              
              String targetLower = target.toLowerCase();
-             if (targetLower.equals("xen62") || targetLower.equals("xen") || targetLower.equals("xenus") || targetLower.equals("xenus_")) {
+             if (xenus.xenaddons.config.GoatedPlayersManager.isGoated(targetLower)) {
                  mc.player.networkHandler.sendChatCommand("pc " + target + " is not gay");
                  return;
              }
@@ -189,14 +224,14 @@ public class ZguegAddonsModule extends Module {
              mc.player.networkHandler.sendChatCommand("pc " + response);
         }
         // !racist command
-        else if (cleanMsg.startsWith("!racist")) {
+        else if (cleanMsg.startsWith("!racist") && cmdRacist.getValue()) {
              String target = sender;
              String[] args = message.trim().split(" ");
              if (args.length > 1) target = args[1];
              
              int percent;
              String targetLower = target.toLowerCase();
-             if (targetLower.equals("xen62") || targetLower.equals("xen") || targetLower.equals("xenus")) {
+             if (xenus.xenaddons.config.GoatedPlayersManager.isGoated(targetLower)) {
                  percent = (int) (Math.random() * 21) + 180; // 180-200%
              } else {
                  percent = (int) (Math.random() * 101); // 0-100%
@@ -204,14 +239,14 @@ public class ZguegAddonsModule extends Module {
              mc.player.networkHandler.sendChatCommand("pc " + target + " is racist at " + percent + "% !");
         }
         // !py command
-        else if (cleanMsg.startsWith("!py")) {
+        else if (cleanMsg.startsWith("!py") && cmdPy.getValue()) {
              String target = "Casseur2Metheque";
              String[] args = message.trim().split(" ");
              if (args.length > 1) target = args[1];
              mc.player.networkHandler.sendChatCommand("pc " + target + " can't py big gwer");
         }
         // !gwer command
-        else if (cleanMsg.startsWith("!gwer")) {
+        else if (cleanMsg.startsWith("!gwer") && cmdGwer.getValue()) {
              String[] GWERLIST = {
                 "{pseudo} failed blaze.",
                 "{pseudo} died and became a ghost.",
@@ -227,14 +262,14 @@ public class ZguegAddonsModule extends Module {
              mc.player.networkHandler.sendChatCommand("pc " + text);
         }
         // !size command
-        else if (cleanMsg.startsWith("!size")) {
+        else if (cleanMsg.startsWith("!size") && cmdSize.getValue()) {
             String target = sender;
             String[] args = message.trim().split(" ");
             if (args.length > 1) target = args[1];
             
             String targetLower = target.toLowerCase();
             int size;
-            if (targetLower.equals("xen62") || targetLower.equals("xen") || targetLower.equals("xenus")) {
+            if (xenus.xenaddons.config.GoatedPlayersManager.isGoated(targetLower)) {
                  size = (int) (Math.random() * 10) + 15; // 15-24
             } else {
                  size = (int) (Math.random() * 8) + 1; // 1-8
@@ -244,11 +279,11 @@ public class ZguegAddonsModule extends Module {
             mc.player.networkHandler.sendChatCommand("pc " + target + "'s size: " + sizeBar);
         }
         // !911 command
-        else if (cleanMsg.startsWith("!911")) {
+        else if (cleanMsg.startsWith("!911") && cmd911.getValue()) {
              mc.player.networkHandler.sendChatCommand("pc ✈ | |");
         }
         // !help command
-        else if (cleanMsg.startsWith("!help")) {
+        else if (cleanMsg.startsWith("!help") && cmdHelp.getValue()) {
              mc.player.networkHandler.sendChatCommand("pc Commands: !rng, !boom, !gay, !racist, !py, !gwer, !size, !911");
         }
     }

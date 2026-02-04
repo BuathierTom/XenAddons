@@ -32,9 +32,11 @@ public class ModuleButton {
         if (extended && !settings.isEmpty()) {
             int currentY = y + baseHeight;
             for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
-                comp.render(context, mouseX, mouseY, x, currentY, width, 15, textRenderer);
-                currentY += 15;
-                this.height += 15;
+                if (comp.setting.isVisible()) {
+                    comp.render(context, mouseX, mouseY, x, currentY, width, 15, textRenderer);
+                    currentY += 15;
+                    this.height += 15;
+                }
             }
         }
     }
@@ -51,17 +53,27 @@ public class ModuleButton {
     }
     
     public int getHeight() {
-        return extended && !settings.isEmpty() ? (18 + settings.size() * 15) : 18;
+        int settingsHeight = 0;
+        if (extended) {
+            for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
+                if (comp.setting.isVisible()) {
+                    settingsHeight += 15;
+                }
+            }
+        }
+        return 18 + settingsHeight;
     }
 
     public boolean mouseClickedSettings(double mouseX, double mouseY, int button, int x, int y) {
         if (extended && !settings.isEmpty()) {
             int currentY = y + 18;
             for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
-                if (mouseX >= x && mouseX < x + parent.WIDTH && mouseY >= currentY && mouseY < currentY + 15) {
-                    if (comp.mouseClicked(mouseX, mouseY, button)) return true;
+                if (comp.setting.isVisible()) {
+                    if (mouseX >= x && mouseX < x + parent.WIDTH && mouseY >= currentY && mouseY < currentY + 15) {
+                        if (comp.mouseClicked(mouseX, mouseY, button, x, currentY, parent.WIDTH)) return true;
+                    }
+                    currentY += 15;
                 }
-                currentY += 15;
             }
         }
         return false;
