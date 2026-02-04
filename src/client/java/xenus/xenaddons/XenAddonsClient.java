@@ -13,6 +13,7 @@ public class XenAddonsClient implements ClientModInitializer {
 
 	private static boolean openMenuNextTick = false;
 	private static boolean openEditorNextTick = false;
+	private static boolean openClickGUINextTick = false;
 
 	@Override
 	public void onInitializeClient() {
@@ -21,6 +22,9 @@ public class XenAddonsClient implements ClientModInitializer {
 		// Fetch Hypixel items in background
 		HypixelItemManager.loadAsync();
 
+		// Initialize Modules
+		xenus.xenaddons.features.ModuleManager.init();
+
 		// Register commands
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 
@@ -28,6 +32,20 @@ public class XenAddonsClient implements ClientModInitializer {
 			dispatcher.register(literal("invbuttons")
 					.executes(context -> {
 						openMenuNextTick = true;
+						return 1;
+					})
+			);
+
+			// Command: /xenaddons or /xa
+			dispatcher.register(literal("xenaddons")
+					.executes(context -> {
+						openClickGUINextTick = true;
+						return 1;
+					})
+			);
+			dispatcher.register(literal("xa")
+					.executes(context -> {
+						openClickGUINextTick = true;
 						return 1;
 					})
 			);
@@ -42,6 +60,10 @@ public class XenAddonsClient implements ClientModInitializer {
 			if (openEditorNextTick) {
 				openEditorNextTick = false;
 				client.setScreen(new GuiInvButtonEditor(null));
+			}
+			if (openClickGUINextTick) {
+				openClickGUINextTick = false;
+				client.setScreen(new xenus.xenaddons.gui.clickgui.ClickGUI());
 			}
 		});
 
