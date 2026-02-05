@@ -26,7 +26,7 @@ public class ColorSetting extends Setting<Integer> {
 
     private void updateValue() {
         int rgb = java.awt.Color.HSBtoRGB(hsv[0], hsv[1], hsv[2]) & 0x00FFFFFF;
-        this.value = (alpha << 24) | rgb;
+        this.setValue((alpha << 24) | rgb);
     }
 
     @Override

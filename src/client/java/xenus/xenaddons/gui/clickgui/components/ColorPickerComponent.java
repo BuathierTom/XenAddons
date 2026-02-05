@@ -2,8 +2,6 @@ package xenus.xenaddons.gui.clickgui.components;
 
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
 import xenus.xenaddons.settings.ColorSetting;
 import xenus.xenaddons.utils.RenderUtils;
 
@@ -12,24 +10,12 @@ public class ColorPickerComponent {
     private boolean pickingPalette = false;
     private boolean pickingHue = false;
     private boolean pickingAlpha = false;
-    private TextFieldWidget hexField = null;
 
     public ColorPickerComponent(ColorSetting setting) {
         this.setting = setting;
     }
 
-    private void initHexField(TextRenderer textRenderer) {
-        if (hexField == null) {
-            this.hexField = new TextFieldWidget(textRenderer, 0, 0, 60, 12, Text.literal("Hex"));
-            this.hexField.setMaxLength(9);
-            this.hexField.setDrawsBackground(false);
-            this.hexField.setText(String.format("%08X", setting.getValue()));
-        }
-    }
-
     public void render(DrawContext context, int mouseX, int mouseY, int x, int y, int width, TextRenderer textRenderer) {
-        initHexField(textRenderer);
-        
         int pickerSize = width - 25;
         int paletteX = x + 5;
         int paletteY = y + 5;
@@ -37,7 +23,8 @@ public class ColorPickerComponent {
         
         // Background
         context.fill(x, y, x + width, y + totalH, 0xDD000000);
-        RenderUtils.drawBorder(context, x, y, width, totalH, 0xFFA020F0); 
+        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
+        RenderUtils.drawBorder(context, x, y, width, totalH, themeColor); 
 
         // 1. Saturation/Brightness Square
         for (int i = 0; i < pickerSize; i++) {
@@ -78,26 +65,12 @@ public class ColorPickerComponent {
         int alphaKnobX = paletteX + (int)((setting.alpha / 255f) * alphaW);
         context.fill(alphaKnobX - 1, alphaY - 1, alphaKnobX + 1, alphaY + alphaH + 1, 0xFFFFFFFF);
 
-        // 5. Preview & Hex Code
+        // 5. Preview
         int previewY = alphaY + alphaH + 5;
-        int previewW = 15;
-        int previewH = 15;
+        int previewW = alphaW;
+        int previewH = 12;
         context.fill(paletteX, previewY, paletteX + previewW, previewY + previewH, setting.getValue());
         RenderUtils.drawBorder(context, paletteX, previewY, previewW, previewH, 0xFFFFFFFF);
-
-        // Hex Field
-        int hexX = paletteX + previewW + 4;
-        if (hexField != null && !hexField.isFocused()) {
-            hexField.setText(String.format("%08X", setting.getValue()));
-        }
-        
-        context.getMatrices().pushMatrix();
-        context.getMatrices().translate((float)hexX, (float)(previewY + 3));
-        context.getMatrices().scale(0.8f, 0.8f);
-        hexField.setX(0);
-        hexField.setY(0);
-        hexField.render(context, (int)((mouseX - hexX) / 0.8f), (int)((mouseY - (previewY + 3)) / 0.8f), 0);
-        context.getMatrices().popMatrix();
 
         // Interaction
         if (pickingPalette) {
@@ -135,18 +108,6 @@ public class ColorPickerComponent {
             pickingAlpha = true;
             return true;
         }
-        
-        if (hexField != null) {
-            int previewY = alphaY + 8 + 5;
-            int hexMinX = paletteX + 15 + 4;
-            int hexMinY = previewY + 3;
-            if (mouseX >= hexMinX && mouseX <= hexMinX + (60*0.8f) && mouseY >= hexMinY && mouseY <= hexMinY + (12*0.8f)) {
-                hexField.setFocused(true);
-                return true;
-            } else {
-                hexField.setFocused(false);
-            }
-        }
         return false;
     }
 
@@ -157,32 +118,10 @@ public class ColorPickerComponent {
     }
 
     public boolean charTyped(net.minecraft.client.input.CharInput input) {
-        if (hexField != null && hexField.isFocused()) {
-            if (hexField.charTyped(input)) {
-                updateColorFromHex();
-                return true;
-            }
-        }
         return false;
     }
 
     public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
-        if (hexField != null && hexField.isFocused()) {
-            if (hexField.keyPressed(input)) {
-                updateColorFromHex();
-                return true;
-            }
-        }
         return false;
-    }
-
-    private void updateColorFromHex() {
-        try {
-            String text = hexField.getText();
-            if (text.startsWith("#")) text = text.substring(1);
-            long val = Long.parseLong(text, 16);
-            if (text.length() <= 6) val |= 0xFF000000L;
-            setting.setValue((int)val);
-        } catch (Exception ignored) {}
     }
 }

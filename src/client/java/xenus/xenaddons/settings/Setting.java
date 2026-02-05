@@ -45,7 +45,14 @@ public class Setting<T> {
         return parent != null;
     }
 
+    private java.util.function.Consumer<T> listener = null;
+
+    public void setListener(java.util.function.Consumer<T> listener) {
+        this.listener = listener;
+    }
+
     public void setValue(T value) {
         this.value = value;
+        if (listener != null) listener.accept(value);
     }
 }

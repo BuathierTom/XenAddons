@@ -3,6 +3,7 @@ package xenus.xenaddons.gui.clickgui.components;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import xenus.xenaddons.gui.clickgui.Panel;
+import xenus.xenaddons.settings.ActionSetting;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ColorSetting;
 import xenus.xenaddons.settings.NumberSetting;
@@ -94,6 +95,12 @@ public class SettingComponent {
             if (colorSetting.expanded) {
                 colorPicker.render(context, mouseX, mouseY, x + 5, y + 12, width - 10, textRenderer);
             }
+        } else if (setting instanceof ActionSetting) {
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(x + 6, y + (height - 9 * 0.7f) / 2f + 0.5f);
+            context.getMatrices().scale(0.7f, 0.7f);
+            context.drawTextWithShadow(textRenderer, setting.name + " >", 0, 0, 0xFFBBBBBB);
+            context.getMatrices().popMatrix();
         }
     }
 
@@ -141,6 +148,11 @@ public class SettingComponent {
                 }
             } else if (colorSetting.expanded) {
                 return colorPicker.mouseClicked(mouseX, mouseY, button, x + 5, y + 12, width - 10);
+            }
+        } else if (setting instanceof ActionSetting) {
+            if (button == 0) {
+                ((ActionSetting) setting).run();
+                return true;
             }
         }
         return false;

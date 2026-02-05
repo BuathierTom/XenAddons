@@ -9,6 +9,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.settings.BooleanSetting;
+import xenus.xenaddons.settings.ColorSetting;
+import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.Setting;
 
 import java.io.File;
@@ -32,9 +34,12 @@ public class ConfigManager {
             JsonObject settingsJson = new JsonObject();
             for (Setting<?> setting : module.settings) {
                 if (setting instanceof BooleanSetting) {
-                    settingsJson.addProperty(setting.name, ((BooleanSetting) setting).getValue());
+                    settingsJson.addProperty(setting.name, (Boolean) setting.getValue());
+                } else if (setting instanceof ColorSetting) {
+                    settingsJson.addProperty(setting.name, (Integer) setting.getValue());
+                } else if (setting instanceof NumberSetting) {
+                    settingsJson.addProperty(setting.name, (Number) setting.getValue());
                 }
-                // Add parsing for other setting types here if added in the future
             }
             moduleJson.add("settings", settingsJson);
 
@@ -86,6 +91,10 @@ public class ConfigManager {
                                 if (settingsJson.has(setting.name)) {
                                     if (setting instanceof BooleanSetting) {
                                         ((BooleanSetting) setting).setValue(settingsJson.get(setting.name).getAsBoolean());
+                                    } else if (setting instanceof ColorSetting) {
+                                        ((ColorSetting) setting).setValue(settingsJson.get(setting.name).getAsInt());
+                                    } else if (setting instanceof NumberSetting) {
+                                        ((NumberSetting) setting).setValue(settingsJson.get(setting.name).getAsDouble());
                                     }
                                 }
                             }

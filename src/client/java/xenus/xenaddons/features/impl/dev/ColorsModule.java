@@ -9,6 +9,7 @@ public class ColorsModule extends Module {
 
     public ColorsModule() {
         super("Colors", "Change the GUI theme color", Category.DEV);
+        menuColor.expanded = true;
         this.registerSetting(menuColor);
     }
 

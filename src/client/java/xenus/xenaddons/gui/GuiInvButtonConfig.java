@@ -156,8 +156,9 @@ public class GuiInvButtonConfig extends Screen {
         context.getMatrices().popMatrix();
 
         // Background
-        context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xAA000000);
-        RenderUtils.drawBorder(context, boxX, boxY, boxW, boxH, 0xFF505050);
+        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
+        context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xDD000000);
+        RenderUtils.drawBorder(context, boxX, boxY, boxW, boxH, themeColor);
 
         // Render Tabs
         int tabH = 16;
@@ -165,17 +166,17 @@ public class GuiInvButtonConfig extends Screen {
 
         // Tab 1: General
         boolean hoverGen = (mouseX >= boxX && mouseX < boxX + tabW && mouseY >= boxY && mouseY < boxY + tabH);
-        int colorGen = (currentTab == Tab.GENERAL) ? 0xCC404040 : (hoverGen ? 0xAA303030 : 0x88202020);
+        int colorGen = (currentTab == Tab.GENERAL) ? themeColor : (hoverGen ? 0xAA303030 : 0x88202020);
         context.fill(boxX, boxY, boxX + tabW, boxY + tabH, colorGen);
-        context.drawTextWithShadow(textRenderer, "Général", boxX + tabW / 2 - textRenderer.getWidth("Général") / 2, boxY + 4, (currentTab == Tab.GENERAL) ? 0xFFFFFFFF : 0xFFAAAAAA);
+        context.drawTextWithShadow(textRenderer, "GENERAL", boxX + tabW / 2 - textRenderer.getWidth("GENERAL") / 2, boxY + 4, 0xFFFFFFFF);
 
         // Tab 2: Profiles
         boolean hoverProf = (mouseX >= boxX + tabW && mouseX < boxX + boxW && mouseY >= boxY && mouseY < boxY + tabH);
-        int colorProf = (currentTab == Tab.PROFILES) ? 0xCC404040 : (hoverProf ? 0xAA303030 : 0x88202020);
+        int colorProf = (currentTab == Tab.PROFILES) ? themeColor : (hoverProf ? 0xAA303030 : 0x88202020);
         context.fill(boxX + tabW, boxY, boxX + boxW, boxY + tabH, colorProf);
-        context.drawTextWithShadow(textRenderer, "Profiles", boxX + tabW + tabW / 2 - textRenderer.getWidth("Profiles") / 2, boxY + 4, (currentTab == Tab.PROFILES) ? 0xFFFFFFFF : 0xFFAAAAAA);
+        context.drawTextWithShadow(textRenderer, "PROFILES", boxX + tabW + tabW / 2 - textRenderer.getWidth("PROFILES") / 2, boxY + 4, 0xFFFFFFFF);
 
-        context.fill(boxX, boxY + tabH, boxX + boxW, boxY + tabH + 1, 0xFF808080);
+        context.fill(boxX, boxY + tabH, boxX + boxW, boxY + tabH + 1, themeColor);
 
         // Render Content
         if (currentTab == Tab.GENERAL) {
@@ -186,23 +187,28 @@ public class GuiInvButtonConfig extends Screen {
     }
 
     private void renderGeneral(DrawContext context, int mouseX, int mouseY) {
+        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
         for (ConfigToggle btn : generalButtons) {
-            context.drawTextWithShadow(textRenderer, btn.label, btn.labelX, btn.y + 4, 0xFFFFFFFF);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(btn.labelX, btn.y + 4);
+            context.getMatrices().scale(0.8f, 0.8f);
+            context.drawTextWithShadow(textRenderer, btn.label, 0, 0, 0xFFFFFFFF);
+            context.getMatrices().popMatrix();
 
             boolean isHovered = mouseX >= btn.btnX && mouseX < btn.btnX + btn.btnW && mouseY >= btn.y && mouseY < btn.y + btn.btnH;
-            int bgColor = isHovered ? 0xA0000000 : 0x80000000;
+            
+            boolean state = btn.getter.get();
+            int bgColor = state ? themeColor : (isHovered ? 0x22FFFFFF : 0x80000000);
             context.fill(btn.btnX, btn.y, btn.btnX + btn.btnW, btn.y + btn.btnH, bgColor);
 
-            boolean state = btn.getter.get();
             String stateTxt = state ? "ON" : "OFF";
-            int color = state ? 0xFF55FF55 : 0xFFFF5555;
-
             int txtW = textRenderer.getWidth(stateTxt);
-            context.drawText(textRenderer, stateTxt, btn.btnX + (btn.btnW - txtW) / 2, btn.y + 4, color, false);
+            context.drawText(textRenderer, stateTxt, btn.btnX + (btn.btnW - txtW) / 2, btn.y + 4, 0xFFFFFFFF, false);
         }
     }
 
     private void renderProfiles(DrawContext context, int mouseX, int mouseY) {
+        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
         // Render "Profile Name" label
         context.drawTextWithShadow(textRenderer, "Profile Name", boxX + 10, boxY + 30, 0xFFA0A0A0);
 
@@ -211,7 +217,7 @@ public class GuiInvButtonConfig extends Screen {
         // Save Button
         ProfileButton saveBtn = this.profileSaveBtn;
         boolean hoverSave = mouseX >= saveBtn.x && mouseX < saveBtn.x + saveBtn.w && mouseY >= saveBtn.y && mouseY < saveBtn.y + saveBtn.h;
-        context.fill(saveBtn.x, saveBtn.y, saveBtn.x + saveBtn.w, saveBtn.y + saveBtn.h, hoverSave ? 0xA0000000 : 0x80000000);
+        context.fill(saveBtn.x, saveBtn.y, saveBtn.x + saveBtn.w, saveBtn.y + saveBtn.h, hoverSave ? themeColor : 0x80000000);
         int saveTW = textRenderer.getWidth(saveBtn.label);
         context.drawText(textRenderer, saveBtn.label, saveBtn.x + (saveBtn.w - saveTW) / 2, saveBtn.y + 4, 0xFFFFFFFF, false);
 
@@ -247,14 +253,14 @@ public class GuiInvButtonConfig extends Screen {
             boolean isHovered = mouseX >= btn.x && mouseX < btn.x + btn.w && mouseY >= drawY && mouseY < drawY + btn.h;
             if (mouseY < listY || mouseY > listY + listH) isHovered = false;
 
-            context.fill(btn.x, drawY, btn.x + btn.w, drawY + btn.h, isHovered ? 0xA0000000 : 0x80000000);
+            context.fill(btn.x, drawY, btn.x + btn.w, drawY + btn.h, isHovered ? themeColor : 0x80000000);
             context.drawText(textRenderer, btn.label, btn.x + 5, drawY + 5, 0xFFFFFFFF, false);
 
             // --- Delete Button ---
             boolean isDelHovered = mouseX >= delBtn.x && mouseX < delBtn.x + delBtn.w && mouseY >= drawY && mouseY < drawY + delBtn.h;
             if (mouseY < listY || mouseY > listY + listH) isDelHovered = false;
 
-            context.fill(delBtn.x, drawY, delBtn.x + delBtn.w, drawY + delBtn.h, isDelHovered ? 0xA0000000 : 0x80000000);
+            context.fill(delBtn.x, drawY, delBtn.x + delBtn.w, drawY + delBtn.h, isDelHovered ? 0xFFFF5555 : 0x80000000);
 
             // Draw Trashcan Icon
             context.drawTexture(RenderPipelines.GUI_TEXTURED, TRASH_ICON, delBtn.x + 1, drawY + 1, 0.0f, 0.0f, 16, 16, 16, 16);

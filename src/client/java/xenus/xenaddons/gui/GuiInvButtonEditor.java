@@ -352,27 +352,27 @@ public class GuiInvButtonEditor extends Screen {
         int startX = 10;
         int startY = 10;
 
+        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
         int saveW = 100;
         int saveY = startY;
         boolean hoverSave = mouseX >= startX && mouseX <= startX + saveW && mouseY >= saveY && mouseY <= saveY + btnH;
-        context.fill(startX, saveY, startX + saveW, saveY + btnH, hoverSave ? 0xFF606060 : 0xFF404040);
-        RenderUtils.drawBorder(context, startX, saveY, saveW, btnH, 0xFFFFFFFF);
+        context.fill(startX, saveY, startX + saveW, saveY + btnH, hoverSave ? themeColor : 0xDD000000);
+        RenderUtils.drawBorder(context, startX, saveY, saveW, btnH, themeColor);
         context.drawCenteredTextWithShadow(textRenderer, "Save as Profile", startX + saveW / 2, saveY + 6, 0xFFFFFFFF);
 
         int exportW = 50;
         int exportY = saveY + btnH + spacing;
         boolean hoverExport = mouseX >= startX && mouseX <= startX + exportW && mouseY >= exportY && mouseY <= exportY + btnH;
-        context.fill(startX, exportY, startX + exportW, exportY + btnH, hoverExport ? 0xFF606060 : 0xFF404040);
-        RenderUtils.drawBorder(context, startX, exportY, exportW, btnH, 0xFFFFFFFF);
+        context.fill(startX, exportY, startX + exportW, exportY + btnH, hoverExport ? themeColor : 0xDD000000);
+        RenderUtils.drawBorder(context, startX, exportY, exportW, btnH, themeColor);
         context.drawCenteredTextWithShadow(textRenderer, "Export", startX + exportW / 2, exportY + 6, 0xFFFFFFFF);
 
         int importW = 50;
         int importY = exportY + btnH + spacing;
         boolean hoverImport = mouseX >= startX && mouseX <= startX + importW && mouseY >= importY && mouseY <= importY + btnH;
-        context.fill(startX, importY, startX + importW, importY + btnH, hoverImport ? 0xFF606060 : 0xFF404040);
-        RenderUtils.drawBorder(context, startX, importY, importW, btnH, 0xFFFFFFFF);
+        context.fill(startX, importY, startX + importW, importY + btnH, hoverImport ? themeColor : 0xDD000000);
+        RenderUtils.drawBorder(context, startX, importY, importW, btnH, themeColor);
         context.drawCenteredTextWithShadow(textRenderer, "Import", startX + importW / 2, importY + 6, 0xFFFFFFFF);
-
         if (System.currentTimeMillis() < actionStatusEndTime) {
             context.drawTextWithShadow(textRenderer, actionStatusText, startX + saveW + 5, startY + 6, 0xFF55FF55);
         }
@@ -386,8 +386,9 @@ public class GuiInvButtonEditor extends Screen {
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xFF202020);
-        RenderUtils.drawBorder(context, panelX, panelY, panelW, panelH, 0xFF505050);
+        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
+        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xDD000000);
+        RenderUtils.drawBorder(context, panelX, panelY, panelW, panelH, themeColor);
 
         context.drawCenteredTextWithShadow(textRenderer, "Profile Name", panelX + panelW / 2, panelY + 10, 0xFFFFFFFF);
 
@@ -454,8 +455,9 @@ public class GuiInvButtonEditor extends Screen {
     }
 
     private void renderEditorPanel(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fill(editorLeft, editorTop, editorLeft + editorWidth, editorTop + editorHeight, 0xFF202020);
-        RenderUtils.drawBorder(context, editorLeft, editorTop, editorWidth, editorHeight, 0xFF505050);
+        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
+        context.fill(editorLeft, editorTop, editorLeft + editorWidth, editorTop + editorHeight, 0xDD000000);
+        RenderUtils.drawBorder(context, editorLeft, editorTop, editorWidth, editorHeight, themeColor);
 
         context.drawText(textRenderer, "Command", editorLeft + 7, editorTop + 7, 0xFFA0A0A0, false);
         commandTextField.render(context, mouseX, mouseY, delta);
@@ -537,13 +539,14 @@ public class GuiInvButtonEditor extends Screen {
 
     // --- Info Panel with X button ---
     private void renderSkullInfoPanel(DrawContext context, int mouseX, int mouseY) {
+        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
         int panelW = 150;
         int panelH = 190; // Increased height
         int panelX = 10;
         int panelY = (this.height - panelH) / 2;
 
-        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xFF202020);
-        RenderUtils.drawBorder(context, panelX, panelY, panelW, panelH, 0xFF505050);
+        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xDD000000);
+        RenderUtils.drawBorder(context, panelX, panelY, panelW, panelH, themeColor);
 
         // Close Button (X)
         int closeSize = 10;
