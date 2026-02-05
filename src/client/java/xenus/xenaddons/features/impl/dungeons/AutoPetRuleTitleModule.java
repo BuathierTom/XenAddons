@@ -96,6 +96,6 @@ public class AutoPetRuleTitleModule extends Module {
         mc.inGameHud.setOverlayMessage(Text.of("§cAutopet§r"), false);
 
         // New cleaner chat message
-        xenus.xenaddons.utils.ChatUtils.info("Autopet > " + colorCode + petName);
+        if (mc.player != null) mc.player.sendMessage(Text.of("§cAutopet §7> " + colorCode + petName), false);
     }
 }

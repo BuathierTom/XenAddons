@@ -24,7 +24,6 @@ public class ZguegAddonsModule extends Module {
     public final BooleanSetting cmdGwer = new BooleanSetting("!gwer", true);
     public final BooleanSetting cmdSize = new BooleanSetting("!size", true);
     public final BooleanSetting cmd911 = new BooleanSetting("!911", true);
-    public final BooleanSetting cmdHelp = new BooleanSetting("!help", true);
     
     private final String[] RADIO_MESSAGES = {
         "Your radio is weak. Find another enjoyer to boost it.",
@@ -50,7 +49,6 @@ public class ZguegAddonsModule extends Module {
         cmdGwer.setParent(commandsEnabled);
         cmdSize.setParent(commandsEnabled);
         cmd911.setParent(commandsEnabled);
-        cmdHelp.setParent(commandsEnabled);
         
         this.registerSetting(cmdBoom);
         this.registerSetting(cmdRng);
@@ -60,7 +58,6 @@ public class ZguegAddonsModule extends Module {
         this.registerSetting(cmdGwer);
         this.registerSetting(cmdSize);
         this.registerSetting(cmd911);
-        this.registerSetting(cmdHelp);
         
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
             if (!this.isEnabled()) return true;
@@ -194,6 +191,5 @@ public class ZguegAddonsModule extends Module {
             mc.player.networkHandler.sendChatCommand("pc " + target + "'s size: " + sizeBar);
         }
         else if (cleanMsg.startsWith("!911") && cmd911.getValue()) { mc.player.networkHandler.sendChatCommand("pc ✈ | |"); }
-        else if (cleanMsg.startsWith("!help") && cmdHelp.getValue()) { mc.player.networkHandler.sendChatCommand("pc Commands: !rng, !boom, !gay, !racist, !py, !gwer, !size, !911"); }
     }
 }
