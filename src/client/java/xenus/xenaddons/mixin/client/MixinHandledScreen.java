@@ -89,7 +89,6 @@ public abstract class MixinHandledScreen extends Screen {
 
             if (mouseX >= guiLeft + x && mouseX <= guiLeft + x + 18 && mouseY >= guiTop + y && mouseY <= guiTop + y + 18) {
                 currentHoveredBtn = btn;
-                RenderUtils.drawBorder(context, x, y, 18, 18, 0xFFFFFFFF);
             }
         }
     }

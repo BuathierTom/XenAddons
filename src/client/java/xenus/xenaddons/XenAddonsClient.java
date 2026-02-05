@@ -25,6 +25,10 @@ public class XenAddonsClient implements ClientModInitializer {
 		// Initialize Modules
 		xenus.xenaddons.features.ModuleManager.init();
 
+        // Initialize Utilities
+        xenus.xenaddons.utils.DungeonUtils.init();
+        xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule.init();
+        
 		// Load Config
 		xenus.xenaddons.config.ConfigManager.load();
 

@@ -6,7 +6,9 @@
 		"MixinHandledScreen",
 		"HandledScreenAccessor",
 		"MixinInventoryScreen",
-		"MixinCraftingScreen"
+		"MixinCraftingScreen",
+		"AccessorInGameHud",
+		"AccessorPlayerListHud"
 	],
 	"injectors": {
 		"defaultRequire": 1

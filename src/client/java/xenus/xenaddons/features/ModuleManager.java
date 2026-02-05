@@ -12,10 +12,18 @@ public class ModuleManager {
         modules.add(new InvButtonsModule());
         modules.add(new xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsModule());
         
+        modules.add(new xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule());
+        modules.add(new xenus.xenaddons.features.impl.dungeons.PosMsgModule());
+        modules.add(new xenus.xenaddons.features.impl.dungeons.PosTitlesModule());
+        
         xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsFeatures.init();
     }
 
     public static List<Module> getModulesByCategory(Category category) {
         return modules.stream().filter(m -> m.category == category).collect(Collectors.toList());
+    }
+
+    public static Module getModule(String name) {
+        return modules.stream().filter(m -> m.name.equalsIgnoreCase(name)).findFirst().orElse(null);
     }
 }

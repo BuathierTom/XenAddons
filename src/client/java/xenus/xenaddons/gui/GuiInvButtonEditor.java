@@ -18,11 +18,13 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
+import xenus.xenaddons.features.Category;
 
 import java.awt.Point;
 import java.nio.charset.StandardCharsets;
@@ -609,10 +611,7 @@ public class GuiInvButtonEditor extends Screen {
 
             result.render(context, ix, iy);
 
-            if (mouseX >= ix && mouseX < ix + 18 && mouseY >= iy && mouseY < iy + 18) {
-                context.fill(ix, iy, ix + 18, iy + 18, 0x40FFFFFF);
-                resultToTooltip = result;
-            }
+
         }
 
         context.disableScissor();
