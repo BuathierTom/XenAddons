@@ -38,11 +38,11 @@ public class Panel {
         int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
         context.fill(x, y, x + WIDTH, y + HEADER_HEIGHT, RenderUtils.darken(themeColor));
         
-        // Scaled Category Title
+        // Bold Uppercase Category Title
         context.getMatrices().pushMatrix();
         context.getMatrices().translate(x + WIDTH / 2f, y + (HEADER_HEIGHT - 9 * 0.8f) / 2f + 1f);
         context.getMatrices().scale(0.8f, 0.8f);
-        RenderUtils.drawCenteredText(context, textRenderer, category.name, 0, 0, 0xFFFFFFFF, true);
+        RenderUtils.drawCenteredText(context, textRenderer, category.name.toUpperCase(), 0, 0, 0xFFFFFFFF, true);
         context.getMatrices().popMatrix();
 
         if (open) {
@@ -55,13 +55,14 @@ public class Panel {
             // Panel background
             context.fill(x, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + contentHeight, 0xDD1A1A1A);
             
-            // Side borders (Odin-like clean lines)
-            context.fill(x, y + HEADER_HEIGHT, x + 1, y + HEADER_HEIGHT + contentHeight, 0xFF383838);
-            context.fill(x + WIDTH - 1, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + contentHeight, 0xFF383838);
-            context.fill(x, y + HEADER_HEIGHT + contentHeight - 1, x + WIDTH, y + HEADER_HEIGHT + contentHeight, 0xFF383838);
+            // Side borders (Purple accents)
+            int accentColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
+            context.fill(x, y + HEADER_HEIGHT, x + 1, y + HEADER_HEIGHT + contentHeight, accentColor);
+            context.fill(x + WIDTH - 1, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + contentHeight, accentColor);
+            context.fill(x, y + HEADER_HEIGHT + contentHeight - 1, x + WIDTH, y + HEADER_HEIGHT + contentHeight, accentColor);
             
-            // Subtle separation between header and content
-            context.fill(x, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + 1, 0xFF383838);
+            // Separation
+            context.fill(x, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + 1, accentColor);
             
             // Render Buttons
             int currentY = y + HEADER_HEIGHT;
@@ -109,6 +110,9 @@ public class Panel {
 
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (button == 0) dragging = false;
+        for (ModuleButton btn : buttons) {
+            btn.mouseReleasedSettings();
+        }
         return false;
     }
 
@@ -117,6 +121,24 @@ public class Panel {
             x = (int) (mouseX - dragX);
             y = (int) (mouseY - dragY);
             return true;
+        }
+        return false;
+    }
+
+    public boolean charTyped(net.minecraft.client.input.CharInput input) {
+        if (open) {
+            for (ModuleButton btn : buttons) {
+                if (btn.charTyped(input)) return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
+        if (open) {
+            for (ModuleButton btn : buttons) {
+                if (btn.keyPressed(input)) return true;
+            }
         }
         return false;
     }

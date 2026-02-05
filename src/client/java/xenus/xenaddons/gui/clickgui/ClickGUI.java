@@ -44,6 +44,7 @@ public class ClickGUI extends Screen {
         this.searchField = new TextFieldWidget(this.textRenderer, this.width / 2 - searchW / 2, this.height - searchH - 10, searchW, searchH, Text.literal("Search"));
         this.searchField.setText(currentSearch);
         this.searchField.setFocused(true);
+        this.searchField.setDrawsBackground(false);
 
         if (panels.isEmpty()) {
             int x = 20;
@@ -59,19 +60,25 @@ public class ClickGUI extends Screen {
         hoveredModule = null; 
         currentSearch = searchField.getText();
 
-        this.renderInGameBackground(context);
+        context.fill(0, 0, this.width, this.height, 0x99000000); // Dark semi-transparent overlay
         
         // Render Search Bar (Scaled 0.8x)
         context.getMatrices().pushMatrix();
-        // Calculate centered bottom position for the scaled widget
         float scaledW = 100 * 0.8f;
         float scaledH = 14 * 0.8f;
-        context.getMatrices().translate(this.width / 2f - scaledW / 2f, this.height - scaledH - 10f);
+        int searchX = (int)(this.width / 2f - scaledW / 2f);
+        int searchY = (int)(this.height - scaledH - 10f);
+        
+        // Custom background & border
+        int accentColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
+        context.fill(searchX, searchY, searchX + (int)scaledW, searchY + (int)scaledH, 0xAA000000);
+        xenus.xenaddons.utils.RenderUtils.drawBorder(context, searchX, searchY, (int)scaledW, (int)scaledH, accentColor);
+        
+        context.getMatrices().translate(searchX, searchY);
         context.getMatrices().scale(0.8f, 0.8f);
-        // Render at 0,0 relative to the translated matrix
-        searchField.setX(0);
-        searchField.setY(0);
-        searchField.render(context, (int)((mouseX - (this.width / 2f - scaledW / 2f)) / 0.8f), (int)((mouseY - (this.height - scaledH - 10f)) / 0.8f), delta);
+        searchField.setX(4); // Internal padding
+        searchField.setY(3);
+        searchField.render(context, (int)((mouseX - searchX) / 0.8f), (int)((mouseY - searchY) / 0.8f), delta);
         context.getMatrices().popMatrix();
 
         // Render Panels
@@ -93,10 +100,10 @@ public class ClickGUI extends Screen {
             int boxH = 10 + padding * 2;
             
             context.fill(0, 0, boxW, boxH, 0xEE1A1A1A);
-            context.fill(0, 0, boxW, 1, 0xFF00AAFF);
-            context.fill(0, boxH - 1, boxW, boxH, 0xFF00AAFF);
-            context.fill(0, 0, 1, boxH, 0xFF00AAFF);
-            context.fill(boxW - 1, 0, boxW, boxH, 0xFF00AAFF);
+            context.fill(0, 0, boxW, 1, accentColor);
+            context.fill(0, boxH - 1, boxW, boxH, accentColor);
+            context.fill(0, 0, 1, boxH, accentColor);
+            context.fill(boxW - 1, 0, boxW, boxH, accentColor);
             
             context.drawTextWithShadow(textRenderer, text, padding, padding, 0xFFFFFFFF);
             
@@ -107,12 +114,18 @@ public class ClickGUI extends Screen {
     @Override
     public boolean charTyped(CharInput input) {
         if (searchField.charTyped(input)) return true;
+        for (Panel panel : panels) {
+            if (panel.charTyped(input)) return true;
+        }
         return super.charTyped(input);
     }
 
     @Override
     public boolean keyPressed(KeyInput input) {
         if (searchField.keyPressed(input)) return true;
+        for (Panel panel : panels) {
+            if (panel.keyPressed(input)) return true;
+        }
         
         int keyCode = input.key();
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {

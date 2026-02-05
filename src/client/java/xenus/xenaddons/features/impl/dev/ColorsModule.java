@@ -2,24 +2,17 @@ package xenus.xenaddons.features.impl.dev;
 
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
-import xenus.xenaddons.settings.NumberSetting;
+import xenus.xenaddons.settings.ColorSetting;
 
 public class ColorsModule extends Module {
-    public final NumberSetting red = new NumberSetting("Red", 0, 0, 255, 1);
-    public final NumberSetting green = new NumberSetting("Green", 170, 0, 255, 1);
-    public final NumberSetting blue = new NumberSetting("Blue", 255, 0, 255, 1);
+    public final ColorSetting menuColor = new ColorSetting("Menu Color", 0xFFA020F0);
 
     public ColorsModule() {
         super("Colors", "Change the GUI theme color", Category.DEV);
-        this.registerSetting(red);
-        this.registerSetting(green);
-        this.registerSetting(blue);
+        this.registerSetting(menuColor);
     }
 
     public int getColor() {
-        int r = red.getValue().intValue();
-        int g = green.getValue().intValue();
-        int b = blue.getValue().intValue();
-        return (255 << 24) | (r << 16) | (g << 8) | b;
+        return menuColor.getValue();
     }
 }

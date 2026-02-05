@@ -26,24 +26,22 @@ public class ModuleButton {
     public void render(DrawContext context, int mouseX, int mouseY, int x, int y, int width, int baseHeight, TextRenderer textRenderer) {
         boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + baseHeight;
         
-        // Dynamic Theme Color
         int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
         if (module.isEnabled()) {
-             context.fill(x, y, x + width, y + baseHeight, hovered ? xenus.xenaddons.utils.RenderUtils.darken(themeColor) : themeColor);
+             context.fill(x, y, x + width, y + baseHeight, themeColor);
+             RenderUtils.drawBorder(context, x, y, width, baseHeight, 0x66FFFFFF); 
         } else {
             if (hovered) {
-                context.fill(x, y, x + width, y + baseHeight, 0x44FFFFFF);
+                context.fill(x, y, x + width, y + baseHeight, 0x22FFFFFF);
             }
         }
         
-        // Module Name (Centered, but let's do Left for Odin style if needed, wait, user wants smaller font)
         context.getMatrices().pushMatrix();
         context.getMatrices().translate(x + 5, y + (baseHeight - 9 * 0.8f) / 2f + 0.5f);
         context.getMatrices().scale(0.8f, 0.8f);
         RenderUtils.drawText(context, textRenderer, module.name, 0, 0, 0xFFFFFFFF, false);
         context.getMatrices().popMatrix();
         
-        // Description logic (to be handled by ClickGUI)
         if (hovered) {
             ClickGUI.setHoveredModule(module, x + width + 5, y);
         }
@@ -52,8 +50,9 @@ public class ModuleButton {
             int currentY = y + baseHeight;
             for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
                 if (comp.setting.isVisible()) {
-                    comp.render(context, mouseX, mouseY, x, currentY, width, 10, textRenderer);
-                    currentY += 10;
+                    int compHeight = comp.getHeight();
+                    comp.render(context, mouseX, mouseY, x, currentY, width, compHeight, textRenderer);
+                    currentY += compHeight;
                 }
             }
         }
@@ -75,7 +74,7 @@ public class ModuleButton {
         if (extended) {
             for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
                 if (comp.setting.isVisible()) {
-                    settingsHeight += 10;
+                    settingsHeight += comp.getHeight();
                 }
             }
         }
@@ -87,11 +86,36 @@ public class ModuleButton {
             int currentY = y + 12;
             for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
                 if (comp.setting.isVisible()) {
-                    if (mouseX >= x && mouseX < x + parent.WIDTH && mouseY >= currentY && mouseY < currentY + 10) {
-                        if (comp.mouseClicked(mouseX, mouseY, button, x, currentY, parent.WIDTH)) return true;
+                    int compHeight = comp.getHeight();
+                    if (mouseX >= x && mouseX < x + Panel.WIDTH && mouseY >= currentY && mouseY < currentY + compHeight) {
+                        if (comp.mouseClicked(mouseX, mouseY, button, x, currentY, Panel.WIDTH)) return true;
                     }
-                    currentY += 10;
+                    currentY += compHeight;
                 }
+            }
+        }
+        return false;
+    }
+
+    public void mouseReleasedSettings() {
+        for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
+             comp.mouseReleased();
+        }
+    }
+
+    public boolean charTyped(net.minecraft.client.input.CharInput input) {
+        if (extended) {
+            for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
+                if (comp.setting.isVisible() && comp.charTyped(input)) return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
+        if (extended) {
+            for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
+                if (comp.setting.isVisible() && comp.keyPressed(input)) return true;
             }
         }
         return false;
