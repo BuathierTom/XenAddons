@@ -25,4 +25,11 @@ public class RenderUtils {
         if (shadow) context.drawTextWithShadow(textRenderer, mutableText, centerX - width / 2, y, color);
         else context.drawText(textRenderer, mutableText, centerX - width / 2, y, color, false);
     }
+    public static int darken(int color) {
+        int a = (color >> 24) & 0xFF;
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+        return (a << 24) | ((int)(r * 0.7) << 16) | ((int)(g * 0.7) << 8) | (int)(b * 0.7);
+    }
 }

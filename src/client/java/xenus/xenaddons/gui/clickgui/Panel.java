@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Panel {
-    public static final int WIDTH = 110;
-    public static final int HEADER_HEIGHT = 20;
+    public static final int WIDTH = 88;
+    public static final int HEADER_HEIGHT = 13;
 
     private final Category category;
     private int x, y;
@@ -34,11 +34,16 @@ public class Panel {
     }
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta, TextRenderer textRenderer) {
-        // Draw Header - Solid Black
-        context.fill(x, y, x + WIDTH, y + HEADER_HEIGHT, 0xFF000000);
+        // Draw Header - Dynamic Theme Color
+        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
+        context.fill(x, y, x + WIDTH, y + HEADER_HEIGHT, RenderUtils.darken(themeColor));
         
-        // Draw Header Title - Centered
-        RenderUtils.drawCenteredText(context, textRenderer, category.name, x + WIDTH / 2, y + (HEADER_HEIGHT - 9) / 2 + 1, 0xFFFFFFFF, true);
+        // Scaled Category Title
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(x + WIDTH / 2f, y + (HEADER_HEIGHT - 9 * 0.8f) / 2f + 1f);
+        context.getMatrices().scale(0.8f, 0.8f);
+        RenderUtils.drawCenteredText(context, textRenderer, category.name, 0, 0, 0xFFFFFFFF, true);
+        context.getMatrices().popMatrix();
 
         if (open) {
             // Calculate total content height first
@@ -47,14 +52,24 @@ public class Panel {
                 contentHeight += button.getHeight();
             }
             
-            // Draw Panel Background (Translucent Black) behind all buttons
-            context.fill(x, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + contentHeight, 0xAA000000);
+            // Panel background
+            context.fill(x, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + contentHeight, 0xDD1A1A1A);
+            
+            // Side borders (Odin-like clean lines)
+            context.fill(x, y + HEADER_HEIGHT, x + 1, y + HEADER_HEIGHT + contentHeight, 0xFF383838);
+            context.fill(x + WIDTH - 1, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + contentHeight, 0xFF383838);
+            context.fill(x, y + HEADER_HEIGHT + contentHeight - 1, x + WIDTH, y + HEADER_HEIGHT + contentHeight, 0xFF383838);
+            
+            // Subtle separation between header and content
+            context.fill(x, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + 1, 0xFF383838);
             
             // Render Buttons
             int currentY = y + HEADER_HEIGHT;
             for (ModuleButton button : buttons) {
-                // Pass baseHeight = 16 (smaller, cleaner)
-                button.render(context, mouseX, mouseY, x, currentY, WIDTH, 16, textRenderer);
+                if (!ClickGUI.getSearch().isEmpty() && !button.getModule().name.toLowerCase().contains(ClickGUI.getSearch().toLowerCase())) {
+                    continue;
+                }
+                button.render(context, mouseX, mouseY, x, currentY, WIDTH, 12, textRenderer);
                 currentY += button.getHeight();
             }
         }

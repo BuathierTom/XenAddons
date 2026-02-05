@@ -2,8 +2,8 @@ package xenus.xenaddons.features;
 
 public enum Category {
     DUNGEON("Dungeon"),
-    RENDER("Render"),
-    MISC("Misc");
+    MISC("Misc"),
+    DEV("Dev");
 
     public final String name;
 

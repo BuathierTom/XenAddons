@@ -7,8 +7,11 @@ import java.util.stream.Collectors;
 
 public class ModuleManager {
     public static final List<Module> modules = new ArrayList<>();
+    public static xenus.xenaddons.features.impl.dev.ColorsModule colors;
 
     public static void init() {
+        colors = new xenus.xenaddons.features.impl.dev.ColorsModule();
+        modules.add(colors);
         modules.add(new InvButtonsModule());
         modules.add(new xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsModule());
         

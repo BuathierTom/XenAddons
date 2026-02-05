@@ -3,6 +3,7 @@ package xenus.xenaddons.gui.clickgui.components;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import xenus.xenaddons.settings.BooleanSetting;
+import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.Setting;
 
 public class SettingComponent {
@@ -13,42 +14,79 @@ public class SettingComponent {
     }
     
     public void render(DrawContext context, int mouseX, int mouseY, int x, int y, int width, int height, TextRenderer textRenderer) {
+        if (!setting.isVisible()) return;
+
+        // Hover effect for setting
+        if (mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height) {
+            context.fill(x, y, x + width, y + height, 0x22FFFFFF);
+        }
+
         if (setting instanceof BooleanSetting) {
             BooleanSetting boolSetting = (BooleanSetting) setting;
             boolean enabled = boolSetting.getValue();
-            boolean isSubSetting = setting.isSubSetting();
             
-            // Check if this setting is a parent of other settings (needs expansion logic)
-            boolean isParent = false;
-            // Ideally we'd scan if any other setting has this as parent, 
-            // but for now let's check if it's "Commands" specifically or rely on manual flag if we had one.
-            // A simple heuristic: if it has no parent, and others have it as parent (which we can't easily check O(1) here without list)
-            // But let's look at the expanded flag on BooleanSetting. If it's used as a parent, logic elsewhere handles visibility.
-            // We just need to know if we should draw the expansion arrow.
-            
-            // Actually, ZguegAddonsModule sets "Commands" as parent.
-            if ("Commands".equals(setting.name)) {
-                isParent = true;
+            // Scaled Icon and Name
+            String arrow = null;
+            if (setting instanceof BooleanSetting && "Commands".equals(setting.name)) {
+                arrow = ((BooleanSetting)setting).expanded ? "-" : "+";
             }
-            
-            int renderX = x;
-            int renderWidth = width;
-            
-            // Removed indentation for sub-settings as requested
-            /*
-            if (isSubSetting) {
-                renderX += 5;
-                renderWidth -= 5;
+
+            context.getMatrices().pushMatrix();
+            if (arrow != null) {
+                // Render Arrow at the beginning
+                context.getMatrices().pushMatrix();
+                context.getMatrices().translate(x + 6, y + (height - 9 * 0.7f) / 2f + 0.5f);
+                context.getMatrices().scale(0.7f, 0.7f);
+                context.drawTextWithShadow(textRenderer, arrow, 0, 0, 0xFFBBBBBB);
+                context.getMatrices().popMatrix();
+                
+                // Shift Name to the right
+                context.getMatrices().translate(x + 15, y + (height - 9 * 0.7f) / 2f + 0.5f);
+            } else {
+                // Normal position
+                context.getMatrices().translate(x + 6, y + (height - 9 * 0.7f) / 2f + 0.5f);
             }
-            */
+            context.getMatrices().scale(0.7f, 0.7f);
+            context.drawTextWithShadow(textRenderer, setting.name, 0, 0, 0xFFE0E0E0);
+            context.getMatrices().popMatrix();
             
-            context.fill(renderX, y, renderX + renderWidth, y + height, enabled ? 0x8800AAFF : 0x882A2A2A);
-            context.drawTextWithShadow(textRenderer, setting.name, renderX + 5, y + 5, 0xFFFFFFFF);
+            // Toggle Switch on the Right
+            int switchW = 16;
+            int switchH = 8;
+            int switchX = x + width - switchW - 6;
+            int switchY = y + (height - switchH) / 2;
             
-            if (isParent) {
-                 String arrow = boolSetting.expanded ? "v" : ">";
-                 context.drawTextWithShadow(textRenderer, arrow, renderX + renderWidth - 15, y + 5, 0xFFFFFFFF);
-            }
+            // Switch Background (Dynamic Theme)
+            int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
+            context.fill(switchX, switchY, switchX + switchW, switchY + switchH, enabled ? themeColor : 0xFF353535);
+            
+            // Switch Knob
+            int knobSize = 6;
+            int knobX = enabled ? (switchX + switchW - knobSize - 1) : (switchX + 1);
+            context.fill(knobX, switchY + 1, knobX + knobSize, switchY + switchH - 1, 0xFFFFFFFF);
+            // ... (rest of search arrow logic if needed)
+        } else if (setting instanceof NumberSetting) {
+            NumberSetting numSetting = (NumberSetting) setting;
+            
+            // Name label (Scaled)
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(x + 6, y + (height - 9 * 0.7f) / 2f + 0.5f);
+            context.getMatrices().scale(0.7f, 0.7f);
+            context.drawTextWithShadow(textRenderer, setting.name + ": " + numSetting.getValue().intValue(), 0, 0, 0xFFE0E0E0);
+            context.getMatrices().popMatrix();
+
+            // Slider Bar
+            int barW = 40;
+            int barH = 2;
+            int barX = x + width - barW - 6;
+            int barY = y + (height - barH) / 2;
+            context.fill(barX, barY, barX + barW, barY + barH, 0xFF353535);
+
+            // Slider Knob (Theme Color)
+            double percent = (numSetting.getValue() - numSetting.getMin()) / (numSetting.getMax() - numSetting.getMin());
+            int knobX = barX + (int)(percent * barW);
+            int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
+            context.fill(knobX - 2, barY - 3, knobX + 2, barY + 5, themeColor);
         }
     }
     
@@ -85,8 +123,19 @@ public class SettingComponent {
                  if (button == 0) {
                      boolSetting.toggle();
                      return true;
-                 }
+                  }
              }
+        } else if (setting instanceof NumberSetting) {
+            NumberSetting numSetting = (NumberSetting) setting;
+            int barW = 40;
+            int barX = x + width - barW - 6;
+            
+            if (mouseX >= barX - 2 && mouseX <= barX + barW + 2) {
+                double percent = (mouseX - barX) / (double)barW;
+                double newValue = numSetting.getMin() + (percent * (numSetting.getMax() - numSetting.getMin()));
+                numSetting.setValue(newValue);
+                return true;
+            }
         }
         return false;
     }

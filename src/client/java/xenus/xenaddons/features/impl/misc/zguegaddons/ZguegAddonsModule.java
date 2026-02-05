@@ -16,15 +16,15 @@ public class ZguegAddonsModule extends Module {
     public final BooleanSetting commandsEnabled = new BooleanSetting("Commands", false);
     
     // Command Settings
-    public final BooleanSetting cmdBoom = new BooleanSetting("Cmd: Boom", true);
-    public final BooleanSetting cmdRng = new BooleanSetting("Cmd: RNG", true);
-    public final BooleanSetting cmdGay = new BooleanSetting("Cmd: Gay", true);
-    public final BooleanSetting cmdRacist = new BooleanSetting("Cmd: Racist", true);
-    public final BooleanSetting cmdPy = new BooleanSetting("Cmd: Py", true);
-    public final BooleanSetting cmdGwer = new BooleanSetting("Cmd: Gwer", true);
-    public final BooleanSetting cmdSize = new BooleanSetting("Cmd: Size", true);
-    public final BooleanSetting cmd911 = new BooleanSetting("Cmd: 911", true);
-    public final BooleanSetting cmdHelp = new BooleanSetting("Cmd: Help", true);
+    public final BooleanSetting cmdBoom = new BooleanSetting("!boom", true);
+    public final BooleanSetting cmdRng = new BooleanSetting("!rng", true);
+    public final BooleanSetting cmdGay = new BooleanSetting("!gay", true);
+    public final BooleanSetting cmdRacist = new BooleanSetting("!racist", true);
+    public final BooleanSetting cmdPy = new BooleanSetting("!py", true);
+    public final BooleanSetting cmdGwer = new BooleanSetting("!gwer", true);
+    public final BooleanSetting cmdSize = new BooleanSetting("!size", true);
+    public final BooleanSetting cmd911 = new BooleanSetting("!911", true);
+    public final BooleanSetting cmdHelp = new BooleanSetting("!help", true);
     
     private final String[] RADIO_MESSAGES = {
         "Your radio is weak. Find another enjoyer to boost it.",
