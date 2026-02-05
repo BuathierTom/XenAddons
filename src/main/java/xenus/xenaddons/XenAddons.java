@@ -117,6 +117,29 @@ public class XenAddons implements ModInitializer {
 		}
 	}
 
+    private static List<CustomButtonData> getDefaultButtons() {
+        List<CustomButtonData> list = new ArrayList<>();
+        list.add(createBtn(97, 17, "/f7", "minecraft:air"));
+        list.add(createBtn(156, -20, "/warp dh", "skull:9b56895b9659896ad647f58599238af532d46db9c1b0389b8bbeb70999dab33d"));
+        list.add(createBtn(137, -20, "/is", "skull:c9c8881e42915a9d29bb61a16fb26d059913204d265df5b439b3d792acd56"));
+        list.add(createBtn(118, -20, "/hub", "skull:d7cc6687423d0570d556ac53e0676cb563bbdd9717cd8269bdebed6f6d4e7bf8"));
+        list.add(createBtn(115, 17, "/gfs ender_pearl 16", "minecraft:ender_pearl"));
+        list.add(createBtn(97, 61, "/storage", "minecraft:ender_chest"));
+        list.add(createBtn(115, 61, "/pet", "minecraft:bone"));
+        list.add(createBtn(133, 61, "/wardrobe", "xenaddons:textures/icons/custom/armor.png"));
+        list.add(createBtn(151, 61, "/potionsbag", "skull:60226d4c1d30fbebecae939da900603e4cd0fed8592a1bb3e11f9ac92391a45a"));
+        list.add(createBtn(153, 27, "/craft", "minecraft:crafting_table"));
+        list.add(createBtn(1, -20, "/sacks", "skull:746a6063263ba7208a2a06cef73234791c92d5f67080a365508b02483eefaf9a"));
+        list.add(createBtn(21, -20, "/accessories", "skull:8ae187145ee732e7c00905a9c16ed1e43ba88d5624a6f4af829f10453fcc9165"));
+        return list;
+    }
+
+    private static CustomButtonData createBtn(int x, int y, String cmd, String item) {
+        CustomButtonData btn = new CustomButtonData(x, y, cmd, item);
+        btn.backgroundIndex = 2;
+        return btn;
+    }
+
 	public static void load() {
 		if (Files.exists(CONFIG_PATH)) {
 			try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
@@ -124,7 +147,11 @@ public class XenAddons implements ModInitializer {
 			} catch (IOException e) {
 				LOGGER.error("Failed to load config", e);
 			}
-		} else { save(); }
+		} else {
+            instance.buttons = getDefaultButtons();
+            save();
+            saveProfile("Main");
+        }
 	}
 
 	public static void save() {

@@ -3,6 +3,7 @@ package xenus.xenaddons.gui.clickgui;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import xenus.xenaddons.features.Module;
+import xenus.xenaddons.utils.RenderUtils;
 
 public class ModuleButton {
     private final Module module;
@@ -21,16 +22,29 @@ public class ModuleButton {
 
     public void render(DrawContext context, int mouseX, int mouseY, int x, int y, int width, int baseHeight, TextRenderer textRenderer) {
         this.height = baseHeight;
-        boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + baseHeight;
         
-        int color = module.isEnabled() ? 0xFF00AAFF : 0xFF2A2A2A; 
-        if (hovered) color = module.isEnabled() ? 0xFF33BBFF : 0xFF3A3A3A;
+        // Colors
+        // Blue requested: 0xFF3D5AFE (approx material blue) or stick to current 0xFF00AAFF
+        // Translucent background provided by Panel. only fill active or hovered.
         
-        context.fill(x, y, x + width, y + baseHeight, color);
-        context.drawTextWithShadow(textRenderer, module.name, x + 5, y + 5, 0xFFFFFFFF);
+        if (module.isEnabled()) {
+             context.fill(x, y, x + width, y + baseHeight, 0xFF00AAFF); // Active Blue
+        } else {
+            // Disabled: Do nothing (transparent), show panel bg
+            // Hover effect slightly lighter
+            if (mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + baseHeight) {
+                context.fill(x, y, x + width, y + baseHeight, 0x20FFFFFF);
+            }
+        }
+        
+        // Center Text
+        RenderUtils.drawCenteredText(context, textRenderer, module.name, x + width / 2, y + (baseHeight - 9) / 2 + 1, 0xFFFFFFFF, true);
         
         if (extended && !settings.isEmpty()) {
             int currentY = y + baseHeight;
+            // Draw background for settings to distinguish them? Or just line?
+            // Usually simpler is better.
+            
             for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
                 if (comp.setting.isVisible()) {
                     comp.render(context, mouseX, mouseY, x, currentY, width, 15, textRenderer);
@@ -61,12 +75,12 @@ public class ModuleButton {
                 }
             }
         }
-        return 18 + settingsHeight;
+        return 16 + settingsHeight;
     }
 
     public boolean mouseClickedSettings(double mouseX, double mouseY, int button, int x, int y) {
         if (extended && !settings.isEmpty()) {
-            int currentY = y + 18;
+            int currentY = y + 16;
             for (xenus.xenaddons.gui.clickgui.components.SettingComponent comp : settings) {
                 if (comp.setting.isVisible()) {
                     if (mouseX >= x && mouseX < x + parent.WIDTH && mouseY >= currentY && mouseY < currentY + 15) {

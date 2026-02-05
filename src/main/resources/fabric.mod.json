@@ -3,9 +3,9 @@
 	"id": "xenaddons",
 	"version": "${version}",
 	"name": "XenAddons",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "XenusAddons is a Fabric mod for Minecraft 1.21.10, mostly designed to get somes features forgoten in 1.8.9",
 	"authors": [
-		"Me!"
+		"Xenus"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",

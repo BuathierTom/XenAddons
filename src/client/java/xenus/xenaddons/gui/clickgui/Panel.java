@@ -5,6 +5,7 @@ import net.minecraft.client.gui.DrawContext;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
+import xenus.xenaddons.utils.RenderUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,14 +34,27 @@ public class Panel {
     }
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta, TextRenderer textRenderer) {
-        // Draw Header
-        context.fill(x, y, x + WIDTH, y + HEADER_HEIGHT, 0xFF1A1A1A); // Dark Gray
-        context.drawTextWithShadow(textRenderer, category.name, x + 5, y + 6, 0xFFFFFFFF);
+        // Draw Header - Solid Black
+        context.fill(x, y, x + WIDTH, y + HEADER_HEIGHT, 0xFF000000);
+        
+        // Draw Header Title - Centered
+        RenderUtils.drawCenteredText(context, textRenderer, category.name, x + WIDTH / 2, y + (HEADER_HEIGHT - 9) / 2 + 1, 0xFFFFFFFF, true);
 
         if (open) {
+            // Calculate total content height first
+            int contentHeight = 0;
+            for (ModuleButton button : buttons) {
+                contentHeight += button.getHeight();
+            }
+            
+            // Draw Panel Background (Translucent Black) behind all buttons
+            context.fill(x, y + HEADER_HEIGHT, x + WIDTH, y + HEADER_HEIGHT + contentHeight, 0xAA000000);
+            
+            // Render Buttons
             int currentY = y + HEADER_HEIGHT;
             for (ModuleButton button : buttons) {
-                button.render(context, mouseX, mouseY, x, currentY, WIDTH, 18, textRenderer);
+                // Pass baseHeight = 16 (smaller, cleaner)
+                button.render(context, mouseX, mouseY, x, currentY, WIDTH, 16, textRenderer);
                 currentY += button.getHeight();
             }
         }
