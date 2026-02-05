@@ -19,7 +19,10 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosMsgModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosTitlesModule());
         
+        modules.add(new xenus.xenaddons.features.impl.misc.CommandAliasesModule());
+        
         xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsFeatures.init();
+        xenus.xenaddons.features.impl.misc.CommandAliasesModule.init();
     }
 
     public static List<Module> getModulesByCategory(Category category) {
