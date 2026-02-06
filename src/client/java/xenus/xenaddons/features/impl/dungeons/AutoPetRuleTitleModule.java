@@ -1,11 +1,12 @@
 package xenus.xenaddons.features.impl.dungeons;
 
+import xenus.xenaddons.hud.HudState;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.text.Text;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
-import xenus.xenaddons.mixin.client.AccessorInGameHud;
 
 public class AutoPetRuleTitleModule extends Module {
 
@@ -21,6 +22,11 @@ public class AutoPetRuleTitleModule extends Module {
         
         ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
             return !checkAndProcess(message.getString());
+        });
+
+        // Tick Event for our Custom Notification
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            HudState.PET_NOTIFICATION.tick();
         });
     }
 
@@ -77,22 +83,18 @@ public class AutoPetRuleTitleModule extends Module {
         return false;
     }
 
+    public void debugTrigger() {
+        showSmallNotification("Golden Dragon", "§6");
+    }
+
     private void showSmallNotification(String petName, String colorCode) {
-        if (mc.inGameHud == null) return;
+        int duration = 8; // 400ms (8 ticks) 
 
-        try {
-            AccessorInGameHud accessor = (AccessorInGameHud) mc.inGameHud;
-            accessor.setTitleFadeInTicks(0);
-            accessor.setTitleStayTicks(8);   // ajuste si tu veux plus long
-            accessor.setTitleFadeOutTicks(0);
-        } catch (Exception ignored) {}
-
-        // Important: title = grand, subtitle = plus petit (comme image 1)
-        mc.inGameHud.setTitle(Text.of(colorCode + petName));
-        mc.inGameHud.setSubtitle(Text.of("§cAutopet§r"));
-
-        // Optionnel: vire l'action bar si tu veux exactement le rendu image 1
-        // mc.inGameHud.setOverlayMessage(Text.empty(), false);
+        HudState.PET_NOTIFICATION.show(
+            Text.of(colorCode + petName),
+            Text.of("§cAutopet§r"),
+            duration
+        );
 
         if (mc.player != null) {
             mc.player.sendMessage(Text.of("§cAutopet §7> " + colorCode + petName), false);

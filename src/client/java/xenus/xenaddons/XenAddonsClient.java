@@ -54,6 +54,30 @@ public class XenAddonsClient implements ClientModInitializer {
 					})
 			);
 			dispatcher.register(literal("xa")
+					.then(literal("title").executes(context -> {
+                        xenus.xenaddons.features.impl.dev.DebugModule debug = 
+                            xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
+                        
+                        if (debug != null && debug.isEnabled() && debug.enableTitleTest.getValue()) {
+                            xenus.xenaddons.features.impl.dungeons.PosTitlesModule pm = 
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.PosTitlesModule.class);
+                            if (pm != null) pm.debugTrigger();
+                            return 1;
+                        }
+                        return 0;
+                    }))
+                    .then(literal("petrule").executes(context -> {
+                        xenus.xenaddons.features.impl.dev.DebugModule debug = 
+                            xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
+
+                        if (debug != null && debug.isEnabled() && debug.enablePetRuleTest.getValue()) {
+                            xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule ap = 
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule.class);
+                            if (ap != null) ap.debugTrigger();
+                            return 1;
+                        }
+                        return 0;
+                    }))
 					.executes(context -> {
 						openClickGUINextTick = true;
 						return 1;

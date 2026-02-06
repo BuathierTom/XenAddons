@@ -137,6 +137,10 @@ public class PosTitlesModule extends Module {
         }
     }
 
+    public void debugTrigger() {
+        showAlert("DebugPlayer", "Mage", "Reached Test Point!");
+    }
+
     private void showAlert(String playerName, String playerClass, String text) {
         String classColor = DungeonUtils.getClassColor(playerClass);
         String classLetter = playerClass.substring(0, 1);

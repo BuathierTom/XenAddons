@@ -8,7 +8,8 @@
 		"MixinInventoryScreen",
 		"MixinCraftingScreen",
 		"AccessorInGameHud",
-		"AccessorPlayerListHud"
+		"AccessorPlayerListHud",
+		"MixinInGameHudRenderPetNotif"
 	],
 	"injectors": {
 		"defaultRequire": 1

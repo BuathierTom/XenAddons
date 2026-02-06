@@ -20,6 +20,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosTitlesModule());
         
         modules.add(new xenus.xenaddons.features.impl.misc.CommandAliasesModule());
+        modules.add(new xenus.xenaddons.features.impl.dev.DebugModule()); // Register DebugModule
         
         xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsFeatures.init();
         xenus.xenaddons.features.impl.misc.CommandAliasesModule.init();
@@ -31,5 +32,15 @@ public class ModuleManager {
 
     public static Module getModule(String name) {
         return modules.stream().filter(m -> m.name.equalsIgnoreCase(name)).findFirst().orElse(null);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static <T extends Module> T getModule(Class<T> clazz) {
+        for (Module module : modules) {
+            if (clazz.isInstance(module)) {
+                return (T) module;
+            }
+        }
+        return null;
     }
 }
