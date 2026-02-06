@@ -33,7 +33,7 @@ public class SettingComponent {
             boolean enabled = boolSetting.getValue();
             
             String arrow = null;
-            if ("Commands".equals(setting.name)) {
+            if ("Commands".equals(setting.name) || "Chat Hider".equals(setting.name)) {
                 arrow = boolSetting.expanded ? "-" : "+";
             }
 
@@ -115,7 +115,7 @@ public class SettingComponent {
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int y, int width) {
         if (setting instanceof BooleanSetting) {
              BooleanSetting boolSetting = (BooleanSetting) setting;
-             boolean isParent = "Commands".equals(setting.name);
+             boolean isParent = "Commands".equals(setting.name) || "Chat Hider".equals(setting.name);
              if (isParent) {
                  boolean onArrow = mouseX >= x + width - 20;
                  if ((button == 0 && onArrow) || button == 1) {

@@ -11,6 +11,9 @@ import xenus.xenaddons.utils.DungeonUtils;
 public class ZguegAddonsModule extends Module {
     
     public final BooleanSetting chatHider = new BooleanSetting("Chat Hider", false);
+    public final BooleanSetting hideRadioMessages = new BooleanSetting("Radio Msg", true); // Renamed
+    public final BooleanSetting hideDiscordWarning = new BooleanSetting("Discord Warn", true); // Renamed
+    
     public final BooleanSetting cryptsNotify = new BooleanSetting("Crypts Notify", false);
     public final BooleanSetting classNotify = new BooleanSetting("Class Notify", false);
     public final BooleanSetting commandsEnabled = new BooleanSetting("Commands", false);
@@ -37,6 +40,12 @@ public class ZguegAddonsModule extends Module {
     public ZguegAddonsModule() {
         super("ZguegAddons", "Collection of ZguegAddons features", Category.MISC);
         this.registerSetting(chatHider);
+        this.registerSetting(hideRadioMessages);
+        this.registerSetting(hideDiscordWarning);
+        
+        hideRadioMessages.setParent(chatHider);
+        hideDiscordWarning.setParent(chatHider);
+        
         this.registerSetting(cryptsNotify);
         this.registerSetting(classNotify);
         this.registerSetting(commandsEnabled);
@@ -113,11 +122,14 @@ public class ZguegAddonsModule extends Module {
         if (commandsEnabled.getValue()) {
             processPartyMessage(msg);
         }
-        if (!chatHider.getValue()) return true;
-        for (String criteria : RADIO_MESSAGES) {
-            if (msg.contains(criteria)) return false;
+        
+        if (hideRadioMessages.getValue()) {
+            for (String criteria : RADIO_MESSAGES) {
+                if (msg.contains(criteria)) return false;
+            }
         }
-        if (msg.contains(DISCORD_WARNING)) {
+        
+        if (hideDiscordWarning.getValue() && msg.contains(DISCORD_WARNING)) {
             String[] lines = msg.split("\n");
             boolean modified = false;
             for (String line : lines) {
@@ -127,6 +139,9 @@ public class ZguegAddonsModule extends Module {
             }
             if (modified) return false;
         }
+
+        if (!chatHider.getValue()) return true;
+        
         return true;
     }
 
