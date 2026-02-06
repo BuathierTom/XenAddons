@@ -10,6 +10,7 @@ import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ColorSetting;
+import xenus.xenaddons.settings.KeybindSetting;
 import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.Setting;
 
@@ -39,6 +40,8 @@ public class ConfigManager {
                     settingsJson.addProperty(setting.name, (Integer) setting.getValue());
                 } else if (setting instanceof NumberSetting) {
                     settingsJson.addProperty(setting.name, (Number) setting.getValue());
+                } else if (setting instanceof KeybindSetting) {
+                    settingsJson.addProperty(setting.name, (Integer) setting.getValue());
                 }
             }
             moduleJson.add("settings", settingsJson);
@@ -95,6 +98,8 @@ public class ConfigManager {
                                         ((ColorSetting) setting).setValue(settingsJson.get(setting.name).getAsInt());
                                     } else if (setting instanceof NumberSetting) {
                                         ((NumberSetting) setting).setValue(settingsJson.get(setting.name).getAsDouble());
+                                    } else if (setting instanceof KeybindSetting) {
+                                        ((KeybindSetting) setting).setValue(settingsJson.get(setting.name).getAsInt());
                                     }
                                 }
                             }

@@ -13,6 +13,8 @@ public class SettingComponent {
     public final Setting<?> setting;
     private ColorPickerComponent colorPicker = null;
     
+    public boolean listening = false; // For KeybindSetting
+
     public SettingComponent(Setting<?> setting) {
         this.setting = setting;
         if (setting instanceof ColorSetting) {
@@ -101,6 +103,57 @@ public class SettingComponent {
             context.getMatrices().scale(0.7f, 0.7f);
             context.drawTextWithShadow(textRenderer, setting.name + " >", 0, 0, 0xFFBBBBBB);
             context.getMatrices().popMatrix();
+            
+        } else if (setting instanceof xenus.xenaddons.settings.KeybindSetting) {
+             xenus.xenaddons.settings.KeybindSetting kb = (xenus.xenaddons.settings.KeybindSetting) setting;
+             
+             context.getMatrices().pushMatrix();
+             context.getMatrices().translate(x + 6, y + (height - 9 * 0.7f) / 2f + 0.5f);
+             context.getMatrices().scale(0.7f, 0.7f);
+             context.drawTextWithShadow(textRenderer, setting.name, 0, 0, 0xFFE0E0E0);
+             context.getMatrices().popMatrix();
+             
+             String keyName;
+             if (listening) {
+                 keyName = "...";
+             } else {
+                 int key = kb.getKey();
+                 if (key == -1) keyName = "NONE";
+                 else if (key < 0) {
+                     // Mouse button handling
+                     int btn = -key - 100;
+                     if (btn == 0) keyName = "LMOUSE";
+                     else if (btn == 1) keyName = "RMOUSE";
+                     else if (btn == 2) keyName = "MMOUSE";
+                     else keyName = "MOUSE " + (btn + 1);
+                 } else {
+                     String n = org.lwjgl.glfw.GLFW.glfwGetKeyName(key, 0);
+                     if (n == null) {
+                         // Fallback for special keys
+                         if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT) keyName = "LSHIFT";
+                         else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT) keyName = "RSHIFT";
+                         else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL) keyName = "LCTRL";
+                         else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL) keyName = "RCTRL";
+                         else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT) keyName = "LALT";
+                         else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_ALT) keyName = "RALT";
+                         else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_TAB) keyName = "TAB";
+                         else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER) keyName = "ENTER";
+                         else keyName = "KEY " + key;
+                     } else {
+                         keyName = n.toUpperCase();
+                     }
+                 }
+             }
+             
+             keyName = "[" + keyName + "]";
+             
+             context.getMatrices().pushMatrix();
+             float scale = 0.7f;
+             int knW = textRenderer.getWidth(keyName);
+             context.getMatrices().translate(x + width - (knW * scale) - 6, y + (height - 9 * scale) / 2f + 0.5f);
+             context.getMatrices().scale(scale, scale);
+             context.drawTextWithShadow(textRenderer, keyName, 0, 0, listening ? 0xFFFFFF00 : 0xFFAAAAAA);
+             context.getMatrices().popMatrix();
         }
     }
 
@@ -140,8 +193,9 @@ public class SettingComponent {
                 return true;
             }
         } else if (setting instanceof ColorSetting) {
+            // ... (ColorSetting logic kept externally or assumed unchanged)
             ColorSetting colorSetting = (ColorSetting) setting;
-            if (mouseY < y + 10) { // Clicked the label/preview part
+            if (mouseY < y + 10) { 
                 if (button == 0 || button == 1) {
                     colorSetting.expanded = !colorSetting.expanded;
                     return true;
@@ -153,6 +207,24 @@ public class SettingComponent {
             if (button == 0) {
                 ((ActionSetting) setting).run();
                 return true;
+            }
+        } else if (setting instanceof xenus.xenaddons.settings.KeybindSetting) {
+            xenus.xenaddons.settings.KeybindSetting kb = (xenus.xenaddons.settings.KeybindSetting) setting;
+            if (listening) {
+                kb.setKey(-100 - button);
+                listening = false;
+                return true;
+            } else {
+                if (button == 0) {
+                    listening = true;
+                    return true;
+                } else if (button == 1) {
+                    // Right click to clear? or just listen?
+                    // Standard is Left Click to listen. 
+                    // Optional: Right click to reset/clear.
+                    kb.setKey(-1);
+                    return true;
+                }
             }
         }
         return false;
@@ -173,6 +245,22 @@ public class SettingComponent {
         if (setting instanceof ColorSetting && ((ColorSetting)setting).expanded) {
             return colorPicker.keyPressed(input);
         }
+        
+        if (setting instanceof xenus.xenaddons.settings.KeybindSetting && listening) {
+             xenus.xenaddons.settings.KeybindSetting kb = (xenus.xenaddons.settings.KeybindSetting) setting;
+             int key = input.key();
+             
+             if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+                 kb.setKey(-1); // Unbind
+             } else if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE) {
+                 kb.setKey(-1);
+             } else {
+                 kb.setKey(key);
+             }
+             listening = false;
+             return true;
+        }
+        
         return false;
     }
 }

@@ -3,7 +3,6 @@ package xenus.xenaddons.gui.clickgui;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
@@ -18,7 +17,6 @@ public class ClickGUI extends Screen {
     private static xenus.xenaddons.features.Module hoveredModule = null;
     private static int hoveredX = 0;
     private static int hoveredY = 0;
-    private TextFieldWidget searchField;
 
     public static void setHoveredModule(xenus.xenaddons.features.Module module, int x, int y) {
         hoveredModule = module;
@@ -27,10 +25,8 @@ public class ClickGUI extends Screen {
     }
 
     public static String getSearch() {
-        return ClickGUI.currentSearch;
+        return ""; // Search disabled
     }
-    
-    private static String currentSearch = "";
 
     public ClickGUI() {
         super(Text.literal("ClickGUI"));
@@ -38,14 +34,6 @@ public class ClickGUI extends Screen {
 
     @Override
     protected void init() {
-        int searchW = 100;
-        int searchH = 14;
-        // Positioned at the bottom center
-        this.searchField = new TextFieldWidget(this.textRenderer, this.width / 2 - searchW / 2, this.height - searchH - 10, searchW, searchH, Text.literal("Search"));
-        this.searchField.setText(currentSearch);
-        this.searchField.setFocused(true);
-        this.searchField.setDrawsBackground(false);
-
         if (panels.isEmpty()) {
             int x = 20;
             for (Category category : Category.values()) {
@@ -58,29 +46,9 @@ public class ClickGUI extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         hoveredModule = null; 
-        currentSearch = searchField.getText();
 
         context.fill(0, 0, this.width, this.height, 0x99000000); // Dark semi-transparent overlay
         
-        // Render Search Bar (Scaled 0.8x)
-        context.getMatrices().pushMatrix();
-        float scaledW = 100 * 0.8f;
-        float scaledH = 14 * 0.8f;
-        int searchX = (int)(this.width / 2f - scaledW / 2f);
-        int searchY = (int)(this.height - scaledH - 10f);
-        
-        // Custom background & border
-        int accentColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
-        context.fill(searchX, searchY, searchX + (int)scaledW, searchY + (int)scaledH, 0xAA000000);
-        xenus.xenaddons.utils.RenderUtils.drawBorder(context, searchX, searchY, (int)scaledW, (int)scaledH, accentColor);
-        
-        context.getMatrices().translate(searchX, searchY);
-        context.getMatrices().scale(0.8f, 0.8f);
-        searchField.setX(4); // Internal padding
-        searchField.setY(3);
-        searchField.render(context, (int)((mouseX - searchX) / 0.8f), (int)((mouseY - searchY) / 0.8f), delta);
-        context.getMatrices().popMatrix();
-
         // Render Panels
         for (Panel panel : panels) {
             panel.render(context, mouseX, mouseY, delta, textRenderer);
@@ -91,6 +59,7 @@ public class ClickGUI extends Screen {
             String text = hoveredModule.description;
             int textWidth = textRenderer.getWidth(text);
             int padding = 2; 
+            int accentColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
             
             context.getMatrices().pushMatrix();
             context.getMatrices().translate((float)hoveredX, (float)hoveredY);
@@ -113,7 +82,6 @@ public class ClickGUI extends Screen {
 
     @Override
     public boolean charTyped(CharInput input) {
-        if (searchField.charTyped(input)) return true;
         for (Panel panel : panels) {
             if (panel.charTyped(input)) return true;
         }
@@ -122,7 +90,6 @@ public class ClickGUI extends Screen {
 
     @Override
     public boolean keyPressed(KeyInput input) {
-        if (searchField.keyPressed(input)) return true;
         for (Panel panel : panels) {
             if (panel.keyPressed(input)) return true;
         }
