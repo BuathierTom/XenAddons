@@ -79,23 +79,23 @@ public class AutoPetRuleTitleModule extends Module {
 
     private void showSmallNotification(String petName, String colorCode) {
         if (mc.inGameHud == null) return;
-        
-        // Instant timers
+
         try {
             AccessorInGameHud accessor = (AccessorInGameHud) mc.inGameHud;
             accessor.setTitleFadeInTicks(0);
-            accessor.setTitleStayTicks(8); // 400ms
+            accessor.setTitleStayTicks(8);   // ajuste si tu veux plus long
             accessor.setTitleFadeOutTicks(0);
         } catch (Exception ignored) {}
 
-        // Small notification trick:
-        // Use subtitle for the pet name (smaller than title)
-        // Use action bar for "(Autopet)" (even smaller)
-        mc.inGameHud.setTitle(Text.of("")); 
-        mc.inGameHud.setSubtitle(Text.of(colorCode + petName));
-        mc.inGameHud.setOverlayMessage(Text.of("§cAutopet§r"), false);
+        // Important: title = grand, subtitle = plus petit (comme image 1)
+        mc.inGameHud.setTitle(Text.of(colorCode + petName));
+        mc.inGameHud.setSubtitle(Text.of("§cAutopet§r"));
 
-        // New cleaner chat message
-        if (mc.player != null) mc.player.sendMessage(Text.of("§cAutopet §7> " + colorCode + petName), false);
+        // Optionnel: vire l'action bar si tu veux exactement le rendu image 1
+        // mc.inGameHud.setOverlayMessage(Text.empty(), false);
+
+        if (mc.player != null) {
+            mc.player.sendMessage(Text.of("§cAutopet §7> " + colorCode + petName), false);
+        }
     }
 }
