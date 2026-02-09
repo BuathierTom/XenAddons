@@ -18,13 +18,11 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
-import xenus.xenaddons.features.Category;
 
 import java.awt.Point;
 import java.nio.charset.StandardCharsets;

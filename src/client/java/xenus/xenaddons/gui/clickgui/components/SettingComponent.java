@@ -8,6 +8,7 @@ import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ColorSetting;
 import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.Setting;
+import xenus.xenaddons.settings.CollapsibleSetting;
 
 public class SettingComponent {
     public final Setting<?> setting;
@@ -35,7 +36,7 @@ public class SettingComponent {
             boolean enabled = boolSetting.getValue();
             
             String arrow = null;
-            if ("Commands".equals(setting.name) || "Chat Hider".equals(setting.name)) {
+            if ("Commands".equals(setting.name) || "Chat Hider".equals(setting.name) || "Render Toggles".equals(setting.name)) {
                 arrow = boolSetting.expanded ? "-" : "+";
             }
 
@@ -154,7 +155,37 @@ public class SettingComponent {
              context.getMatrices().scale(scale, scale);
              context.drawTextWithShadow(textRenderer, keyName, 0, 0, listening ? 0xFFFFFF00 : 0xFFAAAAAA);
              context.getMatrices().popMatrix();
-        }
+        } else if (setting instanceof CollapsibleSetting) {
+             CollapsibleSetting collapsible = (CollapsibleSetting) setting;
+             String arrow = collapsible.isExpanded() ? "-" : "+";
+
+             context.getMatrices().pushMatrix();
+             // Draw text at x + 6 (same position as other settings)
+             context.getMatrices().translate(x + 6, y + (height - 9 * 0.7f) / 2f + 0.5f);
+             context.getMatrices().scale(0.7f, 0.7f);
+             context.drawTextWithShadow(textRenderer, setting.name, 0, 0, 0xFFE0E0E0);
+             context.getMatrices().popMatrix();
+
+             // Draw arrow on the right side
+             context.getMatrices().pushMatrix();
+             context.getMatrices().translate(x + width - 20, y + (height - 9 * 0.7f) / 2f + 0.5f);
+             context.getMatrices().scale(0.7f, 0.7f);
+             context.drawTextWithShadow(textRenderer, arrow, 0, 0, 0xFFBBBBBB);
+             context.getMatrices().popMatrix();
+
+             // Render child settings if expanded
+             if (collapsible.isExpanded()) {
+                 int childY = y + 10;
+                 for (Setting<?> childSetting : collapsible.getChildren()) {
+                     if (childSetting.isVisible()) {
+                         SettingComponent childComp = new SettingComponent(childSetting);
+                         int childHeight = childComp.getHeight();
+                         childComp.render(context, mouseX, mouseY, x + 10, childY, width - 10, childHeight, textRenderer);
+                         childY += childHeight;
+                     }
+                 }
+             }
+         }
     }
 
     public int getHeight() {
@@ -162,13 +193,26 @@ public class SettingComponent {
         if (setting instanceof ColorSetting && ((ColorSetting)setting).expanded) {
             return 12 + (Panel.WIDTH - 20) + 30; // Approx height for picker
         }
+        if (setting instanceof CollapsibleSetting) {
+            CollapsibleSetting collapsible = (CollapsibleSetting) setting;
+            int totalHeight = 10; // Base height
+            if (collapsible.isExpanded()) {
+                for (Setting<?> childSetting : collapsible.getChildren()) {
+                    if (childSetting.isVisible()) {
+                        SettingComponent childComp = new SettingComponent(childSetting);
+                        totalHeight += childComp.getHeight();
+                    }
+                }
+            }
+            return totalHeight;
+        }
         return 10;
     }
     
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int y, int width) {
         if (setting instanceof BooleanSetting) {
              BooleanSetting boolSetting = (BooleanSetting) setting;
-             boolean isParent = "Commands".equals(setting.name) || "Chat Hider".equals(setting.name);
+             boolean isParent = "Commands".equals(setting.name) || "Chat Hider".equals(setting.name) || "Render Toggles".equals(setting.name);
              if (isParent) {
                  boolean onArrow = mouseX >= x + width - 20;
                  if ((button == 0 && onArrow) || button == 1) {
@@ -226,8 +270,30 @@ public class SettingComponent {
                     return true;
                 }
             }
-        }
-        return false;
+         } else if (setting instanceof CollapsibleSetting) {
+             CollapsibleSetting collapsible = (CollapsibleSetting) setting;
+             // Check if click is on the header (first 10 pixels)
+             if (mouseY < y + 10) {
+                 if (button == 0 || button == 1) {
+                     collapsible.toggle();
+                     return true;
+                 }
+             } else if (collapsible.isExpanded()) {
+                 // Check clicks on child settings
+                 int childY = y + 10;
+                 for (Setting<?> childSetting : collapsible.getChildren()) {
+                     if (childSetting.isVisible()) {
+                         SettingComponent childComp = new SettingComponent(childSetting);
+                         int childHeight = childComp.getHeight();
+                         if (mouseY >= childY && mouseY < childY + childHeight) {
+                             return childComp.mouseClicked(mouseX, mouseY, button, x + 10, childY, width - 10);
+                         }
+                         childY += childHeight;
+                     }
+                 }
+             }
+         }
+         return false;
     }
 
     public void mouseReleased() {

@@ -124,6 +124,46 @@ public class XenAddonsClient implements ClientModInitializer {
                         }
                         return 1;
                     }))
+                    .then(literal("setroom")
+                        .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument("name", com.mojang.brigadier.arguments.StringArgumentType.string())
+                        .executes(context -> {
+                            String name = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "name");
+                            xenus.xenaddons.features.impl.dungeons.RouteManager.setCurrentRoom(name);
+                            xenus.xenaddons.utils.ChatUtils.info("Current room set to: " + name);
+                            return 1;
+                        })))
+                    .then(literal("setstep")
+                        .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument("index", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                        .executes(context -> {
+                            int index = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "index");
+                            xenus.xenaddons.features.impl.dungeons.RouteManager.setCurrentStep(index);
+                            xenus.xenaddons.utils.ChatUtils.info("Current step set to: " + index);
+                            return 1;
+                        })))
+                    .then(literal("debug")
+                        .executes(context -> {
+                            net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
+                            if (mc.player == null) return 0;
+                            
+                            int px = (int) mc.player.getX();
+                            int pz = (int) mc.player.getZ();
+                            org.joml.Vector2i center = xenus.xenaddons.features.impl.dungeons.secretroutes.dungeon.DungeonScanner.getRoomCentre(px, pz);
+                            
+                            xenus.xenaddons.utils.ChatUtils.info("§b[SecretRoutes Debug]");
+                            xenus.xenaddons.utils.ChatUtils.info("Pos: " + px + ", " + pz);
+                            xenus.xenaddons.utils.ChatUtils.info("Room Center: " + center.x + ", " + center.y);
+                            xenus.xenaddons.utils.ChatUtils.info("In Dungeon: " + xenus.xenaddons.utils.DungeonUtils.inDungeon());
+                            
+                            xenus.xenaddons.features.impl.dungeons.secretroutes.dungeon.DungeonRoom room = xenus.xenaddons.features.impl.dungeons.secretroutes.dungeon.DungeonScanner.currentRoom;
+                            if (room != null) {
+                                xenus.xenaddons.utils.ChatUtils.info("Current Room: §a" + room.data.name());
+                                xenus.xenaddons.utils.ChatUtils.info("Rotation: §e" + room.rotation);
+                            } else {
+                                xenus.xenaddons.utils.ChatUtils.info("Current Room: §cNone (Scan failed or not triggered)");
+                            }
+                            
+                            return 1;
+                        }))
 					.executes(context -> {
 						openClickGUINextTick = true;
 						return 1;

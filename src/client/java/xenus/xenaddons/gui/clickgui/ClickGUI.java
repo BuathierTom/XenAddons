@@ -13,6 +13,7 @@ import java.util.List;
 
 public class ClickGUI extends Screen {
     private final List<Panel> panels = new ArrayList<>();
+    private double scrollY = 0;
     
     private static xenus.xenaddons.features.Module hoveredModule = null;
     private static int hoveredX = 0;
@@ -49,9 +50,12 @@ public class ClickGUI extends Screen {
 
         context.fill(0, 0, this.width, this.height, 0x99000000); // Dark semi-transparent overlay
         
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(0, (float)scrollY);
+
         // Render Panels
         for (Panel panel : panels) {
-            panel.render(context, mouseX, mouseY, delta, textRenderer);
+            panel.render(context, mouseX, (int)(mouseY - scrollY), delta, textRenderer);
         }
 
         // Render Description Tooltip (Extreme Micro)
@@ -78,6 +82,8 @@ public class ClickGUI extends Screen {
             
             context.getMatrices().popMatrix();
         }
+
+        context.getMatrices().popMatrix();
     }
 
     @Override
@@ -105,7 +111,7 @@ public class ClickGUI extends Screen {
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
         double mouseX = click.x();
-        double mouseY = click.y();
+        double mouseY = click.y() - scrollY;
         int button = click.button();
         
         for (Panel panel : panels) {
@@ -119,7 +125,7 @@ public class ClickGUI extends Screen {
     @Override
     public boolean mouseReleased(Click click) {
         double mouseX = click.x();
-        double mouseY = click.y();
+        double mouseY = click.y() - scrollY;
         int button = click.button();
         
         for (Panel panel : panels) {
@@ -133,7 +139,7 @@ public class ClickGUI extends Screen {
     @Override
     public boolean mouseDragged(Click click, double deltaX, double deltaY) {
         double mouseX = click.x();
-        double mouseY = click.y();
+        double mouseY = click.y() - scrollY;
         int button = click.button();
         
          for (Panel panel : panels) {
@@ -142,6 +148,13 @@ public class ClickGUI extends Screen {
             }
         }
         return super.mouseDragged(click, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        scrollY += verticalAmount * 20;
+        if (scrollY > 0) scrollY = 0;
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
     @Override
     public void close() {
