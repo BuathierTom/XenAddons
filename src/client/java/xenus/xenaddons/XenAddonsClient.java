@@ -83,7 +83,6 @@ public class XenAddonsClient implements ClientModInitializer {
                             xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
 
                         if (debug == null || !debug.isEnabled() || !debug.enableTiclassTest.getValue()) {
-                            xenus.xenaddons.utils.ChatUtils.error("Debug ticlass is disabled in settings.");
                             return 0;
                         }
 
@@ -124,24 +123,15 @@ public class XenAddonsClient implements ClientModInitializer {
                         }
                         return 1;
                     }))
-                    .then(literal("setroom")
-                        .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument("name", com.mojang.brigadier.arguments.StringArgumentType.string())
+                    .then(literal("secretroom")
                         .executes(context -> {
-                            String name = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "name");
-                            xenus.xenaddons.features.impl.dungeons.RouteManager.setCurrentRoom(name);
-                            xenus.xenaddons.utils.ChatUtils.info("Current room set to: " + name);
-                            return 1;
-                        })))
-                    .then(literal("setstep")
-                        .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument("index", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
-                        .executes(context -> {
-                            int index = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "index");
-                            xenus.xenaddons.features.impl.dungeons.RouteManager.setCurrentStep(index);
-                            xenus.xenaddons.utils.ChatUtils.info("Current step set to: " + index);
-                            return 1;
-                        })))
-                    .then(literal("debug")
-                        .executes(context -> {
+                            xenus.xenaddons.features.impl.dev.DebugModule debugModule = 
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
+                            
+                            if (debugModule == null || !debugModule.isEnabled() || !debugModule.enableSecretRoomTest.getValue()) {
+                                return 0;
+                            }
+                            
                             net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
                             if (mc.player == null) return 0;
                             
