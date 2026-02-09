@@ -79,6 +79,14 @@ public class XenAddonsClient implements ClientModInitializer {
                         return 0;
                     }))
                     .then(literal("ticlass").executes(context -> {
+                        xenus.xenaddons.features.impl.dev.DebugModule debug = 
+                            xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
+
+                        if (debug == null || !debug.isEnabled() || !debug.enableTiclassTest.getValue()) {
+                            xenus.xenaddons.utils.ChatUtils.error("Debug ticlass is disabled in settings.");
+                            return 0;
+                        }
+
                         net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
                         if (mc.getNetworkHandler() != null) {
                             xenus.xenaddons.utils.ChatUtils.info("§aScanning player classes (Debug Mode)...");
