@@ -9,6 +9,7 @@ import org.lwjgl.glfw.GLFW;
 import xenus.xenaddons.config.ConfigManager;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule;
+import xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule;
 import xenus.xenaddons.features.impl.dungeons.PosTitlesModule;
 import xenus.xenaddons.hud.HudState;
 import xenus.xenaddons.utils.RenderUtils;
@@ -17,10 +18,12 @@ public class HudEditorScreen extends Screen {
     private static final Text POS_TITLES_PREVIEW = Text.literal("Player (M) At P2!");
     private static final Text AUTOPET_TITLE_PREVIEW = Text.literal("Golden Dragon");
     private static final Text AUTOPET_SUB_PREVIEW = Text.literal("Autopet");
+    private static final Text PLAYERS_LEAPED_PREVIEW = Text.literal("2/4 Players Leaped");
 
     private final Screen parent;
     private PosTitlesModule posTitlesModule;
     private AutoPetRuleTitleModule autoPetModule;
+    private PlayersLeapedModule playersLeapedModule;
 
     private ComponentType dragging = null;
     private int dragOffsetX = 0;
@@ -38,6 +41,7 @@ public class HudEditorScreen extends Screen {
     protected void init() {
         posTitlesModule = ModuleManager.getModule(PosTitlesModule.class);
         autoPetModule = ModuleManager.getModule(AutoPetRuleTitleModule.class);
+        playersLeapedModule = ModuleManager.getModule(PlayersLeapedModule.class);
     }
 
     @Override
@@ -49,12 +53,16 @@ public class HudEditorScreen extends Screen {
 
         Bounds posBounds = getPosTitlesBounds();
         Bounds petBounds = getAutoPetBounds();
+        Bounds playersLeapedBounds = getPlayersLeapedBounds();
 
         renderComponentBox(context, mouseX, mouseY, posBounds, "Pos Titles");
         renderPosTitlesPreview(context, posBounds);
 
         renderComponentBox(context, mouseX, mouseY, petBounds, "AutoPet Title");
         renderAutoPetPreview(context, petBounds);
+
+        renderComponentBox(context, mouseX, mouseY, playersLeapedBounds, "Players Leaped");
+        renderPlayersLeapedPreview(context, playersLeapedBounds);
 
         renderResetButton(context, mouseX, mouseY);
     }
@@ -76,6 +84,14 @@ public class HudEditorScreen extends Screen {
             dragging = ComponentType.AUTOPET_TITLE;
             dragOffsetX = mouseX - petBounds.x;
             dragOffsetY = mouseY - petBounds.y;
+            return true;
+        }
+
+        Bounds playersLeapedBounds = getPlayersLeapedBounds();
+        if (playersLeapedBounds.contains(mouseX, mouseY)) {
+            dragging = ComponentType.PLAYERS_LEAPED;
+            dragOffsetX = mouseX - playersLeapedBounds.x;
+            dragOffsetY = mouseY - playersLeapedBounds.y;
             return true;
         }
 
@@ -121,6 +137,14 @@ public class HudEditorScreen extends Screen {
             return true;
         }
 
+        if (dragging == ComponentType.PLAYERS_LEAPED && playersLeapedModule != null) {
+            Bounds playersLeapedBounds = getPlayersLeapedBounds();
+            int centerX = newX + (playersLeapedBounds.w / 2);
+            playersLeapedModule.setHudOffsetX(centerX - (width / 2));
+            playersLeapedModule.setHudY(newY);
+            return true;
+        }
+
         return super.mouseDragged(click, deltaX, deltaY);
     }
 
@@ -133,6 +157,7 @@ public class HudEditorScreen extends Screen {
             int mx = (int) mouseX;
             int my = (int) mouseY;
             if (getAutoPetBounds().contains(mx, my)) target = ComponentType.AUTOPET_TITLE;
+            else if (getPlayersLeapedBounds().contains(mx, my)) target = ComponentType.PLAYERS_LEAPED;
             else if (getPosTitlesBounds().contains(mx, my)) target = ComponentType.POS_TITLES;
         }
 
@@ -145,6 +170,12 @@ public class HudEditorScreen extends Screen {
         if (target == ComponentType.POS_TITLES && posTitlesModule != null) {
             double step = verticalAmount > 0 ? 0.05 : -0.05;
             posTitlesModule.setHudScale(posTitlesModule.getHudScale() + step);
+            return true;
+        }
+
+        if (target == ComponentType.PLAYERS_LEAPED && playersLeapedModule != null) {
+            double step = verticalAmount > 0 ? 0.05 : -0.05;
+            playersLeapedModule.setHudScale(playersLeapedModule.getHudScale() + step);
             return true;
         }
 
@@ -194,6 +225,11 @@ public class HudEditorScreen extends Screen {
             autoPetModule.setHudOffsetX(0);
             autoPetModule.setHudOffsetY(-20);
         }
+        if (playersLeapedModule != null) {
+            playersLeapedModule.setHudOffsetX(0);
+            playersLeapedModule.setHudY(68);
+            playersLeapedModule.setHudScale(1.0);
+        }
     }
 
     private Bounds getPosTitlesBounds() {
@@ -229,6 +265,19 @@ public class HudEditorScreen extends Screen {
 
         int left = centerX - (widthPx / 2);
         return new Bounds(left, baseY, widthPx, heightPx);
+    }
+
+    private Bounds getPlayersLeapedBounds() {
+        int textWidth = textRenderer.getWidth(PLAYERS_LEAPED_PREVIEW);
+        float scale = playersLeapedModule != null ? (float) playersLeapedModule.getHudScale() : 1.0f;
+        int scaledWidth = (int) Math.ceil(textWidth * scale);
+        int x = (width - scaledWidth) / 2;
+        int y = 68;
+        if (playersLeapedModule != null) {
+            x += playersLeapedModule.getHudOffsetX();
+            y = playersLeapedModule.getHudY();
+        }
+        return new Bounds(x, y, scaledWidth, (int) Math.ceil(textRenderer.fontHeight * scale));
     }
 
     private void renderPosTitlesPreview(DrawContext context, Bounds bounds) {
@@ -269,6 +318,17 @@ public class HudEditorScreen extends Screen {
         context.getMatrices().popMatrix();
     }
 
+    private void renderPlayersLeapedPreview(DrawContext context, Bounds bounds) {
+        float scale = playersLeapedModule != null ? (float) playersLeapedModule.getHudScale() : 1.0f;
+        float inv = 1.0f / scale;
+        context.getMatrices().pushMatrix();
+        context.getMatrices().scale(scale, scale);
+        int drawX = (int) (bounds.x * inv);
+        int drawY = (int) (bounds.y * inv);
+        context.drawTextWithShadow(textRenderer, PLAYERS_LEAPED_PREVIEW, drawX, drawY, 0xFF55AAFF);
+        context.getMatrices().popMatrix();
+    }
+
     private void renderComponentBox(DrawContext context, int mouseX, int mouseY, Bounds bounds, String name) {
         boolean hovered = bounds.contains(mouseX, mouseY);
         boolean active = dragging != null && dragging.label.equals(name);
@@ -283,7 +343,8 @@ public class HudEditorScreen extends Screen {
 
     private enum ComponentType {
         POS_TITLES("Pos Titles"),
-        AUTOPET_TITLE("AutoPet Title");
+        AUTOPET_TITLE("AutoPet Title"),
+        PLAYERS_LEAPED("Players Leaped");
 
         private final String label;
 
