@@ -31,7 +31,7 @@ public class PosMsgModule extends Module {
         ClientPlayerEntity player = mc.player;
         if (player == null || player.isInvisible()) return;
 
-        String playerClass = DungeonUtils.getPlayerClass(player.getName().getString());
+        String playerClass = DungeonUtils.getPlayerClass(player);
         if (playerClass == null) return;
 
         for (DungeonUtils.PositionDefinition pos : DungeonUtils.positionDefinitions) {

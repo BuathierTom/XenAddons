@@ -78,6 +78,44 @@ public class XenAddonsClient implements ClientModInitializer {
                         }
                         return 0;
                     }))
+                    .then(literal("ticlass").executes(context -> {
+                        net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
+                        if (mc.getNetworkHandler() != null) {
+                            xenus.xenaddons.utils.ChatUtils.info("§aScanning player classes (Debug Mode)...");
+                            
+                            // Force update to ensure latest data
+                            xenus.xenaddons.utils.DungeonUtils.updateClasses(); 
+                            xenus.xenaddons.utils.ChatUtils.info("In Dungeon: " + xenus.xenaddons.utils.DungeonUtils.inDungeon());
+
+                            for (net.minecraft.client.network.PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
+                                String name = entry.getProfile().name();
+                                net.minecraft.text.Text display = entry.getDisplayName();
+                                String rawDisplay = (display != null) ? display.getString() : "null";
+                                
+                                String clazz = xenus.xenaddons.utils.DungeonUtils.getPlayerClass(name);
+                                String color = (clazz != null) ? xenus.xenaddons.utils.DungeonUtils.getClassColor(clazz) : "§7";
+                                
+                                xenus.xenaddons.utils.ChatUtils.info(color + name + " -> Class: " + clazz + " | Tab: " + rawDisplay);
+                            }
+                            
+                            if (mc.player != null) {
+                                String myName = mc.player.getName().getString();
+                                String myClass = xenus.xenaddons.utils.DungeonUtils.getPlayerClass(mc.player);
+                                xenus.xenaddons.features.impl.dungeons.PosTitlesModule pm = 
+                                    xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.PosTitlesModule.class);
+                                
+                                if (pm != null && pm.isEnabled()) {
+                                    // Pass the detected class, or if null, indicate failure in the alert text instead of faking Mage
+                                    if (myClass != null) {
+                                        pm.showAlert(myName, myClass, "Class Detected via UUID!");
+                                    } else {
+                                        pm.showAlert(myName, "Mage", "Class NOT Detected (Still Defaulting Mage)");
+                                    }
+                                }
+                            }
+                        }
+                        return 1;
+                    }))
 					.executes(context -> {
 						openClickGUINextTick = true;
 						return 1;

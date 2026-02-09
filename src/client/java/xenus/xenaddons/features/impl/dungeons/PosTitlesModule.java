@@ -74,7 +74,7 @@ public class PosTitlesModule extends Module {
             if (entity.isInvisible()) continue;
 
             String playerName = entity.getName().getString();
-            String playerClass = DungeonUtils.getPlayerClass(playerName);
+            String playerClass = DungeonUtils.getPlayerClass(entity);
             if (playerClass == null) continue;
 
             Map<String, Boolean> playerVisits = lastLocations.computeIfAbsent(playerName, k -> new HashMap<>());
@@ -141,7 +141,7 @@ public class PosTitlesModule extends Module {
         showAlert("DebugPlayer", "Mage", "Reached Test Point!");
     }
 
-    private void showAlert(String playerName, String playerClass, String text) {
+    public void showAlert(String playerName, String playerClass, String text) {
         String classColor = DungeonUtils.getClassColor(playerClass);
         String classLetter = playerClass.substring(0, 1);
         String formatted = String.format("%s%s (%s) §e%s", classColor, playerName, classLetter, text);

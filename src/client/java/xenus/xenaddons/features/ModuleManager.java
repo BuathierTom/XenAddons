@@ -18,6 +18,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosMsgModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosTitlesModule());
+        modules.add(new xenus.xenaddons.features.impl.dungeons.MelodyWarningModule());
         
         modules.add(new xenus.xenaddons.features.impl.misc.CommandAliasesModule());
         modules.add(new xenus.xenaddons.features.impl.misc.CommandKeybindsModule());

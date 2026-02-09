@@ -28,9 +28,21 @@ public class DungeonUtils {
     public static boolean inCatacombs = false;
     
     private static final Map<String, String> PLAYER_CLASSES = new HashMap<>();
+    private static final Map<java.util.UUID, String> PLAYER_CLASSES_UUID = new HashMap<>();
     private static int tickCounter = 0;
     
     private static final Pattern CRYPTS_PATTERN = Pattern.compile("Crypts:\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
+
+    public static void reset() {
+        floorNumber = 0;
+        currentPhase = 0;
+        currentStage = 0;
+        crypts = 0;
+        dungeonSeconds = 0;
+        inCatacombs = false;
+        PLAYER_CLASSES.clear();
+        PLAYER_CLASSES_UUID.clear();
+    }
 
     public static void init() {
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
@@ -57,6 +69,11 @@ public class DungeonUtils {
                     updateClasses();
                 }
             }
+        });
+
+        // Reset dungeon state when joining a world to prevent stale state issues
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            reset();
         });
     }
 
@@ -148,16 +165,6 @@ public class DungeonUtils {
         return -1;
     }
 
-    public static void reset() {
-        floorNumber = 0;
-        currentPhase = 0;
-        currentStage = 0;
-        crypts = 0;
-        dungeonSeconds = 0;
-        inCatacombs = false;
-        PLAYER_CLASSES.clear();
-    }
-
     private static void handleChat(String cleanMsg) {
         String msg = cleanMsg.replaceAll("§[0-9a-fk-or]", "");
 
@@ -186,21 +193,47 @@ public class DungeonUtils {
             reset(); 
         }
     }
-    
+
     public static void updateClasses() {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.getNetworkHandler() == null) return;
         
+        // 1. Identify real players (ignore Hypixel sorting entries starting with !)
+        Map<String, java.util.UUID> realPlayers = new HashMap<>();
+        for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
+            String name = entry.getProfile().name();
+            if (name != null && !name.startsWith("!")) {
+                 realPlayers.put(name, entry.getProfile().id());
+            }
+        }
+
+        // 2. Scan tab list for class tokens and match with real players
         for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
             Text displayName = entry.getDisplayName();
-            String name = entry.getProfile().name();
             if (displayName == null) continue;
             
             String text = displayName.getString();
+            if (text == null) continue;
+
+            String cleanText = text.replaceAll("§[0-9a-fk-or]", "");
             String[] classes = {"Mage", "Archer", "Berserk", "Tank", "Healer"};
+            
             for (String c : classes) {
-                if (text.contains("(" + c) || text.contains("[" + c)) {
-                    PLAYER_CLASSES.put(name, c);
+                if (cleanText.contains(c)) {
+                    // This tab entry contains a class definition.
+                    // Check if any real player's name is inside this text.
+                    for (Map.Entry<String, java.util.UUID> realPlayer : realPlayers.entrySet()) {
+                        String realName = realPlayer.getKey();
+                        if (cleanText.contains(realName)) {
+                            PLAYER_CLASSES.put(realName, c);
+                            if (realPlayer.getValue() != null) {
+                                PLAYER_CLASSES_UUID.put(realPlayer.getValue(), c);
+                            }
+                        }
+                    }
+                    // Also map the direct profile name just in case (e.g. !A-b -> Archer)
+                    String profileName = entry.getProfile().name();
+                    PLAYER_CLASSES.put(profileName, c);
                     break;
                 }
             }
@@ -209,7 +242,17 @@ public class DungeonUtils {
     
     public static String getPlayerClass(String playerName) {
         if (PLAYER_CLASSES.containsKey(playerName)) return PLAYER_CLASSES.get(playerName);
-        return (floorNumber > 0 || inCatacombs) ? "Mage" : null;
+        return null;
+    }
+
+    public static String getPlayerClass(java.util.UUID uuid) {
+        if (PLAYER_CLASSES_UUID.containsKey(uuid)) return PLAYER_CLASSES_UUID.get(uuid);
+        return null;
+    }
+
+    public static String getPlayerClass(net.minecraft.entity.player.PlayerEntity player) {
+        if (player == null) return null;
+        return getPlayerClass(player.getUuid());
     }
     
     public static boolean inDungeon() { return floorNumber > 0 || inCatacombs; }
@@ -261,8 +304,16 @@ public class DungeonUtils {
 
     static {
         positionDefinitions.add(new PositionDefinition("AtP2", "At P2!", (clazz) -> (currentPhase == 1 || currentPhase == 0) && !"Healer".equals(clazz), (entity) -> entity.getY() < 205 && entity.getY() > 164, "at p2", "in p2"));
-        positionDefinitions.add(new PositionDefinition("AtSS", "At SS!", (clazz) -> true, (entity) -> isInBox(106, 110, 118, 122, 92, 96, entity), "at ss", "at ssc"));
-        positionDefinitions.add(new PositionDefinition("AtEE2", "At Pre Enter 2!", (clazz) -> true, (entity) -> isInBox(49, 58, 108, 115, 129, 133, entity), "pre enter 2", "at ee2"));
-        positionDefinitions.add(new PositionDefinition("AtMid", "At Mid!", (clazz) -> true, (entity) -> isInBox(47, 61, 64, 75, 69, 83, entity), "at mid", "in mid"));
+        positionDefinitions.add(new PositionDefinition("AtSS", "At SS!", (clazz) -> inPhase(new int[]{2, 3}), (entity) -> isInBox(106, 110, 118, 122, 92, 96, entity), "at ss", "at simon says", "at ssc"));
+        positionDefinitions.add(new PositionDefinition("AtEE2", "At Pre Enter 2!", (clazz) -> inStage(1), (entity) -> isInBox(49, 58, 108, 115, 129, 133, entity), "early enter 2", "pre enter 2", "at ee2", "entered 3.2"));
+        positionDefinitions.add(new PositionDefinition("AtEE2High", "At Pre Enter 2 (High)!", (clazz) -> inStage(1), (entity) -> isInBox(62, 59, 132, 135, 143, 138, entity), "high pre enter 2", "high ee2", "ee2 high", "early enter high", "high early enter 2", "pre enter 2 (high)"));
+        positionDefinitions.add(new PositionDefinition("AtSafespot2", "At Safespot 2!", (clazz) -> inStage(1), (entity) -> isInBox(46, 49, 109, 109, 121.987, 121.988, entity), "2 safespot", "safespot 2"));
+        positionDefinitions.add(new PositionDefinition("AtEE3", "At Pre Enter 3!", (clazz) -> inStage(2), (entity) -> isInBox(0, 4, 108, 115, 98, 107, entity), "early enter 3", "pre enter 3", "at ee3", "entered 3.3"));
+        positionDefinitions.add(new PositionDefinition("AtSafespot3", "At Safespot 3!", (clazz) -> inStage(2), (entity) -> isInBox(19, 18, 121.5, 125, 91, 100, entity), "safespot 3", "3 safespot"));
+        positionDefinitions.add(new PositionDefinition("AtCore", "At Core!", (clazz) -> inPhase(new int[]{2, 3}), (entity) -> isInBox(52, 56, 113, 117, 49, 53, entity), "at core", "pre enter 4", "early enter 4", "at ee4", "entered 3.4"));
+        positionDefinitions.add(new PositionDefinition("InGoldorTunnel", "Inside Goldor Tunnel!", (clazz) -> inStage(4), (entity) -> isInBox(41, 68, 110, 150, 59, 117, entity), "in goldor tunnel", "inside goldor tunnel", "in core", "entered 3.5", "at ee5", "pre enter 5"));
+        positionDefinitions.add(new PositionDefinition("AtMid", "At Mid!", (clazz) -> inPhase(4), (entity) -> isInBox(47, 61, 64, 75, 69, 83, entity), "at mid", "in mid"));
+        positionDefinitions.add(new PositionDefinition("AtPre4Entry", "At Pre4 Entry!", (clazz) -> inPhase(2) && !"Healer".equals(clazz), (entity) -> isInBox(91, 93, 129, 133, 44, 46, entity), "i4 entry", "pre4 entry"));
+        positionDefinitions.add(new PositionDefinition("AtP5", "At P5!", (clazz) -> inPhase(4) && "Healer".equals(clazz), (entity) -> entity.getY() < 50 && entity.getY() > 4, "at p5", "in p5"));
     }
 }
