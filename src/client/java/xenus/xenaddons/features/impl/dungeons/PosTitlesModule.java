@@ -9,6 +9,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
+import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.utils.ChatUtils;
 import xenus.xenaddons.utils.DungeonUtils;
 
@@ -29,9 +30,18 @@ public class PosTitlesModule extends Module {
     // Custom HUD Rendering
     private String currentTitle = null;
     private int titleTimer = 0;
+    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
+    private final NumberSetting hudY = new NumberSetting("HUD Y", 30, -1000, 1000, 1);
+    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 1.0, 0.5, 6.0, 0.05);
 
     public PosTitlesModule() {
         super("Pos Titles", "Shows titles when teammates reach specific points", Category.DUNGEON);
+        hudOffsetX.setVisibility(() -> false);
+        hudY.setVisibility(() -> false);
+        hudScale.setVisibility(() -> false);
+        this.registerSetting(hudOffsetX);
+        this.registerSetting(hudY);
+        this.registerSetting(hudScale);
         
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (this.isEnabled()) {
@@ -55,11 +65,18 @@ public class PosTitlesModule extends Module {
     private void renderTopTitle(DrawContext drawContext) {
         int width = mc.getWindow().getScaledWidth();
         int textWidth = mc.textRenderer.getWidth(currentTitle);
-        int x = (width - textWidth) / 2;
-        int y = 30; // 30 pixels from TOP
+        float scale = (float) hudScale.getValue().doubleValue();
+        float inv = 1.0f / scale;
+        int centerX = (width / 2) + hudOffsetX.getValue().intValue();
+        int y = hudY.getValue().intValue();
 
+        drawContext.getMatrices().pushMatrix();
+        drawContext.getMatrices().scale(scale, scale);
+        int x = (int) ((centerX * inv) - (textWidth / 2f));
+        int drawY = (int) (y * inv);
+        drawContext.drawTextWithShadow(mc.textRenderer, currentTitle, x, drawY, 0xFFFFFFFF);
+        drawContext.getMatrices().popMatrix();
 
-        drawContext.drawTextWithShadow(mc.textRenderer, currentTitle, x, y, 0xFFFFFFFF);
     }
 
     private void onTick() {
@@ -173,5 +190,29 @@ public class PosTitlesModule extends Module {
         lastLocations.clear();
         currentTitle = null;
         titleTimer = 0;
+    }
+
+    public int getHudOffsetX() {
+        return hudOffsetX.getValue().intValue();
+    }
+
+    public int getHudY() {
+        return hudY.getValue().intValue();
+    }
+
+    public void setHudOffsetX(int value) {
+        hudOffsetX.setValue((double) value);
+    }
+
+    public void setHudY(int value) {
+        hudY.setValue((double) value);
+    }
+
+    public double getHudScale() {
+        return hudScale.getValue();
+    }
+
+    public void setHudScale(double value) {
+        hudScale.setValue(value);
     }
 }

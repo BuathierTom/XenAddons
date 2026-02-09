@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import xenus.xenaddons.features.ModuleManager;
+import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule;
 import xenus.xenaddons.hud.HudState;
 
 @Mixin(InGameHud.class)
@@ -30,7 +32,7 @@ public class MixinInGameHudRenderPetNotif {
         Text subtitle = notif.getSubtitle();
 
         // --- Render Title (Main Pet Name) ---
-        float titleScale = notif.scale; // 2.5
+        float titleScale = notif.scale; // fallback
         
         context.getMatrices().pushMatrix();
         context.getMatrices().scale(titleScale, titleScale);
@@ -40,10 +42,19 @@ public class MixinInGameHudRenderPetNotif {
 
         int titleW = tr.getWidth(title);
         int centerX = screenW / 2;
-        int baseY = screenH / 2 + notif.yOffset;
+        int hudOffsetX = 0;
+        int hudOffsetY = notif.yOffset;
+        AutoPetRuleTitleModule module = ModuleManager.getModule(AutoPetRuleTitleModule.class);
+        if (module != null) {
+            hudOffsetX = module.getHudOffsetX();
+            hudOffsetY = module.getHudOffsetY();
+            titleScale = (float) module.getHudScale();
+        }
+
+        int baseY = screenH / 2 + hudOffsetY;
         
         float titleInv = 1.0f / titleScale;
-        int titleScreenX = centerX; 
+        int titleScreenX = centerX + hudOffsetX;
         int titleScreenY = baseY;
 
         // Convert screen coords to scaled coords
@@ -67,7 +78,7 @@ public class MixinInGameHudRenderPetNotif {
         // Let's go down 25px from baseY.
         int subScreenY = baseY + 25; 
 
-        int drawSubX = (int)((centerX * subInv) - (subW / 2));
+        int drawSubX = (int)(((centerX + hudOffsetX) * subInv) - (subW / 2));
         int drawSubY = (int)(subScreenY * subInv);
 
         context.drawTextWithShadow(tr, subtitle, drawSubX, drawSubY, 0xFFFFFFFF);

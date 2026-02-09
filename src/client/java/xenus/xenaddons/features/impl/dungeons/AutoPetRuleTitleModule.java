@@ -7,11 +7,21 @@ import net.minecraft.text.Text;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
+import xenus.xenaddons.settings.NumberSetting;
 
 public class AutoPetRuleTitleModule extends Module {
+    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
+    private final NumberSetting hudOffsetY = new NumberSetting("HUD Offset Y", -20, -1000, 1000, 1);
+    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 2.5, 0.5, 6.0, 0.05);
 
     public AutoPetRuleTitleModule() {
         super("AutoPet Title", "Shows a title when AutoPet equips a pet", Category.DUNGEON);
+        hudOffsetX.setVisibility(() -> false);
+        hudOffsetY.setVisibility(() -> false);
+        hudScale.setVisibility(() -> false);
+        this.registerSetting(hudOffsetX);
+        this.registerSetting(hudOffsetY);
+        this.registerSetting(hudScale);
     }
 
     public static void init() {
@@ -99,5 +109,29 @@ public class AutoPetRuleTitleModule extends Module {
         if (mc.player != null) {
             mc.player.sendMessage(Text.of("§cAutopet §7> " + colorCode + petName), false);
         }
+    }
+
+    public int getHudOffsetX() {
+        return hudOffsetX.getValue().intValue();
+    }
+
+    public int getHudOffsetY() {
+        return hudOffsetY.getValue().intValue();
+    }
+
+    public void setHudOffsetX(int value) {
+        hudOffsetX.setValue((double) value);
+    }
+
+    public void setHudOffsetY(int value) {
+        hudOffsetY.setValue((double) value);
+    }
+
+    public double getHudScale() {
+        return hudScale.getValue();
+    }
+
+    public void setHudScale(double value) {
+        hudScale.setValue(value);
     }
 }

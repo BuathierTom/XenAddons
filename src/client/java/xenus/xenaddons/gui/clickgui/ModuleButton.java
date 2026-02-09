@@ -60,7 +60,7 @@ public class ModuleButton {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-             module.toggle();
+             module.onClick();
              return true;
         } else if (button == 1) {
              extended = !extended;
