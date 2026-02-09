@@ -42,7 +42,7 @@ public class SecretUtils {
             BlockPos secretPos = OnEnterNewRoom.currentRoom.getSecretLocation();
             if (secretPos != null) {
                 Vec3d target = new Vec3d(secretPos.getX() + 0.5, secretPos.getY() + 0.5, secretPos.getZ() + 0.5);
-                AnotherRenderingUtil.addLineFromCursor(new RenderTypes.LineFromCursor(target, new Color(config.lineColor.getValue()), (float)config.lineWidth.getValue().doubleValue()));
+                AnotherRenderingUtil.addLineFromCursor(new RenderTypes.LineFromCursor(target, new Color(config.lineColor.getValue()), (float)config.lineWidth.getValue().doubleValue(), false));
             }
         }
 
@@ -126,7 +126,26 @@ public class SecretUtils {
                 linePoints[j] = new Vec3d(line.getOne(), line.getTwo(), line.getThree());
             }
 
-            AnotherRenderingUtil.addLinesFromPoints(linePoints, new Color(config.lineColor.getValue()), (float)config.lineWidth.getValue().doubleValue(), true);
+            AnotherRenderingUtil.addLinesFromPoints(linePoints, new Color(config.lineColor.getValue()), (float)config.lineWidth.getValue().doubleValue(), false);
+        }
+
+        // Render "Start" on the first point of the currently rendered line.
+        if (shouldRenderWaypoints && currentSecretWaypoints.has("locations")) {
+            JsonArray currentLocations = currentSecretWaypoints.get("locations").getAsJsonArray();
+            if (!currentLocations.isEmpty()) {
+                JsonArray startCoords = currentLocations.get(0).getAsJsonArray();
+                BlockPos startPos = RoomRotationUtils.relativeToActual(
+                        new BlockPos(startCoords.get(0).getAsInt(), startCoords.get(1).getAsInt(), startCoords.get(2).getAsInt()),
+                        RoomDirectionUtils.roomDirection(),
+                        RoomDirectionUtils.roomCorner()
+                );
+                AnotherRenderingUtil.addWorldText(new RenderTypes.WorldText(
+                        Text.literal("Start"),
+                        new Vec3d(startPos.getX() + 0.5, startPos.getY() + 0.5, startPos.getZ() + 0.5),
+                        true,
+                        3.0f
+                ));
+            }
         }
 
         // Render Secrets (Interact, Item, Bat)

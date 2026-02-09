@@ -147,12 +147,12 @@ public class AnotherRenderingUtil {
             float g = line.color.getGreen() / 255f;
             float b = line.color.getBlue() / 255f;
 
-            float thickness = Math.max(0.002f, line.lineWidth * THICKNESS_MULTIPLIER);
-
             Vec3d start = line.start.subtract(camPos);
             Vec3d end = line.end.subtract(camPos);
+            float startThickness = computeScreenSpaceThicknessAtPoint(line.lineWidth, start);
+            float endThickness = computeScreenSpaceThicknessAtPoint(line.lineWidth, end);
 
-            drawBillboardLine(buffer, matrix, start, end, r, g, b, 1.0f, thickness);
+            drawBillboardLineVariable(buffer, matrix, start, end, r, g, b, 1.0f, startThickness, endThickness);
         }
     }
 
@@ -161,24 +161,24 @@ public class AnotherRenderingUtil {
         Matrix4f matrix = matrices.peek().getPositionMatrix();
 
         for (RenderTypes.LineFromCursor line : linesFromCursor) {
-            if (!throughWalls) continue;
+            if (line.throughWalls != throughWalls) continue;
 
             float r = line.color.getRed() / 255f;
             float g = line.color.getGreen() / 255f;
             float b = line.color.getBlue() / 255f;
 
-            float thickness = Math.max(0.002f, line.lineWidth * THICKNESS_MULTIPLIER);
-
             Vec3d target = line.point.subtract(camPos);
+            float startThickness = computeScreenSpaceThicknessAtPoint(line.lineWidth, Vec3d.ZERO);
+            float endThickness = computeScreenSpaceThicknessAtPoint(line.lineWidth, target);
 
-            drawBillboardLine(buffer, matrix, Vec3d.ZERO, target, r, g, b, 1.0f, thickness);
+            drawBillboardLineVariable(buffer, matrix, Vec3d.ZERO, target, r, g, b, 1.0f, startThickness, endThickness);
         }
     }
 
     private static void renderText(MatrixStack matrices, Vec3d camPos) {
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
         Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
-        VertexConsumerProvider consumers = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+        VertexConsumerProvider.Immediate consumers = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
 
         for (RenderTypes.WorldText wt : worldTexts) {
             matrices.push();
@@ -199,39 +199,59 @@ public class AnotherRenderingUtil {
 
             matrices.pop();
         }
+
+        consumers.draw();
+    }
+
+    private static float computeScreenSpaceThicknessAtPoint(float pixelWidth, Vec3d point) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        int framebufferHeight = Math.max(1, mc.getWindow().getFramebufferHeight());
+        double fovDeg = mc.options.getFov().getValue();
+        double fovRad = Math.toRadians(fovDeg);
+
+        double distance = Math.max(1.0, point.length());
+        double worldPerPixel = (2.0 * distance * Math.tan(fovRad * 0.5)) / framebufferHeight;
+
+        return (float) Math.max(0.002f, pixelWidth * worldPerPixel);
     }
 
     private static void drawBillboardLine(VertexConsumer buffer, Matrix4f mat, Vec3d start, Vec3d end, float r, float g, float b, float a, float thickness) {
+        drawBillboardLineVariable(buffer, mat, start, end, r, g, b, a, thickness, thickness);
+    }
+
+    private static void drawBillboardLineVariable(VertexConsumer buffer, Matrix4f mat, Vec3d start, Vec3d end, float r, float g, float b, float a, float startThickness, float endThickness) {
         Vector3f lineDir = new Vector3f((float) (end.x - start.x), (float) (end.y - start.y), (float) (end.z - start.z));
+        if (lineDir.lengthSquared() < 0.000001f) return;
         lineDir.normalize();
 
-        Vector3f camDir = new Vector3f((float) start.x, (float) start.y, (float) start.z);
-        if (camDir.lengthSquared() < 0.0001f) camDir.set(0, 1, 0);
-        camDir.normalize();
+        Vector3f camDirMid = new Vector3f(
+                (float) ((start.x + end.x) * 0.5),
+                (float) ((start.y + end.y) * 0.5),
+                (float) ((start.z + end.z) * 0.5)
+        );
+        if (camDirMid.lengthSquared() < 0.0001f) camDirMid.set(0, 1, 0);
+        camDirMid.normalize();
 
         Vector3f widthDir = new Vector3f();
-        lineDir.cross(camDir, widthDir);
-
-        if (widthDir.lengthSquared() < 0.0001f) {
-            widthDir.set(1, 0, 0);
-            if (Math.abs(lineDir.x) > 0.9f) widthDir.set(0, 1, 0);
-        }
-
+        lineDir.cross(camDirMid, widthDir);
+        if (widthDir.lengthSquared() < 0.0001f) widthDir.set(Math.abs(lineDir.x) > 0.9f ? 0 : 1, Math.abs(lineDir.x) > 0.9f ? 1 : 0, 0);
         widthDir.normalize();
-        widthDir.mul(thickness / 2.0f);
 
-        float x1 = (float) start.x - widthDir.x;
-        float y1 = (float) start.y - widthDir.y;
-        float z1 = (float) start.z - widthDir.z;
-        float x2 = (float) start.x + widthDir.x;
-        float y2 = (float) start.y + widthDir.y;
-        float z2 = (float) start.z + widthDir.z;
-        float x3 = (float) end.x + widthDir.x;
-        float y3 = (float) end.y + widthDir.y;
-        float z3 = (float) end.z + widthDir.z;
-        float x4 = (float) end.x - widthDir.x;
-        float y4 = (float) end.y - widthDir.y;
-        float z4 = (float) end.z - widthDir.z;
+        Vector3f startOffset = new Vector3f(widthDir).mul(startThickness / 2.0f);
+        Vector3f endOffset = new Vector3f(widthDir).mul(endThickness / 2.0f);
+
+        float x1 = (float) start.x - startOffset.x;
+        float y1 = (float) start.y - startOffset.y;
+        float z1 = (float) start.z - startOffset.z;
+        float x2 = (float) start.x + startOffset.x;
+        float y2 = (float) start.y + startOffset.y;
+        float z2 = (float) start.z + startOffset.z;
+        float x3 = (float) end.x + endOffset.x;
+        float y3 = (float) end.y + endOffset.y;
+        float z3 = (float) end.z + endOffset.z;
+        float x4 = (float) end.x - endOffset.x;
+        float y4 = (float) end.y - endOffset.y;
+        float z4 = (float) end.z - endOffset.z;
 
         int light = 15728880;
 

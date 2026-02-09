@@ -200,10 +200,6 @@ See the [Command Aliases](#command-aliases) section for the full list of availab
 
 ### Build Steps
 ```bash
-# Clone the repository
-git clone https://github.com/BuathierTom/XenAddons.git
-cd XenAddons
-
 # Build the mod
 ./gradlew build
 
@@ -251,8 +247,6 @@ This project is licensed under the CC0-1.0 License - see the LICENSE file for de
 ## 📞 Contact
 
 **Author:** Xenus
-
-**Issues:** Please report bugs and feature requests on the [GitHub Issues](https://github.com/BuathierTom/XenAddons/issues) page.
 
 ---
 

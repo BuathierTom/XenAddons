@@ -79,11 +79,17 @@ public class RenderTypes {
         public Vec3d point;
         public Color color;
         public float lineWidth;
+        public boolean throughWalls;
 
         public LineFromCursor(Vec3d point, Color color, float lineWidth) {
+            this(point, color, lineWidth, true);
+        }
+
+        public LineFromCursor(Vec3d point, Color color, float lineWidth, boolean throughWalls) {
             this.point = point;
             this.color = color;
             this.lineWidth = lineWidth;
+            this.throughWalls = throughWalls;
         }
     }
 }
