@@ -41,22 +41,29 @@
 ### 🏰 Dungeons
 
 #### **Auto Pet Rule Title**
-Automatically displays pet rules in dungeons with customizable titles.
-- Configurable title display
-- Dungeon-specific pet rule detection
-- Clean HUD integration
+Replaces AutoPet equip chat messages with a centered HUD title notification.
+- Configurable HUD position and scale via `Edit HUD`
+- Filters the original AutoPet message for cleaner output
 
 #### **Position Messages**
 Sends your position in chat for dungeon coordination.
-- Quick position sharing with party members
-- Customizable message format
-- Keybind support
+- Automatically sends party callouts when you reach tracked positions
 
 #### **Position Titles**
 Displays position information as titles on screen.
-- Real-time position updates
-- Customizable title format and colors
-- Toggle-able display
+- Shows teammate position callouts as HUD text
+- Configurable HUD position and scale via `Edit HUD`
+
+#### **SecretRoutes**
+Displays route lines and secret waypoints in dungeons.
+- Route rendering and full-route modes
+- Configurable line color, alpha, and width
+- Toggles for etherwarp/mines/interacts/superbooms/pearls/secret types
+
+#### **Players Leaped**
+Shows `x/4 Players Leaped` in F7 terms zones.
+- Auto-detects relevant F7 areas/phases
+- Configurable HUD position and scale via `Edit HUD`
 
 ---
 
@@ -81,6 +88,14 @@ Powerful command shortcuts system with individual toggles for each command group
 - Individual toggle for each command group
 - Clean settings interface
 - Optimized command execution
+
+#### **Custom Keybinds**
+Bind common SkyBlock commands to custom keys.
+- Wardrobe
+- Equipment
+- Trades
+- Garden warp
+- Pets
 
 #### **Inventory Buttons**
 Adds customizable buttons to inventory screens.
@@ -115,10 +130,20 @@ Special players get different results in commands. Managed through configuration
 ### 🔧 Development Tools
 
 #### **Colors Module**
-Development utility for testing color codes and formatting.
-- Color palette testing
-- Format code preview
-- Quick color reference
+Sets the GUI theme color used by XenAddons interfaces.
+
+#### **Edit HUD**
+Opens a HUD editor screen to move and scale supported HUD elements.
+- Drag-and-drop placement
+- Mouse wheel scaling
+- Reset placement button
+
+#### **Debug**
+Dev/test toggles for debug commands.
+- `/xa title`
+- `/xa petrule`
+- `/xa ticlass`
+- `/xa secretroom`
 
 ---
 
@@ -144,7 +169,7 @@ Development utility for testing color codes and formatting.
 ## 🎯 Usage
 
 ### Opening the GUI
-Press `Right Shift` (default keybind) to open the XenAddons click GUI.
+Use `/xa` or `/xenaddons` to open the XenAddons Click GUI.
 
 ### Navigating the GUI
 - Click on category panels to expand/collapse
@@ -186,9 +211,18 @@ Edit `goated_players.json` to add players who get special treatment in ZguegAddo
 
 ### Main Command
 - `/xa` - Opens the XenAddons GUI
+- `/xenaddons` - Opens the XenAddons GUI
+- `/invbuttons` - Opens the InvButtons menu
 
 ### Command Aliases
 See the [Command Aliases](#command-aliases) section for the full list of available shortcuts.
+
+### Debug Commands
+These commands work only if `Debug` module is enabled and the related toggle is enabled:
+- `/xa title`
+- `/xa petrule`
+- `/xa ticlass`
+- `/xa secretroom`
 
 ---
 
