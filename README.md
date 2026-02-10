@@ -97,6 +97,11 @@ Bind common SkyBlock commands to custom keys.
 - Garden warp
 - Pets
 
+#### **Cursor 1.8.9**
+Re-centers your cursor on the crosshair whenever a GUI is opened.
+- Works with inventory and container screens
+- Designed to mimic 1.8.9 cursor behavior
+
 #### **Inventory Buttons**
 Adds customizable buttons to inventory screens.
 - Quick access to common actions
