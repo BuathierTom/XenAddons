@@ -28,6 +28,8 @@ public class XenAddonsClient implements ClientModInitializer {
         // Initialize Utilities
         xenus.xenaddons.utils.DungeonUtils.init();
         xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule.init();
+        xenus.xenaddons.config.GoatedPlayersManager.init();
+        xenus.xenaddons.config.CustomPlayerScaleManager.init();
         
 		// Load Config
 		xenus.xenaddons.config.ConfigManager.load();

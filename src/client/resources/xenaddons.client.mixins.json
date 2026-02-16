@@ -4,6 +4,12 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"MixinHandledScreen",
+		"MixinChatHud",
+		"MixinChatScreenVisualWords",
+		"MixinDrawContextVisualWords",
+		"MixinScreenTooltipVisualWords",
+		"MixinPlayerEntityDisplayName",
+		"MixinPlayerEntityRendererCustomSize",
 		"HandledScreenAccessor",
 		"MixinInventoryScreen",
 		"MixinCraftingScreen",
