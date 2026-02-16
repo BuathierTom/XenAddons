@@ -5,7 +5,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
+import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Formatting;
 
 import java.io.InputStream;
@@ -21,6 +23,9 @@ public class GoatedPlayersManager {
     private static final Pattern LEGACY_AMP_PATTERN = Pattern.compile("(?i)&([0-9A-FK-OR])");
     private static final Pattern LEGACY_SECTION_PATTERN = Pattern.compile("(?i)§[0-9A-FK-OR]");
     private static final String VISUAL_WORDS_RESOURCE = "/assets/xenaddons/visual/visualWords.json";
+    private static final String CAPY_MARKER = "{capy}";
+    private static final String CAPY_GLYPH = "\uE100";
+    private static final Identifier CAPY_FONT = Identifier.of("xenaddons", "capybara");
 
     private static final Map<String, GoatedEntry> GOATED_PLAYERS = new LinkedHashMap<>();
 
@@ -42,6 +47,10 @@ public class GoatedPlayersManager {
     }
 
     public static String applyVisualWords(String text) {
+        return applyVisualWordsInternal(text, false);
+    }
+
+    private static String applyVisualWordsInternal(String text, boolean keepMarkers) {
         if (text == null || text.isEmpty()) return text;
         String result = text;
 
@@ -50,6 +59,10 @@ public class GoatedPlayersManager {
             String replacement = boundarySafeDisplayName(entry.getValue().displayName);
             String pattern = "(?i)\\b" + Pattern.quote(key) + "\\b";
             result = result.replaceAll(pattern, Matcher.quoteReplacement(replacement));
+        }
+
+        if (!keepMarkers) {
+            result = result.replace(CAPY_MARKER, "");
         }
 
         return result;
@@ -96,7 +109,7 @@ public class GoatedPlayersManager {
         if (text == null) return null;
         MutableText rebuilt = Text.empty();
         text.visit((style, string) -> {
-            appendLegacyFormatted(rebuilt, applyVisualWords(string), style);
+            appendLegacyFormatted(rebuilt, applyVisualWordsInternal(string, true), style);
             return Optional.empty();
         }, Style.EMPTY);
         return rebuilt;
@@ -112,7 +125,7 @@ public class GoatedPlayersManager {
             char c = normalized.charAt(i);
             if (c == '§' && i + 1 < normalized.length()) {
                 if (!plain.isEmpty()) {
-                    out.append(Text.literal(plain.toString()).setStyle(currentStyle));
+                    appendWithCabyToken(out, plain.toString(), currentStyle);
                     plain.setLength(0);
                 }
 
@@ -133,7 +146,28 @@ public class GoatedPlayersManager {
         }
 
         if (!plain.isEmpty()) {
-            out.append(Text.literal(plain.toString()).setStyle(currentStyle));
+            appendWithCabyToken(out, plain.toString(), currentStyle);
+        }
+    }
+
+    private static void appendWithCabyToken(MutableText out, String plain, Style style) {
+        if (plain == null || plain.isEmpty()) return;
+
+        int idx = 0;
+        while (idx < plain.length()) {
+            int marker = plain.indexOf(CAPY_MARKER, idx);
+            if (marker < 0) {
+                out.append(Text.literal(plain.substring(idx)).setStyle(style));
+                break;
+            }
+
+            if (marker > idx) {
+                out.append(Text.literal(plain.substring(idx, marker)).setStyle(style));
+            }
+
+            // Render capybara icon with custom bitmap font.
+            out.append(Text.literal(CAPY_GLYPH).setStyle(style.withFont(new StyleSpriteSource.Font(CAPY_FONT))));
+            idx = marker + CAPY_MARKER.length();
         }
     }
 
@@ -184,7 +218,7 @@ public class GoatedPlayersManager {
         addFallback("ziimou", "ziimou");
         addFallback("e0le_", "e0le_");
         addFallback("avgcata12", "avgcata12");
-        addFallback("antorak", "antorak");
+        addFallback("antorak", "antorak " + CAPY_MARKER);
         addFallback("icantarch", "§5§k? §5§lI§d§lCant§5§lArch§r §5§k?");
     }
 
