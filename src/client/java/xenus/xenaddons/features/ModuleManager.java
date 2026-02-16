@@ -14,7 +14,6 @@ public class ModuleManager {
         modules.add(colors);
         modules.add(new InvButtonsModule());
         modules.add(new xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsModule());
-        modules.add(new xenus.xenaddons.features.impl.misc.Cursor189Module());
         
         modules.add(new xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosMsgModule());
