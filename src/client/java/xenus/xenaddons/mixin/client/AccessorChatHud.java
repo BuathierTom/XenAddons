@@ -19,7 +19,9 @@ public interface AccessorChatHud {
     @Invoker("getMessageIndex")
     int xenaddons$getMessageIndex(double x, double y);
 
+    @Invoker("refresh")
+    void xenaddons$refresh();
+
     @Accessor("messages")
     List<ChatHudLine> xenaddons$getMessages();
 }
-

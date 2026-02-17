@@ -29,6 +29,7 @@ public class GoatedPlayersManager {
     private static final String FRANCE_GLYPH = "\uE101";
     private static final Identifier CAPY_FONT = Identifier.of("xenaddons", "capybara");
     private static final Identifier FRANCE_FONT = Identifier.of("xenaddons", "france");
+    private static final String[] CONCAT_STATUS_SUFFIXES = new String[] {"offline", "online"};
 
     private static final Map<String, GoatedEntry> GOATED_PLAYERS = new LinkedHashMap<>();
 
@@ -60,8 +61,7 @@ public class GoatedPlayersManager {
         for (Map.Entry<String, GoatedEntry> entry : GOATED_PLAYERS.entrySet()) {
             String key = entry.getKey();
             String replacement = boundarySafeDisplayName(entry.getValue().displayName);
-            String pattern = "(?i)\\b" + Pattern.quote(key) + "\\b";
-            result = result.replaceAll(pattern, Matcher.quoteReplacement(replacement));
+            result = replaceWithSmartBoundaries(result, key, replacement);
         }
 
         if (!keepMarkers) {
@@ -70,6 +70,133 @@ public class GoatedPlayersManager {
         }
 
         return result;
+    }
+
+    private static String replaceWithSmartBoundaries(String input, String needle, String replacement) {
+        if (input == null || input.isEmpty() || needle == null || needle.isEmpty()) return input;
+
+        String loweredInput = input.toLowerCase();
+        String loweredNeedle = needle.toLowerCase();
+        String[] friendListStatusPrefixes = new String[] {
+            needle + " is ",
+            needle + " est ",
+            needle + " was ",
+            needle + " has "
+        };
+        for (String prefix : friendListStatusPrefixes) {
+            int idx = loweredInput.indexOf(prefix.toLowerCase());
+            while (idx >= 0) {
+                input = input.substring(0, idx) + replacement + input.substring(idx + needle.length());
+                loweredInput = input.toLowerCase();
+                idx = loweredInput.indexOf(prefix.toLowerCase(), idx + replacement.length());
+            }
+        }
+
+        StringBuilder out = new StringBuilder(input.length());
+        int i = 0;
+        int n = input.length();
+        int m = needle.length();
+
+        while (i < n) {
+            if (i + m <= n && input.regionMatches(true, i, needle, 0, m) && hasSmartBoundary(input, i, i + m)) {
+                out.append(replacement);
+                i += m;
+            } else {
+                out.append(input.charAt(i));
+                i++;
+            }
+        }
+        return out.toString();
+    }
+
+    private static boolean hasSmartBoundary(String s, int start, int end) {
+        char first = s.charAt(start);
+        char last = s.charAt(end - 1);
+
+        boolean leftOk;
+        if (start == 0) {
+            leftOk = true;
+        } else {
+            int prevIdx = previousVisibleCharIndex(s, start - 1);
+            char prev = prevIdx >= 0 ? s.charAt(prevIdx) : '\0';
+            leftOk = !isWordChar(prev)
+                || (Character.isLowerCase(prev) && Character.isUpperCase(first))
+                || hasConcatenatedStatusPrefix(s, start);
+        }
+
+        boolean rightOk;
+        if (end >= s.length()) {
+            rightOk = true;
+        } else {
+            int nextIdx = nextVisibleCharIndex(s, end);
+            char next = nextIdx >= 0 ? s.charAt(nextIdx) : '\0';
+            rightOk = !isWordChar(next) || (Character.isLowerCase(last) && Character.isUpperCase(next));
+        }
+
+        return leftOk && rightOk;
+    }
+
+    private static boolean hasConcatenatedStatusPrefix(String s, int start) {
+        String leftWord = readLeftVisibleWord(s, start).toLowerCase();
+        for (String suffix : CONCAT_STATUS_SUFFIXES) {
+            if (leftWord.endsWith(suffix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String readLeftVisibleWord(String s, int start) {
+        StringBuilder out = new StringBuilder();
+        int i = previousVisibleCharIndex(s, start - 1);
+        while (i >= 0) {
+            char c = s.charAt(i);
+            if (!isWordChar(c)) break;
+            out.append(c);
+            i = previousVisibleCharIndex(s, i - 1);
+        }
+        return out.reverse().toString();
+    }
+
+    private static int previousVisibleCharIndex(String s, int from) {
+        int i = from;
+        while (i >= 0) {
+            if (isLegacyCodePairAt(s, i - 1)) {
+                i -= 2;
+                continue;
+            }
+            if (s.charAt(i) == '§' && i + 1 < s.length() && isLegacyCodeChar(s.charAt(i + 1))) {
+                i--;
+                continue;
+            }
+            return i;
+        }
+        return -1;
+    }
+
+    private static int nextVisibleCharIndex(String s, int from) {
+        int i = from;
+        while (i < s.length()) {
+            if (isLegacyCodePairAt(s, i)) {
+                i += 2;
+                continue;
+            }
+            return i;
+        }
+        return -1;
+    }
+
+    private static boolean isLegacyCodePairAt(String s, int idx) {
+        return idx >= 0 && idx + 1 < s.length() && s.charAt(idx) == '§' && isLegacyCodeChar(s.charAt(idx + 1));
+    }
+
+    private static boolean isLegacyCodeChar(char c) {
+        char lower = Character.toLowerCase(c);
+        return (lower >= '0' && lower <= '9') || (lower >= 'a' && lower <= 'f') || (lower >= 'k' && lower <= 'o') || lower == 'r';
+    }
+
+    private static boolean isWordChar(char c) {
+        return Character.isLetterOrDigit(c) || c == '_';
     }
 
     public static String normalizeLegacyCodes(String text) {

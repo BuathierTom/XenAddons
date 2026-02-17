@@ -12,51 +12,6 @@ import java.util.List;
 
 @Mixin(DrawContext.class)
 public class MixinDrawContextVisualWords {
-
-    @ModifyVariable(
-        method = "drawText(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;IIIZ)V",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 1,
-        require = 0
-    )
-    private Text xenaddons$drawTextText(Text text) {
-        return GoatedPlayersManager.applyVisualWords(text);
-    }
-
-    @ModifyVariable(
-        method = "drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;III)V",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 1,
-        require = 0
-    )
-    private Text xenaddons$drawTextWithShadowText(Text text) {
-        return GoatedPlayersManager.applyVisualWords(text);
-    }
-
-    @ModifyVariable(
-        method = "drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)V",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 1,
-        require = 0
-    )
-    private String xenaddons$drawTextString(String text) {
-        return GoatedPlayersManager.applyVisualWords(text);
-    }
-
-    @ModifyVariable(
-        method = "drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;III)V",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 1,
-        require = 0
-    )
-    private String xenaddons$drawTextWithShadowString(String text) {
-        return GoatedPlayersManager.applyVisualWords(text);
-    }
-
     @ModifyVariable(
         method = "drawTooltip(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;II)V",
         at = @At("HEAD"),

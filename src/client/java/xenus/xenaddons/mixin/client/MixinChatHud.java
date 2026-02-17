@@ -55,6 +55,16 @@ public class MixinChatHud {
         return replaced;
     }
 
+    @Inject(method = "addMessage(Lnet/minecraft/text/Text;)V", at = @At("TAIL"))
+    private void xenaddons$refreshAfterSimpleAdd(CallbackInfo ci) {
+        ((AccessorChatHud) (Object) this).xenaddons$refresh();
+    }
+
+    @Inject(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V", at = @At("TAIL"))
+    private void xenaddons$refreshAfterAdvancedAdd(CallbackInfo ci) {
+        ((AccessorChatHud) (Object) this).xenaddons$refresh();
+    }
+
     @Inject(method = "render", at = @At("HEAD"))
     private void xenaddons$beginChatRender(DrawContext context, int currentTick, int mouseX, int mouseY, boolean focused, CallbackInfo ci) {
         VisualWordsRenderState.pushChatRender();
