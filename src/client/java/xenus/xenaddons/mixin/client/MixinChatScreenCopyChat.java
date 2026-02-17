@@ -16,9 +16,11 @@ import xenus.xenaddons.features.impl.misc.CopyChatModule;
 import xenus.xenaddons.utils.ChatUtils;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Mixin(ChatScreen.class)
 public class MixinChatScreenCopyChat {
+    private static final Pattern LEGACY_COLOR_CODE = Pattern.compile("(?i)[§&][0-9A-FK-OR]");
 
     @Inject(method = "mouseClicked", at = @At("HEAD"))
     private void xenaddons$copyChatOnRightClick(Click click, boolean bl, CallbackInfoReturnable<Boolean> cir) {
@@ -46,6 +48,7 @@ public class MixinChatScreenCopyChat {
 
         Text original = VisualWordsChatStore.getOriginalOrNull(line.content());
         String copied = (original != null ? original : line.content()).getString();
+        copied = LEGACY_COLOR_CODE.matcher(copied).replaceAll("");
         if (copied.isBlank()) return;
 
         mc.keyboard.setClipboard(copied);
