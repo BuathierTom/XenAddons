@@ -1,296 +1,139 @@
 # XenAddons
 
-<div align="center">
+XenAddons is a Fabric mod for Minecraft **1.21.10** focused on Hypixel SkyBlock quality-of-life features.
 
-![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
-![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
-![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![License](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)
+## Compatibility
 
-**A Fabric mod for Minecraft 1.21.10, bringing back features from 1.8.9 Hypixel mods**
+- Minecraft: `1.21.10`
+- Mod loader: `Fabric`
+- Java: `21+`
 
-</div>
+## Main Commands
 
----
+- `/xa` - Open XenAddons GUI
+- `/xenaddons` - Open XenAddons GUI
 
-## 📋 Table of Contents
-
-- [About](#-about)
-- [Features](#-features)
-  - [Dungeons](#-dungeons)
-  - [Miscellaneous](#-miscellaneous)
-  - [Development Tools](#-development-tools)
-- [Installation](#-installation)
-- [Usage](#-usage)
-- [Configuration](#-configuration)
-- [Commands](#-commands)
-- [Building](#-building)
-- [Contributing](#-contributing)
-- [License](#-license)
-
----
-
-## 🎮 About
-
-**XenAddons** is a comprehensive Fabric mod designed for Minecraft 1.21.10 that ports popular features from 1.8.9 Hypixel Skyblock mods to modern Minecraft. It focuses on quality-of-life improvements, dungeon utilities, and party management tools.
-
----
-
-## ✨ Features
-
-### 🏰 Dungeons
-
-#### **Auto Pet Rule Title**
-Replaces AutoPet equip chat messages with a centered HUD title notification.
-- Configurable HUD position and scale via `Edit HUD`
-- Filters the original AutoPet message for cleaner output
-
-#### **Position Messages**
-Sends your position in chat for dungeon coordination.
-- Automatically sends party callouts when you reach tracked positions
-
-#### **Position Titles**
-Displays position information as titles on screen.
-- Shows teammate position callouts as HUD text
-- Configurable HUD position and scale via `Edit HUD`
-
-#### **SecretRoutes**
-Displays route lines and secret waypoints in dungeons.
-- Route rendering and full-route modes
-- Configurable line color, alpha, and width
-- Toggles for etherwarp/mines/interacts/superbooms/pearls/secret types
-
-#### **Players Leaped**
-Shows `x/4 Players Leaped` in F7 terms zones.
-- Auto-detects relevant F7 areas/phases
-- Configurable HUD position and scale via `Edit HUD`
-
----
-
-### 🛠️ Miscellaneous
-
-#### **Command Aliases**
-Powerful command shortcuts system with individual toggles for each command group.
-
-**Available Commands:**
-- `/d`, `/dung` - Quick warp to dungeon hub
-- `/ai` - Toggle party all invite
-- `/pko` - Kick offline party members
-- `/pd` - Disband party
-- `/pk <player>` - Kick specific player from party
-- `/pt <player>` - Transfer party to player
-- `/lsb` - Leave server and join Skyblock (lobby → play sb)
-- `/ld` - Leave server, join Skyblock, and warp to dungeon hub
-- `/f1` to `/f7` - Quick join Catacombs floors 1-7
-- `/m1` to `/m7` - Quick join Master Catacombs floors 1-7
-
-**Features:**
-- Individual toggle for each command group
-- Clean settings interface
-- Optimized command execution
-
-#### **Custom Keybinds**
-Bind common SkyBlock commands to custom keys.
-- Wardrobe
-- Equipment
-- Trades
-- Garden warp
-- Pets
-
-#### **Cursor 1.8.9**
-Re-centers your cursor on the crosshair whenever a GUI is opened.
-- Works with inventory and container screens
-- Designed to mimic 1.8.9 cursor behavior
-
-#### **Inventory Buttons**
-Adds customizable buttons to inventory screens.
-- Quick access to common actions
-- Customizable button positions
-- Clean inventory integration
-
-#### **ZguegAddons Features**
-Collection of party commands and chat utilities.
-
-**Chat Features:**
-- **Chat Hider** - Hides radio messages and Discord warnings
-- **Crypts Notify** - Announces when 5 crypts are reached in party chat
-- **Class Notify** - Automatically announces your selected dungeon class
-
-**Party Commands:**
-All commands can be toggled individually:
-- `!boom` - Sends random Quranic verses
-- `!rng` - Calculates RNG percentage for players
-- `!gay` - Fun gay percentage calculator (goated players protected)
-- `!racist` - Racist percentage calculator (goated players get 180%+)
-- `!py` - "Can't py big gwer" message
-- `!gwer` - Random gwer messages
-- `!size` - Size calculator (goated players get 15-25cm)
-- `!911` - Sends ✈ | |
-
-**Goated Players System:**
-Special players get different results in commands. Managed through configuration.
-
----
-
-### 🔧 Development Tools
-
-#### **Colors Module**
-Sets the GUI theme color used by XenAddons interfaces.
-
-#### **Edit HUD**
-Opens a HUD editor screen to move and scale supported HUD elements.
-- Drag-and-drop placement
-- Mouse wheel scaling
-- Reset placement button
-
-#### **Debug**
-Dev/test toggles for debug commands.
+Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `/xa title`
 - `/xa petrule`
 - `/xa ticlass`
 - `/xa secretroom`
 
----
+## Modules
 
-## 📦 Installation
+### Dungeon
 
-1. **Download and install [Fabric Loader](https://fabricmc.net/use/)**
-   - Minecraft version: 1.21.10
-   - Loader version: 0.16.9 or higher
+- `AutoPet Title`
+  - Replaces AutoPet equip chat message with a HUD notification.
+  - Supports HUD move/scale through `Edit HUD`.
 
-2. **Download [Fabric API](https://modrinth.com/mod/fabric-api)**
-   - Place in your `mods` folder
+- `Pos Message`
+  - Sends party callouts when your character reaches configured dungeon spots.
 
-3. **Download XenAddons**
-   - Get the latest release from the releases page
-   - Place the `.jar` file in your `mods` folder
+- `Pos Titles`
+  - Displays teammate callouts as HUD text.
+  - Supports HUD move/scale through `Edit HUD`.
 
-4. **Launch Minecraft**
-   - Select the Fabric 1.21.10 profile
-   - Enjoy!
+- `SecretRoutes`
+  - Renders room routes/secrets in dungeons.
+  - Settings include:
+    - route rendering mode (current, full route, all steps, all secrets)
+    - line color / line width / box alpha
+    - render toggles (etherwarp, mines, interacts, superbooms, enderpearls, item secrets, interact secrets, bat secrets)
 
----
+- `Players Leaped`
+  - Displays `x/4 Players Leaped` in F7 terms-related zones.
+  - Supports HUD move/scale through `Edit HUD`.
 
-## 🎯 Usage
+### Misc
 
-### Opening the GUI
-Use `/xa` or `/xenaddons` to open the XenAddons Click GUI.
+- `Command Aliases`
+  - Shortcuts with per-group toggles:
+    - `/d`, `/dung`
+    - `/ai`
+    - `/pko`
+    - `/pd`
+    - `/pk <player>`
+    - `/pt <player>`
+    - `/lsb`, `/ld`
+    - `/f1`..`/f7`
+    - `/m1`..`/m7`
 
-### Navigating the GUI
-- Click on category panels to expand/collapse
-- Toggle modules with the checkbox
-- Click on module names to access settings
-- Drag panels to reposition them
+- `Custom Keybinds`
+  - Bind commands to keys:
+    - Wardrobe
+    - Equipment
+    - Trades
+    - Garden
+    - Pets
 
-### Configuring Modules
-1. Open the GUI with `Right Shift`
-2. Click on a module name to open its settings
-3. Toggle individual features on/off
-4. Settings are saved automatically
+- `Cursor 1.8.9`
+  - Keeps inventory cursor behavior closer to legacy 1.8.9 style.
 
----
+- `Custom Size`
+  - Applies per-player custom scale from JSON data.
+  - Optional `In Dungeon Only` toggle.
 
-## ⚙️ Configuration
+- `Copy Chat`
+  - Right-click a chat line in chat screen to copy message text.
+  - Integrated with VisualWords so copied text uses original message content.
 
-Configuration files are stored in `.minecraft/config/xenaddons/`
+- `Item Price`
+  - Shows SkyBlock item prices in tooltips.
+  - Supports:
+    - `Bazaar Price`
+    - `AH Price` (Lowest BIN)
 
-### Main Config
-- Module states (enabled/disabled)
-- Keybinds
-- GUI positions
+- `InvButtons`
+  - Adds configurable inventory buttons.
+  - Includes button position editor and profiles/advanced screen.
 
-### Goated Players
-Edit `goated_players.json` to add players who get special treatment in ZguegAddons commands:
-```json
-{
-  "players": [
-    "player1",
-    "player2"
-  ]
-}
-```
+- `ZguegAddons`
+  - Chat tools:
+    - Chat Hider
+    - Radio message filter
+    - Discord warning filter
+  - Dungeon tools:
+    - 5 crypts party notify
+    - Class notify
+  - Party commands:
+    - `!boom`
+    - `!rng`
+    - `!gay`
+    - `!racist`
+    - `!py`
+    - `!gwer`
+    - `!size`
 
----
+### Dev
 
-## 📝 Commands
+- `Colors`
+  - GUI theme color settings.
 
-### Main Command
-- `/xa` - Opens the XenAddons GUI
-- `/xenaddons` - Opens the XenAddons GUI
-- `/invbuttons` - Opens the InvButtons menu
+- `Edit HUD`
+  - Move/scale/reset supported HUD elements.
 
-### Command Aliases
-See the [Command Aliases](#command-aliases) section for the full list of available shortcuts.
+- `Debug`
+  - Enables test/debug helpers used by `/xa ...` subcommands.
 
-### Debug Commands
-These commands work only if `Debug` module is enabled and the related toggle is enabled:
-- `/xa title`
-- `/xa petrule`
-- `/xa ticlass`
-- `/xa secretroom`
+## Visual Words / Custom Data
 
----
+The mod includes :
+- visual name replacements / formatting (`visualWords`)
+- player scaling (`customSizes`)
 
-## 🔨 Building
+## Config File
 
-### Prerequisites
-- Java 21 or higher
-- Git
+Runtime module state/settings are saved in:
 
-### Build Steps
+- `.minecraft/config/xenaddons_config.json`
+
+## Build
+
 ```bash
-# Build the mod
 ./gradlew build
-
-# The built jar will be in build/libs/
 ```
 
-### Development
-```bash
-# Run the client
-./gradlew runClient
+Built jar output:
 
-# Run with auto-reload
-./gradlew runClient --continuous
-```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Guidelines
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the CC0-1.0 License - see the LICENSE file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- Fabric team for the modding framework
-- Hypixel Skyblock community
-- All contributors and users
-
----
-
-## 📞 Contact
-
-**Author:** Xenus
-
----
-
-<div align="center">
-
-**Made with ❤️ for the Hypixel Skyblock community**
-
-</div>
+- `build/libs/`
