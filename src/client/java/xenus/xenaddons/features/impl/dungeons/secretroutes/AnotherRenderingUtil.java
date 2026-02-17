@@ -149,10 +149,9 @@ public class AnotherRenderingUtil {
 
             Vec3d start = line.start.subtract(camPos);
             Vec3d end = line.end.subtract(camPos);
-            float startThickness = computeScreenSpaceThicknessAtPoint(line.lineWidth, start);
-            float endThickness = computeScreenSpaceThicknessAtPoint(line.lineWidth, end);
+            float thickness = toWorldThickness(line.lineWidth);
 
-            drawBillboardLineVariable(buffer, matrix, start, end, r, g, b, 1.0f, startThickness, endThickness);
+            drawBillboardLine(buffer, matrix, start, end, r, g, b, 1.0f, thickness);
         }
     }
 
@@ -168,11 +167,14 @@ public class AnotherRenderingUtil {
             float b = line.color.getBlue() / 255f;
 
             Vec3d target = line.point.subtract(camPos);
-            float startThickness = computeScreenSpaceThicknessAtPoint(line.lineWidth, Vec3d.ZERO);
-            float endThickness = computeScreenSpaceThicknessAtPoint(line.lineWidth, target);
+            float thickness = toWorldThickness(line.lineWidth);
 
-            drawBillboardLineVariable(buffer, matrix, Vec3d.ZERO, target, r, g, b, 1.0f, startThickness, endThickness);
+            drawBillboardLine(buffer, matrix, Vec3d.ZERO, target, r, g, b, 1.0f, thickness);
         }
+    }
+
+    private static float toWorldThickness(float lineWidth) {
+        return Math.max(0.002f, lineWidth * THICKNESS_MULTIPLIER);
     }
 
     private static void renderText(MatrixStack matrices, Vec3d camPos) {
