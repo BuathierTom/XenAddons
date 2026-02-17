@@ -2,6 +2,7 @@ package xenus.xenaddons.mixin.client;
 
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.client.gui.hud.ChatHudLine.Visible;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -19,9 +20,15 @@ public interface AccessorChatHud {
     @Invoker("getMessageIndex")
     int xenaddons$getMessageIndex(double x, double y);
 
+    @Invoker("getMessageLineIndex")
+    int xenaddons$getMessageLineIndex(double x, double y);
+
     @Invoker("refresh")
     void xenaddons$refresh();
 
     @Accessor("messages")
     List<ChatHudLine> xenaddons$getMessages();
+
+    @Accessor("visibleMessages")
+    List<Visible> xenaddons$getVisibleMessages();
 }
