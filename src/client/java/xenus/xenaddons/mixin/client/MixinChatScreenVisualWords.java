@@ -1,5 +1,6 @@
 package xenus.xenaddons.mixin.client;
 
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.OrderedText;
@@ -11,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xenus.xenaddons.config.GoatedPlayersManager;
+import xenus.xenaddons.config.VisualWordsRenderState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,5 +67,15 @@ public abstract class MixinChatScreenVisualWords {
             parts.add(OrderedText.styledForwardsVisitedString(plain.toString(), currentStyle));
         }
         return OrderedText.concat(parts);
+    }
+
+    @Inject(method = "render", at = @At("HEAD"))
+    private void xenaddons$beginChatScreenRender(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+        VisualWordsRenderState.pushChatRender();
+    }
+
+    @Inject(method = "render", at = @At("TAIL"))
+    private void xenaddons$endChatScreenRender(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+        VisualWordsRenderState.popChatRender();
     }
 }

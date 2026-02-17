@@ -20,9 +20,7 @@ public final class CustomPlayerScaleManager {
 
     public static void init() {
         SCALES.clear();
-        if (!loadFromResources()) {
-            addFallback();
-        }
+        loadFromResources();
     }
 
     private static boolean loadFromResources() {
@@ -32,32 +30,27 @@ public final class CustomPlayerScaleManager {
         try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
             JsonElement root = JsonParser.parseReader(reader);
             if (!root.isJsonArray()) return false;
-
-            JsonArray arr = root.getAsJsonArray();
-            for (JsonElement el : arr) {
-                if (!el.isJsonObject()) continue;
-                JsonObject obj = el.getAsJsonObject();
-                if (!obj.has("uuid") || !obj.has("x") || !obj.has("y") || !obj.has("z")) continue;
-
-                try {
-                    UUID uuid = UUID.fromString(obj.get("uuid").getAsString());
-                    float x = obj.get("x").getAsFloat();
-                    float y = obj.get("y").getAsFloat();
-                    float z = obj.get("z").getAsFloat();
-                    SCALES.put(uuid, new PlayerScale(x, y, z));
-                } catch (Exception ignored) {}
-            }
-            return !SCALES.isEmpty();
+            return loadFromJsonArray(root.getAsJsonArray());
         } catch (Exception ignored) {
             return false;
         }
     }
 
-    private static void addFallback() {
-        SCALES.put(
-            UUID.fromString("24c56ab5-b504-4d38-bd06-e5af6686fcaa"),
-            new PlayerScale(2.0f, 0.5f, 1.0f)
-        );
+    private static boolean loadFromJsonArray(JsonArray arr) {
+        for (JsonElement el : arr) {
+            if (!el.isJsonObject()) continue;
+            JsonObject obj = el.getAsJsonObject();
+            if (!obj.has("uuid") || !obj.has("x") || !obj.has("y") || !obj.has("z")) continue;
+
+            try {
+                UUID uuid = UUID.fromString(obj.get("uuid").getAsString());
+                float x = obj.get("x").getAsFloat();
+                float y = obj.get("y").getAsFloat();
+                float z = obj.get("z").getAsFloat();
+                SCALES.put(uuid, new PlayerScale(x, y, z));
+            } catch (Exception ignored) {}
+        }
+        return !SCALES.isEmpty();
     }
 
     public static PlayerScale get(UUID uuid) {

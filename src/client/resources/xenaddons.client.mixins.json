@@ -5,11 +5,13 @@
 	"client": [
 		"MixinHandledScreen",
 		"MixinChatHud",
+		"MixinChatScreenCopyChat",
 		"MixinChatScreenVisualWords",
 		"MixinDrawContextVisualWords",
 		"MixinScreenTooltipVisualWords",
 		"MixinPlayerEntityDisplayName",
 		"MixinPlayerEntityRendererCustomSize",
+		"AccessorChatHud",
 		"HandledScreenAccessor",
 		"MixinInventoryScreen",
 		"MixinCraftingScreen",
