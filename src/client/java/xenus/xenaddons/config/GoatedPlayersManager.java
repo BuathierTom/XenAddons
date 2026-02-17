@@ -24,8 +24,11 @@ public class GoatedPlayersManager {
     private static final Pattern LEGACY_SECTION_PATTERN = Pattern.compile("(?i)§[0-9A-FK-OR]");
     private static final String VISUAL_WORDS_RESOURCE = "/assets/xenaddons/visual/visualWords.json";
     private static final String CAPY_MARKER = "{capy}";
+    private static final String FRANCE_MARKER = "{france}";
     private static final String CAPY_GLYPH = "\uE100";
+    private static final String FRANCE_GLYPH = "\uE101";
     private static final Identifier CAPY_FONT = Identifier.of("xenaddons", "capybara");
+    private static final Identifier FRANCE_FONT = Identifier.of("xenaddons", "france");
 
     private static final Map<String, GoatedEntry> GOATED_PLAYERS = new LinkedHashMap<>();
 
@@ -63,6 +66,7 @@ public class GoatedPlayersManager {
 
         if (!keepMarkers) {
             result = result.replace(CAPY_MARKER, "");
+            result = result.replace(FRANCE_MARKER, "");
         }
 
         return result;
@@ -125,7 +129,7 @@ public class GoatedPlayersManager {
             char c = normalized.charAt(i);
             if (c == '§' && i + 1 < normalized.length()) {
                 if (!plain.isEmpty()) {
-                    appendWithCabyToken(out, plain.toString(), currentStyle);
+                    appendWithIconTokens(out, plain.toString(), currentStyle);
                     plain.setLength(0);
                 }
 
@@ -146,16 +150,31 @@ public class GoatedPlayersManager {
         }
 
         if (!plain.isEmpty()) {
-            appendWithCabyToken(out, plain.toString(), currentStyle);
+            appendWithIconTokens(out, plain.toString(), currentStyle);
         }
     }
 
-    private static void appendWithCabyToken(MutableText out, String plain, Style style) {
+    private static void appendWithIconTokens(MutableText out, String plain, Style style) {
         if (plain == null || plain.isEmpty()) return;
 
         int idx = 0;
         while (idx < plain.length()) {
-            int marker = plain.indexOf(CAPY_MARKER, idx);
+            int capyIdx = plain.indexOf(CAPY_MARKER, idx);
+            int franceIdx = plain.indexOf(FRANCE_MARKER, idx);
+
+            int marker;
+            boolean isCaby;
+            if (capyIdx < 0 && franceIdx < 0) {
+                marker = -1;
+                isCaby = false;
+            } else if (capyIdx >= 0 && (franceIdx < 0 || capyIdx < franceIdx)) {
+                marker = capyIdx;
+                isCaby = true;
+            } else {
+                marker = franceIdx;
+                isCaby = false;
+            }
+
             if (marker < 0) {
                 out.append(Text.literal(plain.substring(idx)).setStyle(style));
                 break;
@@ -165,17 +184,21 @@ public class GoatedPlayersManager {
                 out.append(Text.literal(plain.substring(idx, marker)).setStyle(style));
             }
 
-            // Render capybara icon with custom bitmap font.
-            out.append(Text.literal(CAPY_GLYPH).setStyle(style.withFont(new StyleSpriteSource.Font(CAPY_FONT))));
-            idx = marker + CAPY_MARKER.length();
+            if (isCaby) {
+                Style iconStyle = style.withColor(Formatting.WHITE).withFont(new StyleSpriteSource.Font(CAPY_FONT));
+                out.append(Text.literal(CAPY_GLYPH).setStyle(iconStyle));
+                idx = marker + CAPY_MARKER.length();
+            } else {
+                Style iconStyle = style.withColor(Formatting.WHITE).withFont(new StyleSpriteSource.Font(FRANCE_FONT));
+                out.append(Text.literal(FRANCE_GLYPH).setStyle(iconStyle));
+                idx = marker + FRANCE_MARKER.length();
+            }
         }
     }
 
     public static void init() {
         GOATED_PLAYERS.clear();
-        if (!loadFromResources()) {
-            addFallbackEntries();
-        }
+        loadFromResources();
     }
 
     private static boolean loadFromResources() {
@@ -185,45 +208,29 @@ public class GoatedPlayersManager {
         try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
             JsonElement element = JsonParser.parseReader(reader);
             if (!element.isJsonObject()) return false;
-
-            JsonObject root = element.getAsJsonObject();
-            for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
-                String key = entry.getKey().toLowerCase();
-                JsonElement value = entry.getValue();
-
-                if (value.isJsonPrimitive()) {
-                    String displayName = sanitizeDisplayName(value.getAsString());
-                    GOATED_PLAYERS.put(key, new GoatedEntry(displayName, new int[] {255, 255, 255, 127}));
-                } else if (value.isJsonObject()) {
-                    JsonObject obj = value.getAsJsonObject();
-                    String displayName = obj.has("displayName")
-                        ? sanitizeDisplayName(obj.get("displayName").getAsString())
-                        : sanitizeDisplayName(entry.getKey());
-                    GOATED_PLAYERS.put(key, new GoatedEntry(displayName, new int[] {255, 255, 255, 127}));
-                }
-            }
-            return !GOATED_PLAYERS.isEmpty();
+            return loadFromJsonObject(element.getAsJsonObject());
         } catch (Exception ignored) {
             return false;
         }
     }
 
-    private static void addFallbackEntries() {
-        addFallback("xenus", "xenus");
-        addFallback("xen", "xen");
-        addFallback("xen62", "xen62");
-        addFallback("dtxenus", "§d§ldt§5§lXenus§r");
-        addFallback("dtnyro", "§5§odtNyro§r");
-        addFallback("fxhz", "§b§k?§r §b§lFxhz§r §b§k?§r");
-        addFallback("ziimou", "ziimou");
-        addFallback("e0le_", "e0le_");
-        addFallback("avgcata12", "avgcata12");
-        addFallback("antorak", "antorak " + CAPY_MARKER);
-        addFallback("icantarch", "§5§k? §5§lI§d§lCant§5§lArch§r §5§k?");
-    }
+    private static boolean loadFromJsonObject(JsonObject root) {
+        for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+            String key = entry.getKey().toLowerCase();
+            JsonElement value = entry.getValue();
 
-    private static void addFallback(String key, String displayName) {
-        GOATED_PLAYERS.put(key.toLowerCase(), new GoatedEntry(sanitizeDisplayName(displayName), new int[] {255, 255, 255, 127}));
+            if (value.isJsonPrimitive()) {
+                String displayName = sanitizeDisplayName(value.getAsString());
+                GOATED_PLAYERS.put(key, new GoatedEntry(displayName, new int[] {255, 255, 255, 127}));
+            } else if (value.isJsonObject()) {
+                JsonObject obj = value.getAsJsonObject();
+                String displayName = obj.has("displayName")
+                    ? sanitizeDisplayName(obj.get("displayName").getAsString())
+                    : sanitizeDisplayName(entry.getKey());
+                GOATED_PLAYERS.put(key, new GoatedEntry(displayName, new int[] {255, 255, 255, 127}));
+            }
+        }
+        return !GOATED_PLAYERS.isEmpty();
     }
 
     private static final class GoatedEntry {
