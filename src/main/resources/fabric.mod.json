@@ -7,10 +7,6 @@
 	"authors": [
 		"Xenus"
 	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
 	"license": "CC0-1.0",
 	"icon": "assets/xenaddons/icon.png",
 	"environment": "*",
@@ -34,5 +30,10 @@
 		"minecraft": "~1.21.10",
 		"java": ">=21",
 		"fabric-api": "*"
+	},
+	"custom": {
+		"modmenu": {
+			"update_checker": true
+		}
 	}
 }
