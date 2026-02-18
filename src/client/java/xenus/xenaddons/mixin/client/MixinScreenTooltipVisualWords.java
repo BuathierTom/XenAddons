@@ -4,6 +4,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,24 +37,48 @@ public class MixinScreenTooltipVisualWords {
             String itemId = ItemPriceManager.resolvePricingId(stack);
             if (itemId != null) {
                 int count = Math.max(1, stack.getCount());
-                Double ahPrice = ItemPriceManager.getAhPrice(itemId);
-                Double bzPrice = ItemPriceManager.getBzPrice(itemId);
+                ItemPriceManager.BazaarPrice bazaar = itemPrice.showBzPrice.getValue() ? ItemPriceManager.getBazaarPrice(itemId) : null;
 
-                // Priority: Bazaar first, then Lowest BIN
-                if (itemPrice.showBzPrice.getValue() && bzPrice != null) {
-                    double total = bzPrice * count;
-                    String line = "§b§lBazaar: §6" + ItemPriceManager.formatCoins(total);
-                    if (count > 1) line += " §7(" + count + "x)";
-                    replaced.add(Text.literal(line));
-                } else if (itemPrice.showAhPrice.getValue() && ahPrice != null) {
-                    double total = ahPrice * count;
-                    String line = "§b§lLowest BIN: §6" + ItemPriceManager.formatCoins(total);
-                    if (count > 1) line += " §7(" + count + "x)";
-                    replaced.add(Text.literal(line));
+                // Bazaar has priority; if missing, fallback to Lowest BIN.
+                if (bazaar != null) {
+                    boolean showStack = count > 1;
+                    long handle = client.getWindow().getHandle();
+                    boolean shiftDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+                        || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+                    int multiplier = (showStack && shiftDown) ? count : 1;
+
+                    addPriceSectionSpacer(replaced);
+                    if (showStack) {
+                        replaced.add(Text.literal("§7[SHIFT show x" + count + "]"));
+                    }
+
+                    addBazaarLine(replaced, "Bazaar Buy", bazaar.buy(), multiplier);
+                    addBazaarLine(replaced, "Bazaar Sell", bazaar.sell(), multiplier);
+                    addBazaarLine(replaced, "Bazaar Insta-Buy", bazaar.instaBuy(), multiplier);
+                    addBazaarLine(replaced, "Bazaar Insta-Sell", bazaar.instaSell(), multiplier);
+                } else if (itemPrice.showAhPrice.getValue()) {
+                    Double lowestBin = ItemPriceManager.getLowestBin(itemId);
+                    if (lowestBin != null) {
+                        addPriceSectionSpacer(replaced);
+                        replaced.add(Text.literal("§b§lLowest BIN: §6" + ItemPriceManager.formatCoins(lowestBin)));
+                    }
                 }
             }
         }
 
         cir.setReturnValue(replaced);
+    }
+
+    private static void addBazaarLine(List<Text> tooltip, String label, Double price, int multiplier) {
+        if (price == null) return;
+        double shown = price * Math.max(1, multiplier);
+        tooltip.add(Text.literal("§b§l" + label + ": §6" + ItemPriceManager.formatCoins(shown)));
+    }
+
+    private static void addPriceSectionSpacer(List<Text> tooltip) {
+        if (tooltip.isEmpty()) return;
+        Text last = tooltip.get(tooltip.size() - 1);
+        if (last.getString().isEmpty()) return;
+        tooltip.add(Text.literal(""));
     }
 }

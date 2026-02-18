@@ -16,18 +16,19 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ItemPriceManager {
-    private static final String LOWEST_BIN_API_URL = "https://api.noammaddons.workers.dev/lowestbin";
-    private static final String BAZAAR_API_URL = "https://api.noammaddons.workers.dev/bazaar";
+    private static final String HYPIXEL_BAZAAR_API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
+    private static final String NOAMM_LOWEST_BIN_API_URL = "https://api.noammaddons.workers.dev/lowestbin";
     private static final long REFRESH_MS = 5 * 60 * 1000L;
 
-    private static final Map<String, Double> AH_BY_ID = new ConcurrentHashMap<>();
-    private static final Map<String, Double> BZ_BY_ID = new ConcurrentHashMap<>();
+    private static final Map<String, Double> LOWEST_BIN_BY_ID = new ConcurrentHashMap<>();
+    private static final Map<String, BazaarPrice> BAZAAR_BY_ID = new ConcurrentHashMap<>();
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final AtomicBoolean FETCHING = new AtomicBoolean(false);
@@ -37,24 +38,23 @@ public final class ItemPriceManager {
 
     public static void requestRefreshIfNeeded() {
         long now = System.currentTimeMillis();
-        if ((now - lastFetchAt) < REFRESH_MS && !AH_BY_ID.isEmpty() && !BZ_BY_ID.isEmpty()) {
+        if ((now - lastFetchAt) < REFRESH_MS && !LOWEST_BIN_BY_ID.isEmpty() && !BAZAAR_BY_ID.isEmpty()) {
             return;
         }
         if (!FETCHING.compareAndSet(false, true)) return;
 
         Thread.startVirtualThread(() -> {
             try {
-                // Bazaar first (requested priority)
-                Map<String, Double> bz = fetchFlatPriceMap(BAZAAR_API_URL);
+                Map<String, BazaarPrice> bz = fetchBazaarPrices();
                 if (!bz.isEmpty()) {
-                    BZ_BY_ID.clear();
-                    BZ_BY_ID.putAll(bz);
+                    BAZAAR_BY_ID.clear();
+                    BAZAAR_BY_ID.putAll(bz);
                 }
 
-                Map<String, Double> ah = fetchFlatPriceMap(LOWEST_BIN_API_URL);
-                if (!ah.isEmpty()) {
-                    AH_BY_ID.clear();
-                    AH_BY_ID.putAll(ah);
+                Map<String, Double> lb = fetchLowestBinsFromNoamm();
+                if (!lb.isEmpty()) {
+                    LOWEST_BIN_BY_ID.clear();
+                    LOWEST_BIN_BY_ID.putAll(lb);
                 }
 
                 lastFetchAt = System.currentTimeMillis();
@@ -66,14 +66,14 @@ public final class ItemPriceManager {
         });
     }
 
-    public static Double getAhPrice(String itemId) {
+    public static Double getLowestBin(String itemId) {
         if (itemId == null || itemId.isBlank()) return null;
-        return AH_BY_ID.get(itemId);
+        return LOWEST_BIN_BY_ID.get(itemId);
     }
 
-    public static Double getBzPrice(String itemId) {
+    public static BazaarPrice getBazaarPrice(String itemId) {
         if (itemId == null || itemId.isBlank()) return null;
-        return BZ_BY_ID.get(itemId);
+        return BAZAAR_BY_ID.get(itemId);
     }
 
     public static String extractSkyBlockId(ItemStack stack) {
@@ -194,24 +194,96 @@ public final class ItemPriceManager {
         return total;
     }
 
-    private static Map<String, Double> fetchFlatPriceMap(String url) {
-        Map<String, Double> out = new ConcurrentHashMap<>();
-        try {
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
-            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) return out;
+    private static Map<String, BazaarPrice> fetchBazaarPrices() {
+        Map<String, BazaarPrice> out = new HashMap<>();
+        JsonObject root = fetchJsonObject(HYPIXEL_BAZAAR_API_URL);
+        if (root == null || !root.has("products") || !root.get("products").isJsonObject()) return out;
 
-            JsonElement root = JsonParser.parseString(response.body());
-            if (!root.isJsonObject()) return out;
-            JsonObject object = root.getAsJsonObject();
-            for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-                JsonElement value = entry.getValue();
-                if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
-                    out.put(entry.getKey(), value.getAsDouble());
-                }
-            }
-        } catch (Exception ignored) {}
+        JsonObject products = root.getAsJsonObject("products");
+        for (Map.Entry<String, JsonElement> entry : products.entrySet()) {
+            String id = entry.getKey();
+            JsonObject product = entry.getValue().getAsJsonObject();
+
+            Double buy = readSummaryPrice(product, "buy_summary");
+            Double sell = readSummaryPrice(product, "sell_summary");
+            Double instaBuy = readQuickStatusPrice(product, "buyPrice");
+            Double instaSell = readQuickStatusPrice(product, "sellPrice");
+
+            if (buy == null && sell == null && instaBuy == null && instaSell == null) continue;
+            out.put(id, new BazaarPrice(buy, sell, instaBuy, instaSell));
+        }
+
         return out;
     }
 
+    private static Map<String, Double> fetchLowestBinsFromNoamm() {
+        Map<String, Double> out = new HashMap<>();
+        JsonElement rootElement = fetchJsonElement(NOAMM_LOWEST_BIN_API_URL);
+        if (rootElement == null || !rootElement.isJsonObject()) return out;
+
+        JsonObject root = rootElement.getAsJsonObject();
+        if (root.has("success") && root.get("success").isJsonPrimitive() && !root.get("success").getAsBoolean()) {
+            return out;
+        }
+
+        JsonObject source = null;
+        if (root.has("data") && root.get("data").isJsonObject()) {
+            source = root.getAsJsonObject("data");
+        } else if (root.has("lowestbin") && root.get("lowestbin").isJsonObject()) {
+            source = root.getAsJsonObject("lowestbin");
+        } else {
+            source = root;
+        }
+
+        for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
+            JsonElement value = entry.getValue();
+            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) continue;
+            out.put(entry.getKey(), value.getAsDouble());
+        }
+
+        return out;
+    }
+
+    private static Double readSummaryPrice(JsonObject product, String field) {
+        if (!product.has(field) || !product.get(field).isJsonArray()) return null;
+        var arr = product.getAsJsonArray(field);
+        if (arr.isEmpty() || !arr.get(0).isJsonObject()) return null;
+        JsonObject first = arr.get(0).getAsJsonObject();
+        if (!first.has("pricePerUnit") || !first.get("pricePerUnit").isJsonPrimitive()) return null;
+        return first.get("pricePerUnit").getAsDouble();
+    }
+
+    private static Double readQuickStatusPrice(JsonObject product, String field) {
+        if (!product.has("quick_status") || !product.get("quick_status").isJsonObject()) return null;
+        JsonObject quick = product.getAsJsonObject("quick_status");
+        if (!quick.has(field) || !quick.get(field).isJsonPrimitive()) return null;
+        return quick.get(field).getAsDouble();
+    }
+
+    private static JsonObject fetchJsonObject(String url) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) return null;
+
+            JsonElement root = JsonParser.parseString(response.body());
+            if (!root.isJsonObject()) return null;
+            return root.getAsJsonObject();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static JsonElement fetchJsonElement(String url) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) return null;
+            return JsonParser.parseString(response.body());
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    public record BazaarPrice(Double buy, Double sell, Double instaBuy, Double instaSell) {}
 }
