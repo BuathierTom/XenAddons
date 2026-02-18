@@ -7,6 +7,11 @@
 	"authors": [
 		"Xenus"
 	],
+  	"contact": {
+		"homepage": "https://modrinth.com/mod/xenaddons",
+		"issues": "https://discord.gg/yRbJJwGTPG",
+		"discord" : "https://discord.gg/yRbJJwGTPG"
+	},
 	"license": "All Rights Reserved",
 	"icon": "assets/xenaddons/icon.png",
 	"environment": "*",
@@ -33,7 +38,10 @@
 	},
 	"custom": {
 		"modmenu": {
-			"update_checker": true
+			"update_checker": true,
+			"links": {
+				"modmenu.discord": "https://discord.gg/yRbJJwGTPG"
+				}
 		}
 	}
 }

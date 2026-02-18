@@ -1,6 +1,7 @@
 package xenus.xenaddons.features.impl.misc;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -47,60 +48,56 @@ public class CommandAliasesModule extends Module {
          ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
              
              // d, dung -> warp dungeon_hub
-             dispatcher.register(ClientCommandManager.literal("d").executes(context -> {
+             registerSimple(dispatcher, "d", context -> {
                  if (!isEnabled(getInstance().warpDungeon)) return 0;
                  return runCommand("warp dungeon_hub");
-             }));
-             dispatcher.register(ClientCommandManager.literal("dung").executes(context -> {
+             });
+             registerSimple(dispatcher, "dung", context -> {
                  if (!isEnabled(getInstance().warpDungeon)) return 0;
                  return runCommand("warp dungeon_hub");
-             }));
+             });
              
              // ai -> p settings allinvite
-             dispatcher.register(ClientCommandManager.literal("ai").executes(context -> {
+             registerSimple(dispatcher, "ai", context -> {
                  if (!isEnabled(getInstance().allInvite)) return 0;
                  return runCommand("p settings allinvite");
-             }));
+             });
              
              // pko -> p kickoffline
-             dispatcher.register(ClientCommandManager.literal("pko").executes(context -> {
+             registerSimple(dispatcher, "pko", context -> {
                  if (!isEnabled(getInstance().kickOffline)) return 0;
                  return runCommand("p kickoffline");
-             }));
+             });
              
              // pd -> p disband
-             dispatcher.register(ClientCommandManager.literal("pd").executes(context -> {
+             registerSimple(dispatcher, "pd", context -> {
                  if (!isEnabled(getInstance().partyDisband)) return 0;
                  return runCommand("p disband");
-             }));
+             });
              
              // pk <player>
-             dispatcher.register(ClientCommandManager.literal("pk")
-                 .then(ClientCommandManager.argument("player", StringArgumentType.word())
-                 .executes(context -> {
-                     if (!isEnabled(getInstance().partyKick)) return 0;
-                     return runCommand("p kick " + StringArgumentType.getString(context, "player"));
-                 })));
+             registerPlayerArg(dispatcher, "pk", context -> {
+                 if (!isEnabled(getInstance().partyKick)) return 0;
+                 return runCommand("p kick " + StringArgumentType.getString(context, "player"));
+             });
                  
              // pt <player>
-             dispatcher.register(ClientCommandManager.literal("pt")
-                 .then(ClientCommandManager.argument("player", StringArgumentType.word())
-                 .executes(context -> {
-                     if (!isEnabled(getInstance().partyTransfer)) return 0;
-                     return runCommand("p transfer " + StringArgumentType.getString(context, "player"));
-                 })));
+             registerPlayerArg(dispatcher, "pt", context -> {
+                 if (!isEnabled(getInstance().partyTransfer)) return 0;
+                 return runCommand("p transfer " + StringArgumentType.getString(context, "player"));
+             });
              
              // lsb
-             dispatcher.register(ClientCommandManager.literal("lsb").executes(context -> {
+             registerSimple(dispatcher, "lsb", context -> {
                  if (!isEnabled(getInstance().lobbySb)) return 0;
                  executeLsb();
                  return 1;
-             }));
-             dispatcher.register(ClientCommandManager.literal("ld").executes(context -> {
+             });
+             registerSimple(dispatcher, "ld", context -> {
                  if (!isEnabled(getInstance().lobbySb)) return 0;
                  executeLd();
                  return 1;
-             }));
+             });
              
              // Floors
              registerJoinCommand(dispatcher, "f1", "CATACOMBS_FLOOR_ONE");
@@ -129,10 +126,36 @@ public class CommandAliasesModule extends Module {
     }
     
     private static void registerJoinCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String alias, String floor) {
-        dispatcher.register(ClientCommandManager.literal(alias).executes(context -> {
+        registerSimple(dispatcher, alias, context -> {
             if (!isEnabled(getInstance().floorShortcuts)) return 0;
             return runCommand("joininstance " + floor);
-        }));
+        });
+    }
+
+    private static void registerSimple(CommandDispatcher<FabricClientCommandSource> dispatcher, String command, com.mojang.brigadier.Command<FabricClientCommandSource> execution) {
+        dispatcher.register(ClientCommandManager.literal(command).executes(execution));
+        String capitalized = capitalizeFirst(command);
+        if (!capitalized.equals(command)) {
+            dispatcher.register(ClientCommandManager.literal(capitalized).executes(execution));
+        }
+    }
+
+    private static void registerPlayerArg(CommandDispatcher<FabricClientCommandSource> dispatcher, String command, com.mojang.brigadier.Command<FabricClientCommandSource> execution) {
+        LiteralArgumentBuilder<FabricClientCommandSource> base = ClientCommandManager.literal(command)
+            .then(ClientCommandManager.argument("player", StringArgumentType.word()).executes(execution));
+        dispatcher.register(base);
+
+        String capitalized = capitalizeFirst(command);
+        if (!capitalized.equals(command)) {
+            LiteralArgumentBuilder<FabricClientCommandSource> cap = ClientCommandManager.literal(capitalized)
+                .then(ClientCommandManager.argument("player", StringArgumentType.word()).executes(execution));
+            dispatcher.register(cap);
+        }
+    }
+
+    private static String capitalizeFirst(String input) {
+        if (input == null || input.isEmpty()) return input;
+        return Character.toUpperCase(input.charAt(0)) + input.substring(1);
     }
     
     private static void executeLsb() {

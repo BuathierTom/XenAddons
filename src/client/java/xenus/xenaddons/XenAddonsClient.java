@@ -40,21 +40,23 @@ public class XenAddonsClient implements ClientModInitializer {
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 
 			// Command: /invbuttons
-			dispatcher.register(literal("invbuttons")
+			var invbuttonsNode = dispatcher.register(literal("invbuttons")
 					.executes(context -> {
 						openMenuNextTick = true;
 						return 1;
 					})
 			);
+			dispatcher.register(literal("Invbuttons").redirect(invbuttonsNode));
 
 			// Command: /xenaddons or /xa
-			dispatcher.register(literal("xenaddons")
+			var xenaddonsNode = dispatcher.register(literal("xenaddons")
 					.executes(context -> {
 						openClickGUINextTick = true;
 						return 1;
 					})
 			);
-			dispatcher.register(literal("xa")
+			dispatcher.register(literal("Xenaddons").redirect(xenaddonsNode));
+			var xaNode = dispatcher.register(literal("xa")
 					.then(literal("title").executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug = 
                             xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
@@ -160,6 +162,7 @@ public class XenAddonsClient implements ClientModInitializer {
 						return 1;
 					})
 			);
+			dispatcher.register(literal("Xa").redirect(xaNode));
 		});
 
 		// Ticker to handle opening the screens safely on the client thread
