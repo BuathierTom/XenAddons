@@ -7,6 +7,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.MathHelper;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.NumberSetting;
@@ -64,11 +65,18 @@ public class PosTitlesModule extends Module {
 
     private void renderTopTitle(DrawContext drawContext) {
         int width = mc.getWindow().getScaledWidth();
+        int height = mc.getWindow().getScaledHeight();
         int textWidth = mc.textRenderer.getWidth(currentTitle);
+        int textHeight = mc.textRenderer.fontHeight;
         float scale = (float) hudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
-        int centerX = (width / 2) + hudOffsetX.getValue().intValue();
-        int y = hudY.getValue().intValue();
+        int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
+        int yRaw = hudY.getValue().intValue();
+        int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
+        int maxCenterX = width - minCenterX;
+        int centerX = MathHelper.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
+        int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
+        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
 
         drawContext.getMatrices().pushMatrix();
         drawContext.getMatrices().scale(scale, scale);

@@ -33,10 +33,6 @@ public class MixinInGameHudRenderPetNotif {
 
         // --- Render Title (Main Pet Name) ---
         float titleScale = notif.scale; // fallback
-        
-        context.getMatrices().pushMatrix();
-        context.getMatrices().scale(titleScale, titleScale);
-        
         int screenW = context.getScaledWindowWidth();
         int screenH = context.getScaledWindowHeight();
 
@@ -51,10 +47,18 @@ public class MixinInGameHudRenderPetNotif {
             titleScale = (float) module.getHudScale();
         }
 
-        int baseY = screenH / 2 + hudOffsetY;
+        context.getMatrices().pushMatrix();
+        context.getMatrices().scale(titleScale, titleScale);
+
+        int baseYRaw = screenH / 2 + hudOffsetY;
+        int minCenterX = (int) Math.ceil((titleW * titleScale) / 2.0f) + 2;
+        int maxCenterX = screenW - minCenterX;
+        int clampedCenterX = MathHelper.clamp(centerX + hudOffsetX, minCenterX, Math.max(minCenterX, maxCenterX));
+        int maxBaseY = screenH - (int) Math.ceil(tr.fontHeight * titleScale) - 2;
+        int baseY = MathHelper.clamp(baseYRaw, 2, Math.max(2, maxBaseY));
         
         float titleInv = 1.0f / titleScale;
-        int titleScreenX = centerX + hudOffsetX;
+        int titleScreenX = clampedCenterX;
         int titleScreenY = baseY;
 
         // Convert screen coords to scaled coords
@@ -76,9 +80,14 @@ public class MixinInGameHudRenderPetNotif {
         
         // Position subtitle below title. Title is ~22px tall visually.
         // Let's go down 25px from baseY.
-        int subScreenY = baseY + 25; 
+        int subScreenY = baseY + 25;
+        int minSubCenterX = (int) Math.ceil((subW * subScale) / 2.0f) + 2;
+        int maxSubCenterX = screenW - minSubCenterX;
+        int subCenterX = MathHelper.clamp(clampedCenterX, minSubCenterX, Math.max(minSubCenterX, maxSubCenterX));
+        int maxSubY = screenH - (int) Math.ceil(tr.fontHeight * subScale) - 2;
+        subScreenY = MathHelper.clamp(subScreenY, 2, Math.max(2, maxSubY));
 
-        int drawSubX = (int)(((centerX + hudOffsetX) * subInv) - (subW / 2));
+        int drawSubX = (int)((subCenterX * subInv) - (subW / 2));
         int drawSubY = (int)(subScreenY * subInv);
 
         context.drawTextWithShadow(tr, subtitle, drawSubX, drawSubY, 0xFFFFFFFF);

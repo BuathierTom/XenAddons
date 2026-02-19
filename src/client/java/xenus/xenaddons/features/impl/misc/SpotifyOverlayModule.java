@@ -1,6 +1,7 @@
 package xenus.xenaddons.features.impl.misc;
 
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.util.math.MathHelper;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.NumberSetting;
@@ -35,10 +36,17 @@ public class SpotifyOverlayModule extends Module {
 
     private void renderLine(DrawContext drawContext, String line) {
         int width = mc.getWindow().getScaledWidth();
+        int height = mc.getWindow().getScaledHeight();
+        int textWidth = mc.textRenderer.getWidth(line);
+        int textHeight = mc.textRenderer.fontHeight;
         float scale = (float) hudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
-        int leftX = (width / 2) + hudOffsetX.getValue().intValue();
-        int y = hudY.getValue().intValue();
+        int leftXRaw = (width / 2) + hudOffsetX.getValue().intValue();
+        int yRaw = hudY.getValue().intValue();
+        int maxLeftX = width - (int) Math.ceil(textWidth * scale) - 2;
+        int leftX = MathHelper.clamp(leftXRaw, 2, Math.max(2, maxLeftX));
+        int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
+        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
 
         drawContext.getMatrices().pushMatrix();
         drawContext.getMatrices().scale(scale, scale);
