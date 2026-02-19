@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.1-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.2-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -81,6 +81,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 
 - `Cursor 1.8.9`
   - Keeps inventory cursor behavior closer to legacy 1.8.9 style.
+  - Includes `Hard in dungeons only` mode for immediate center reset when cursor becomes visible in dungeons.
 
 - `Custom Size`
   - Applies per-player custom scale from JSON data.
@@ -93,8 +94,14 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `Item Price`
   - Shows SkyBlock item prices in tooltips.
   - Supports:
-    - `Bazaar Price`
-    - `AH Price` (Lowest BIN)
+    - `Bazaar Price` (Hypixel bazaar)
+    - `Lowest BIN` (Noamm API fallback when item is not bazaar)
+
+- `Spotify Overlay`
+  - HUD showing current playing track in colored format:
+    - `Spotify > Author - Song`
+  - Supports HUD move/scale through `Edit HUD`.
+  - Tab list remains visually on top of the overlay.
 
 - `InvButtons`
   - Adds configurable inventory buttons.
@@ -133,6 +140,15 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 The mod includes :
 - visual name replacements / formatting (`visualWords`)
 - player scaling (`customSizes`)
+
+## Update Checker
+
+- Runs once on first connection each launch.
+- Checks latest release on Modrinth.
+- Shows chat status:
+  - checking update
+  - update available / up-to-date
+- If update is available, downloads latest jar directly to `mods/` and asks for restart.
 
 ## Config File
 
