@@ -10,13 +10,11 @@ import xenus.xenaddons.utils.DungeonUtils;
 
 public class ZguegAddonsModule extends Module {
     
-    public final BooleanSetting chatHider = new BooleanSetting("Chat Hider", false);
     public final BooleanSetting hideRadioMessages = new BooleanSetting("Radio Msg", true); // Renamed
     public final BooleanSetting hideDiscordWarning = new BooleanSetting("Discord Warn", true); // Renamed
     
     public final BooleanSetting cryptsNotify = new BooleanSetting("Crypts Notify", false);
     public final BooleanSetting classNotify = new BooleanSetting("Class Notify", false);
-    public final BooleanSetting commandsEnabled = new BooleanSetting("Commands", false);
     
     // Command Settings
     public final BooleanSetting cmdBoom = new BooleanSetting("!boom", true);
@@ -38,24 +36,11 @@ public class ZguegAddonsModule extends Module {
 
     public ZguegAddonsModule() {
         super("ZguegAddons", "Collection of ZguegAddons features", Category.MISC);
-        this.registerSetting(chatHider);
-        this.registerSetting(hideRadioMessages);
-        this.registerSetting(hideDiscordWarning);
-        
-        hideRadioMessages.setParent(chatHider);
-        hideDiscordWarning.setParent(chatHider);
-        
         this.registerSetting(cryptsNotify);
         this.registerSetting(classNotify);
-        this.registerSetting(commandsEnabled);
-        
-        cmdBoom.setParent(commandsEnabled);
-        cmdRng.setParent(commandsEnabled);
-        cmdGay.setParent(commandsEnabled);
-        cmdRacist.setParent(commandsEnabled);
-        cmdPy.setParent(commandsEnabled);
-        cmdGwer.setParent(commandsEnabled);
-        cmdSize.setParent(commandsEnabled);
+
+        this.registerSetting(hideRadioMessages);
+        this.registerSetting(hideDiscordWarning);
         
         this.registerSetting(cmdBoom);
         this.registerSetting(cmdRng);
@@ -116,7 +101,7 @@ public class ZguegAddonsModule extends Module {
     
     private boolean handleChatHide(Text message) {
         String msg = message.getString();
-        if (commandsEnabled.getValue()) {
+        if (hasAnyCommandEnabled()) {
             processPartyMessage(msg);
         }
         
@@ -137,9 +122,17 @@ public class ZguegAddonsModule extends Module {
             if (modified) return false;
         }
 
-        if (!chatHider.getValue()) return true;
-        
         return true;
+    }
+
+    private boolean hasAnyCommandEnabled() {
+        return cmdBoom.getValue()
+            || cmdRng.getValue()
+            || cmdGay.getValue()
+            || cmdRacist.getValue()
+            || cmdPy.getValue()
+            || cmdGwer.getValue()
+            || cmdSize.getValue();
     }
 
     private void processPartyMessage(String msg) {

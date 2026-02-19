@@ -178,7 +178,7 @@ public class XenAddonsClient implements ClientModInitializer {
 			}
 			if (openClickGUINextTick) {
 				openClickGUINextTick = false;
-				client.setScreen(new xenus.xenaddons.gui.clickgui.ClickGUI());
+				xenus.xenaddons.zen.managers.config.ConfigManager.openConfig();
 			}
 		});
 

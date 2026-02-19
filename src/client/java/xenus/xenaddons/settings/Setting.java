@@ -40,6 +40,10 @@ public class Setting<T> {
     public void setParent(Setting<?> parent) {
         this.parent = parent;
     }
+
+    public Setting<?> getParentSetting() {
+        return parent;
+    }
     
     public boolean isSubSetting() {
         return parent != null;

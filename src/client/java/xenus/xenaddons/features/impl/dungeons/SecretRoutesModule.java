@@ -27,9 +27,6 @@ public class SecretRoutesModule extends Module {
     public final NumberSetting lineWidth = new NumberSetting("Line width", 4, 1, 10, 1);
     public final NumberSetting boxAlpha = new NumberSetting("Box Alpha", 0.5, 0, 1, 0.1);
 
-    // Render Toggles (BooleanSetting with expanded property, like Commands)
-    public final BooleanSetting renderToggles = new BooleanSetting("Render Toggles", true);
-    
     // Feature Toggles (matching SecretRoutesLite defaults)
     public final BooleanSetting renderEtherwarps = new BooleanSetting("Etherwarps", true);
     public final BooleanSetting renderMines = new BooleanSetting("Mines", true);
@@ -66,24 +63,14 @@ public class SecretRoutesModule extends Module {
         this.registerSetting(lineWidth);
         this.registerSetting(boxAlpha);
 
-        // Render Toggles section (like Commands)
-        this.registerSetting(renderToggles);
-        renderToggles.expanded = false; // Collapsed by default
-        renderEtherwarps.setVisibility(() -> renderToggles.expanded);
+        // Render Toggles section
         this.registerSetting(renderEtherwarps);
-        renderMines.setVisibility(() -> renderToggles.expanded);
         this.registerSetting(renderMines);
-        renderInteracts.setVisibility(() -> renderToggles.expanded);
         this.registerSetting(renderInteracts);
-        renderSuperboom.setVisibility(() -> renderToggles.expanded);
         this.registerSetting(renderSuperboom);
-        renderEnderpearls.setVisibility(() -> renderToggles.expanded);
         this.registerSetting(renderEnderpearls);
-        renderSecretsItem.setVisibility(() -> renderToggles.expanded);
         this.registerSetting(renderSecretsItem);
-        renderSecretInteract.setVisibility(() -> renderToggles.expanded);
         this.registerSetting(renderSecretInteract);
-        renderSecretBat.setVisibility(() -> renderToggles.expanded);
         this.registerSetting(renderSecretBat);
 
         // Initialize the sub-systems

@@ -27,7 +27,6 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule());
         
         modules.add(new xenus.xenaddons.features.impl.misc.CommandAliasesModule());
-        modules.add(new xenus.xenaddons.features.impl.misc.CommandKeybindsModule());
         modules.add(new xenus.xenaddons.features.impl.dev.EditHudModule());
         modules.add(new xenus.xenaddons.features.impl.dev.DebugModule()); // Register DebugModule
         
