@@ -3,8 +3,8 @@ package xenus.xenaddons.features.impl.dev;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.ColorSetting;
-import xenus.xenaddons.zen.config.ui.ClickGUI;
-import xenus.xenaddons.zen.ui.Theme;
+import xenus.xenaddons.gui.config.ui.ClickGUI;
+import xenus.xenaddons.gui.ui.Theme;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +34,7 @@ public class ColorsModule extends Module {
             mc.execute(() -> Theme.setMenuPrimary(newColor));
             mc.execute(() -> {
                 if (mc.currentScreen == ClickGUI.INSTANCE) {
-                    xenus.xenaddons.zen.managers.config.ConfigManager.openConfig();
+                    xenus.xenaddons.gui.managers.config.ConfigManager.openConfig();
                 }
             });
         }, 2, TimeUnit.SECONDS);
