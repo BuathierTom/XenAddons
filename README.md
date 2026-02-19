@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.2-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.3-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -71,14 +71,6 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
     - `/f1`..`/f7`
     - `/m1`..`/m7`
 
-- `Custom Keybinds`
-  - Bind commands to keys:
-    - Wardrobe
-    - Equipment
-    - Trades
-    - Garden
-    - Pets
-
 - `Cursor 1.8.9`
   - Keeps inventory cursor behavior closer to legacy 1.8.9 style.
   - Includes `Hard in dungeons only` mode for immediate center reset when cursor becomes visible in dungeons.
@@ -126,8 +118,9 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 
 ### Dev
 
-- `Colors`
+- `Config GUI`
   - GUI theme color settings.
+  - Includes HUD custom font toggle.
 
 - `Edit HUD`
   - Move/scale/reset supported HUD elements.
