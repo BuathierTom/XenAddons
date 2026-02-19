@@ -18,6 +18,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.misc.CustomSizeModule());
         modules.add(new xenus.xenaddons.features.impl.misc.CopyChatModule());
         modules.add(new xenus.xenaddons.features.impl.misc.ItemPriceModule());
+        modules.add(new xenus.xenaddons.features.impl.misc.SpotifyOverlayModule());
         
         modules.add(new xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosMsgModule());

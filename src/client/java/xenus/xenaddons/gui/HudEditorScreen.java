@@ -11,6 +11,7 @@ import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule;
 import xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule;
 import xenus.xenaddons.features.impl.dungeons.PosTitlesModule;
+import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule;
 import xenus.xenaddons.hud.HudState;
 import xenus.xenaddons.utils.RenderUtils;
 
@@ -19,11 +20,13 @@ public class HudEditorScreen extends Screen {
     private static final Text AUTOPET_TITLE_PREVIEW = Text.literal("Golden Dragon");
     private static final Text AUTOPET_SUB_PREVIEW = Text.literal("Autopet");
     private static final Text PLAYERS_LEAPED_PREVIEW = Text.literal("2/4 Players Leaped");
+    private static final Text SPOTIFY_PREVIEW = Text.literal("Spotify > Auteur - Nom musique");
 
     private final Screen parent;
     private PosTitlesModule posTitlesModule;
     private AutoPetRuleTitleModule autoPetModule;
     private PlayersLeapedModule playersLeapedModule;
+    private SpotifyOverlayModule spotifyOverlayModule;
 
     private ComponentType dragging = null;
     private int dragOffsetX = 0;
@@ -42,6 +45,7 @@ public class HudEditorScreen extends Screen {
         posTitlesModule = ModuleManager.getModule(PosTitlesModule.class);
         autoPetModule = ModuleManager.getModule(AutoPetRuleTitleModule.class);
         playersLeapedModule = ModuleManager.getModule(PlayersLeapedModule.class);
+        spotifyOverlayModule = ModuleManager.getModule(SpotifyOverlayModule.class);
     }
 
     @Override
@@ -54,6 +58,7 @@ public class HudEditorScreen extends Screen {
         Bounds posBounds = getPosTitlesBounds();
         Bounds petBounds = getAutoPetBounds();
         Bounds playersLeapedBounds = getPlayersLeapedBounds();
+        Bounds spotifyBounds = getSpotifyBounds();
 
         renderComponentBox(context, mouseX, mouseY, posBounds, "Pos Titles");
         renderPosTitlesPreview(context, posBounds);
@@ -63,6 +68,9 @@ public class HudEditorScreen extends Screen {
 
         renderComponentBox(context, mouseX, mouseY, playersLeapedBounds, "Players Leaped");
         renderPlayersLeapedPreview(context, playersLeapedBounds);
+
+        renderComponentBox(context, mouseX, mouseY, spotifyBounds, "Spotify Overlay");
+        renderSpotifyPreview(context, spotifyBounds);
 
         renderResetButton(context, mouseX, mouseY);
     }
@@ -100,6 +108,14 @@ public class HudEditorScreen extends Screen {
             dragging = ComponentType.POS_TITLES;
             dragOffsetX = mouseX - posBounds.x;
             dragOffsetY = mouseY - posBounds.y;
+            return true;
+        }
+
+        Bounds spotifyBounds = getSpotifyBounds();
+        if (spotifyBounds.contains(mouseX, mouseY)) {
+            dragging = ComponentType.SPOTIFY_OVERLAY;
+            dragOffsetX = mouseX - spotifyBounds.x;
+            dragOffsetY = mouseY - spotifyBounds.y;
             return true;
         }
 
@@ -145,6 +161,12 @@ public class HudEditorScreen extends Screen {
             return true;
         }
 
+        if (dragging == ComponentType.SPOTIFY_OVERLAY && spotifyOverlayModule != null) {
+            spotifyOverlayModule.setHudOffsetX(newX - (width / 2));
+            spotifyOverlayModule.setHudY(newY);
+            return true;
+        }
+
         return super.mouseDragged(click, deltaX, deltaY);
     }
 
@@ -159,6 +181,7 @@ public class HudEditorScreen extends Screen {
             if (getAutoPetBounds().contains(mx, my)) target = ComponentType.AUTOPET_TITLE;
             else if (getPlayersLeapedBounds().contains(mx, my)) target = ComponentType.PLAYERS_LEAPED;
             else if (getPosTitlesBounds().contains(mx, my)) target = ComponentType.POS_TITLES;
+            else if (getSpotifyBounds().contains(mx, my)) target = ComponentType.SPOTIFY_OVERLAY;
         }
 
         if (target == ComponentType.AUTOPET_TITLE && autoPetModule != null) {
@@ -176,6 +199,12 @@ public class HudEditorScreen extends Screen {
         if (target == ComponentType.PLAYERS_LEAPED && playersLeapedModule != null) {
             double step = verticalAmount > 0 ? 0.05 : -0.05;
             playersLeapedModule.setHudScale(playersLeapedModule.getHudScale() + step);
+            return true;
+        }
+
+        if (target == ComponentType.SPOTIFY_OVERLAY && spotifyOverlayModule != null) {
+            double step = verticalAmount > 0 ? 0.05 : -0.05;
+            spotifyOverlayModule.setHudScale(spotifyOverlayModule.getHudScale() + step);
             return true;
         }
 
@@ -230,6 +259,11 @@ public class HudEditorScreen extends Screen {
             playersLeapedModule.setHudY(68);
             playersLeapedModule.setHudScale(1.0);
         }
+        if (spotifyOverlayModule != null) {
+            spotifyOverlayModule.setHudOffsetX(0);
+            spotifyOverlayModule.setHudY(84);
+            spotifyOverlayModule.setHudScale(1.0);
+        }
     }
 
     private Bounds getPosTitlesBounds() {
@@ -276,6 +310,19 @@ public class HudEditorScreen extends Screen {
         if (playersLeapedModule != null) {
             x += playersLeapedModule.getHudOffsetX();
             y = playersLeapedModule.getHudY();
+        }
+        return new Bounds(x, y, scaledWidth, (int) Math.ceil(textRenderer.fontHeight * scale));
+    }
+
+    private Bounds getSpotifyBounds() {
+        int textWidth = textRenderer.getWidth(SPOTIFY_PREVIEW);
+        float scale = spotifyOverlayModule != null ? (float) spotifyOverlayModule.getHudScale() : 1.0f;
+        int scaledWidth = (int) Math.ceil(textWidth * scale);
+        int x = width / 2;
+        int y = 84;
+        if (spotifyOverlayModule != null) {
+            x += spotifyOverlayModule.getHudOffsetX();
+            y = spotifyOverlayModule.getHudY();
         }
         return new Bounds(x, y, scaledWidth, (int) Math.ceil(textRenderer.fontHeight * scale));
     }
@@ -329,6 +376,17 @@ public class HudEditorScreen extends Screen {
         context.getMatrices().popMatrix();
     }
 
+    private void renderSpotifyPreview(DrawContext context, Bounds bounds) {
+        float scale = spotifyOverlayModule != null ? (float) spotifyOverlayModule.getHudScale() : 1.0f;
+        float inv = 1.0f / scale;
+        context.getMatrices().pushMatrix();
+        context.getMatrices().scale(scale, scale);
+        int drawX = (int) (bounds.x * inv);
+        int drawY = (int) (bounds.y * inv);
+        context.drawTextWithShadow(textRenderer, "§6Spotify §7> §aAuteur §7- §bNom musique", drawX, drawY, 0xFFFFFFFF);
+        context.getMatrices().popMatrix();
+    }
+
     private void renderComponentBox(DrawContext context, int mouseX, int mouseY, Bounds bounds, String name) {
         boolean hovered = bounds.contains(mouseX, mouseY);
         boolean active = dragging != null && dragging.label.equals(name);
@@ -344,7 +402,8 @@ public class HudEditorScreen extends Screen {
     private enum ComponentType {
         POS_TITLES("Pos Titles"),
         AUTOPET_TITLE("AutoPet Title"),
-        PLAYERS_LEAPED("Players Leaped");
+        PLAYERS_LEAPED("Players Leaped"),
+        SPOTIFY_OVERLAY("Spotify Overlay");
 
         private final String label;
 
