@@ -1,0 +1,162 @@
+package xenus.xenaddons.features.impl.dungeons;
+
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.util.math.MathHelper;
+import xenus.xenaddons.features.Category;
+import xenus.xenaddons.features.Module;
+import xenus.xenaddons.settings.NumberSetting;
+import xenus.xenaddons.utils.DungeonUtils;
+
+import java.util.regex.Pattern;
+
+public class InvisibilityTimerModule extends Module {
+    private static final Pattern SPIRIT_REGEX = Pattern.compile("^Second Wind Activated! Your Spirit Mask saved your life!$");
+    private static final Pattern BONZO_REGEX = Pattern.compile("^Your (?:. )?Bonzo's Mask saved your life!$");
+    private static final Pattern PHOENIX_REGEX = Pattern.compile("^Your Phoenix Pet saved you from certain death!$");
+
+    private static final int SPIRIT_INVINC_TICKS = 30;
+    private static final int BONZO_INVINC_TICKS = 60;
+    private static final int PHOENIX_INVINC_TICKS = 80;
+
+    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
+    private final NumberSetting hudY = new NumberSetting("HUD Y", 100, -1000, 1000, 1);
+    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 1.0, 0.5, 6.0, 0.05);
+
+    private int activeTicks = 0;
+    private String activeType = null;
+    private String lastProcKey = "";
+    private long lastProcAt = 0L;
+
+    public InvisibilityTimerModule() {
+        super("Invisibility timer", "Shows invincibility duration after mask/phoenix procs", Category.DUNGEON);
+
+        hudOffsetX.setVisibility(() -> false);
+        hudY.setVisibility(() -> false);
+        hudScale.setVisibility(() -> false);
+        this.registerSetting(hudOffsetX);
+        this.registerSetting(hudY);
+        this.registerSetting(hudScale);
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (activeTicks > 0) activeTicks--;
+            if (activeTicks <= 0) activeType = null;
+            if (!this.isEnabled()) {
+                activeTicks = 0;
+                activeType = null;
+            }
+        });
+
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+            if (!this.isEnabled()) return;
+            handleChat(message.getString());
+        });
+
+        ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
+            if (this.isEnabled()) handleChat(message.getString());
+            return true;
+        });
+
+        HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
+            if (!this.isEnabled()) return;
+            if (!DungeonUtils.inDungeon()) return;
+            if (activeTicks <= 0 || activeType == null) return;
+            renderLine(drawContext, getDisplayText(false));
+        });
+    }
+
+    private void handleChat(String rawMessage) {
+        if (!DungeonUtils.inDungeon()) return;
+        if (rawMessage == null || rawMessage.isEmpty()) return;
+
+        String clean = rawMessage.replaceAll("§[0-9a-fk-or]", "");
+
+        int ticks = 0;
+        String type = null;
+        if (SPIRIT_REGEX.matcher(clean).matches()) {
+            ticks = SPIRIT_INVINC_TICKS;
+            type = "Spirit";
+        } else if (BONZO_REGEX.matcher(clean).matches()) {
+            ticks = BONZO_INVINC_TICKS;
+            type = "Bonzo";
+        } else if (PHOENIX_REGEX.matcher(clean).matches()) {
+            ticks = PHOENIX_INVINC_TICKS;
+            type = "Phoenix";
+        }
+
+        if (ticks <= 0 || type == null) return;
+
+        long now = System.currentTimeMillis();
+        String key = type + "|" + clean;
+        if (key.equals(lastProcKey) && (now - lastProcAt) < 250L) return;
+
+        lastProcKey = key;
+        lastProcAt = now;
+        activeType = type;
+        activeTicks = ticks;
+    }
+
+    public String getDisplayText(boolean preview) {
+        if (preview) return "2500";
+        if (activeTicks <= 0 || activeType == null) return "";
+        return String.valueOf(activeTicks * 50);
+    }
+
+    private void renderLine(DrawContext drawContext, String line) {
+        if (line == null || line.isBlank()) return;
+
+        int width = mc.getWindow().getScaledWidth();
+        int height = mc.getWindow().getScaledHeight();
+        int textWidth = mc.textRenderer.getWidth(line);
+        int textHeight = mc.textRenderer.fontHeight;
+
+        float scale = (float) hudScale.getValue().doubleValue();
+        float inv = 1.0f / scale;
+        int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
+        int yRaw = hudY.getValue().intValue();
+
+        int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
+        int maxCenterX = width - minCenterX;
+        int centerX = MathHelper.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
+
+        int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
+        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+
+        drawContext.getMatrices().pushMatrix();
+        drawContext.getMatrices().scale(scale, scale);
+        int x = (int) ((centerX * inv) - (textWidth / 2f));
+        int drawY = (int) (y * inv);
+        drawContext.drawTextWithShadow(mc.textRenderer, line, x, drawY, 0xFFFFAA00);
+        drawContext.getMatrices().popMatrix();
+    }
+
+    public void renderPreview(DrawContext drawContext) {
+        renderLine(drawContext, getDisplayText(true));
+    }
+
+    public int getHudOffsetX() {
+        return hudOffsetX.getValue().intValue();
+    }
+
+    public int getHudY() {
+        return hudY.getValue().intValue();
+    }
+
+    public double getHudScale() {
+        return hudScale.getValue();
+    }
+
+    public void setHudOffsetX(int value) {
+        hudOffsetX.setValue((double) value);
+    }
+
+    public void setHudY(int value) {
+        hudY.setValue((double) value);
+    }
+
+    public void setHudScale(double value) {
+        hudScale.setValue(value);
+    }
+}

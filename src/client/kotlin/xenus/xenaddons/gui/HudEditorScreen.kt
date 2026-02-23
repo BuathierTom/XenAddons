@@ -10,6 +10,7 @@ import org.lwjgl.glfw.GLFW
 import xenus.xenaddons.config.ConfigManager
 import xenus.xenaddons.features.ModuleManager
 import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule
+import xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule
 import xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule
 import xenus.xenaddons.features.impl.dungeons.PosTitlesModule
 import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule
@@ -21,6 +22,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     private var posTitlesModule: PosTitlesModule? = null
     private var autoPetModule: AutoPetRuleTitleModule? = null
     private var playersLeapedModule: PlayersLeapedModule? = null
+    private var invisibilityTimerModule: InvisibilityTimerModule? = null
     private var spotifyOverlayModule: SpotifyOverlayModule? = null
 
     private var dragging: ComponentType? = null
@@ -37,6 +39,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         posTitlesModule = ModuleManager.getModule(PosTitlesModule::class.java)
         autoPetModule = ModuleManager.getModule(AutoPetRuleTitleModule::class.java)
         playersLeapedModule = ModuleManager.getModule(PlayersLeapedModule::class.java)
+        invisibilityTimerModule = ModuleManager.getModule(InvisibilityTimerModule::class.java)
         spotifyOverlayModule = ModuleManager.getModule(SpotifyOverlayModule::class.java)
     }
 
@@ -55,6 +58,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         renderComponent(context, mouseX, mouseY, ComponentType.POS_TITLES, getPosTitlesBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.AUTOPET_TITLE, getAutoPetBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.PLAYERS_LEAPED, getPlayersLeapedBounds())
+        renderComponent(context, mouseX, mouseY, ComponentType.INVISIBILITY_TIMER, getInvisibilityTimerBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.SPOTIFY_OVERLAY, getSpotifyBounds())
 
         renderResetButton(context, mouseX, mouseY)
@@ -170,6 +174,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.POS_TITLES -> renderPosTitlesPreview(context, bounds)
             ComponentType.AUTOPET_TITLE -> renderAutoPetPreview(context, bounds)
             ComponentType.PLAYERS_LEAPED -> renderPlayersLeapedPreview(context, bounds)
+            ComponentType.INVISIBILITY_TIMER -> renderInvisibilityTimerPreview(context, bounds)
             ComponentType.SPOTIFY_OVERLAY -> renderSpotifyPreview(context, bounds)
         }
     }
@@ -224,6 +229,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
                 playersLeapedModule?.setHudY(68)
                 playersLeapedModule?.setHudScale(1.0)
             }
+            ComponentType.INVISIBILITY_TIMER -> {
+                invisibilityTimerModule?.setHudOffsetX(0)
+                invisibilityTimerModule?.setHudY(100)
+                invisibilityTimerModule?.setHudScale(1.0)
+            }
             ComponentType.SPOTIFY_OVERLAY -> {
                 spotifyOverlayModule?.setHudOffsetX(0)
                 spotifyOverlayModule?.setHudY(84)
@@ -241,6 +251,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.POS_TITLES -> posTitlesModule?.hudScale ?: 1.0
             ComponentType.AUTOPET_TITLE -> autoPetModule?.hudScale ?: 2.5
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.hudScale ?: 1.0
+            ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.hudScale ?: 1.0
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.hudScale ?: 1.0
         }
     }
@@ -251,6 +262,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.POS_TITLES -> posTitlesModule?.setHudScale(clamped)
             ComponentType.AUTOPET_TITLE -> autoPetModule?.setHudScale(clamped)
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.setHudScale(clamped)
+            ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.setHudScale(clamped)
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.setHudScale(clamped)
         }
     }
@@ -258,6 +270,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     private fun getActiveComponent(mouseX: Int, mouseY: Int): ComponentType? {
         val priority = listOf(
             ComponentType.SPOTIFY_OVERLAY,
+            ComponentType.INVISIBILITY_TIMER,
             ComponentType.PLAYERS_LEAPED,
             ComponentType.AUTOPET_TITLE,
             ComponentType.POS_TITLES
@@ -270,6 +283,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.POS_TITLES -> getPosTitlesBounds()
             ComponentType.AUTOPET_TITLE -> getAutoPetBounds()
             ComponentType.PLAYERS_LEAPED -> getPlayersLeapedBounds()
+            ComponentType.INVISIBILITY_TIMER -> getInvisibilityTimerBounds()
             ComponentType.SPOTIFY_OVERLAY -> getSpotifyBounds()
         }
     }
@@ -297,6 +311,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
                 val centerX = x + (referenceBounds.w / 2)
                 playersLeapedModule?.setHudOffsetX(centerX - (width / 2))
                 playersLeapedModule?.setHudY(y)
+            }
+            ComponentType.INVISIBILITY_TIMER -> {
+                val centerX = x + (referenceBounds.w / 2)
+                invisibilityTimerModule?.setHudOffsetX(centerX - (width / 2))
+                invisibilityTimerModule?.setHudY(y)
             }
             ComponentType.SPOTIFY_OVERLAY -> {
                 spotifyOverlayModule?.setHudOffsetX(x - (width / 2))
@@ -460,6 +479,20 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
     }
 
+    private fun getInvisibilityTimerBounds(): Bounds {
+        val preview = invisibilityTimerModule?.getDisplayText(true) ?: "2500"
+        val textWidth = textRenderer.getWidth(preview)
+        val scale = (invisibilityTimerModule?.hudScale ?: 1.0).toFloat()
+        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
+        var x = (width - scaledWidth) / 2
+        var y = 100
+        invisibilityTimerModule?.let {
+            x += it.hudOffsetX
+            y = it.hudY
+        }
+        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
+    }
+
     private fun renderPosTitlesPreview(context: DrawContext, bounds: Bounds) {
         val scale = (posTitlesModule?.hudScale ?: 1.0).toFloat()
         val inv = 1.0f / scale
@@ -513,6 +546,16 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
+    private fun renderInvisibilityTimerPreview(context: DrawContext, bounds: Bounds) {
+        val preview = invisibilityTimerModule?.getDisplayText(true) ?: "2500"
+        val scale = (invisibilityTimerModule?.hudScale ?: 1.0).toFloat()
+        val inv = 1.0f / scale
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.drawTextWithShadow(textRenderer, preview, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFAA00.toInt())
+        context.matrices.popMatrix()
+    }
+
     private fun renderComponentBox(context: DrawContext, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
         val hovered = bounds.contains(mouseX, mouseY)
         val active = dragging == type
@@ -536,6 +579,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         POS_TITLES("Pos Titles"),
         AUTOPET_TITLE("AutoPet Title"),
         PLAYERS_LEAPED("Players Leaped"),
+        INVISIBILITY_TIMER("Invisibility timer"),
         SPOTIFY_OVERLAY("Spotify Overlay")
     }
 
