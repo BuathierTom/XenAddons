@@ -2,6 +2,7 @@ package xenus.xenaddons.features.impl.dungeons.secretroutes;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
@@ -39,6 +40,22 @@ public class AnotherRenderingUtil {
                     .target(RenderLayer.MAIN_TARGET)
                     .build(false)
     );
+    private static final RenderPipeline SEE_THROUGH_LINE_PIPELINE = RenderPipelines.register(
+            RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET)
+                    .withLocation(Identifier.of("xenaddons", "see_through_lines"))
+                    .withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.LINES)
+                    .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+                    .withCull(false)
+                    .build()
+    );
+    private static final RenderLayer SEE_THROUGH_LINE_LAYER = RenderLayer.of(
+            "secretroutes_see_through_lines",
+            1536,
+            SEE_THROUGH_LINE_PIPELINE,
+            RenderLayer.MultiPhaseParameters.builder()
+                    .target(RenderLayer.MAIN_TARGET)
+                    .build(false)
+    );
     public static List<RenderTypes.WorldText> worldTexts = new ArrayList<>();
     public static List<RenderTypes.OutlinedBox> outlinedBoxes = new ArrayList<>();
     public static List<RenderTypes.FilledBox> filledBoxes = new ArrayList<>();
@@ -67,8 +84,8 @@ public class AnotherRenderingUtil {
 
             renderFilledBoxes(consumers, matrices, cameraPos, true, SEE_THROUGH_LAYER);
             renderOutlinedBoxesAsQuads(consumers, matrices, cameraPos, true, SEE_THROUGH_LAYER);
-            renderLinesAsQuads(consumers, matrices, cameraPos, true, SEE_THROUGH_LAYER);
-            renderLinesFromCursorAsQuads(consumers, matrices, cameraPos, true, SEE_THROUGH_LAYER);
+            renderLines(consumers, matrices, cameraPos, true);
+            renderLinesFromCursor(consumers, matrices, cameraPos, true);
 
             consumers.draw();
 
@@ -76,8 +93,8 @@ public class AnotherRenderingUtil {
 
             renderFilledBoxes(consumers, matrices, cameraPos, false, normalLayer);
             renderOutlinedBoxesAsQuads(consumers, matrices, cameraPos, false, normalLayer);
-            renderLinesAsQuads(consumers, matrices, cameraPos, false, normalLayer);
-            renderLinesFromCursorAsQuads(consumers, matrices, cameraPos, false, normalLayer);
+            renderLines(consumers, matrices, cameraPos, false);
+            renderLinesFromCursor(consumers, matrices, cameraPos, false);
 
             consumers.draw();
         }
@@ -136,9 +153,9 @@ public class AnotherRenderingUtil {
         }
     }
 
-    private static void renderLinesAsQuads(VertexConsumerProvider consumers, MatrixStack matrices, Vec3d camPos, boolean throughWalls, RenderLayer layer) {
+    private static void renderLines(VertexConsumerProvider consumers, MatrixStack matrices, Vec3d camPos, boolean throughWalls) {
+        RenderLayer layer = throughWalls ? SEE_THROUGH_LINE_LAYER : RenderLayer.getLines();
         VertexConsumer buffer = consumers.getBuffer(layer);
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
 
         for (RenderTypes.Line line : lines) {
             if (line.throughWalls != throughWalls) continue;
@@ -149,15 +166,14 @@ public class AnotherRenderingUtil {
 
             Vec3d start = line.start.subtract(camPos);
             Vec3d end = line.end.subtract(camPos);
-            float thickness = toWorldThickness(line.lineWidth);
-
-            drawBillboardLine(buffer, matrix, start, end, r, g, b, 1.0f, thickness);
+            RenderSystem.lineWidth(Math.max(1.0f, line.lineWidth));
+            drawSimpleLine(buffer, matrices, start, end, r, g, b, 1.0f);
         }
     }
 
-    private static void renderLinesFromCursorAsQuads(VertexConsumerProvider consumers, MatrixStack matrices, Vec3d camPos, boolean throughWalls, RenderLayer layer) {
+    private static void renderLinesFromCursor(VertexConsumerProvider consumers, MatrixStack matrices, Vec3d camPos, boolean throughWalls) {
+        RenderLayer layer = throughWalls ? SEE_THROUGH_LINE_LAYER : RenderLayer.getLines();
         VertexConsumer buffer = consumers.getBuffer(layer);
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
 
         for (RenderTypes.LineFromCursor line : linesFromCursor) {
             if (line.throughWalls != throughWalls) continue;
@@ -167,9 +183,8 @@ public class AnotherRenderingUtil {
             float b = line.color.getBlue() / 255f;
 
             Vec3d target = line.point.subtract(camPos);
-            float thickness = toWorldThickness(line.lineWidth);
-
-            drawBillboardLine(buffer, matrix, Vec3d.ZERO, target, r, g, b, 1.0f, thickness);
+            RenderSystem.lineWidth(Math.max(1.0f, line.lineWidth));
+            drawSimpleLine(buffer, matrices, Vec3d.ZERO, target, r, g, b, 1.0f);
         }
     }
 
@@ -215,6 +230,15 @@ public class AnotherRenderingUtil {
         double worldPerPixel = (2.0 * distance * Math.tan(fovRad * 0.5)) / framebufferHeight;
 
         return (float) Math.max(0.002f, pixelWidth * worldPerPixel);
+    }
+
+    private static void drawSimpleLine(VertexConsumer buffer, MatrixStack matrices, Vec3d start, Vec3d end, float r, float g, float b, float a) {
+        matrices.push();
+        matrices.translate(start.x, start.y, start.z);
+        Matrix4f matrix = matrices.peek().getPositionMatrix();
+        buffer.vertex(matrix, 0, 0, 0).color(r, g, b, a).normal(0, 1, 0);
+        buffer.vertex(matrix, (float) (end.x - start.x), (float) (end.y - start.y), (float) (end.z - start.z)).color(r, g, b, a).normal(0, 1, 0);
+        matrices.pop();
     }
 
     private static void drawBillboardLine(VertexConsumer buffer, Matrix4f mat, Vec3d start, Vec3d end, float r, float g, float b, float a, float thickness) {

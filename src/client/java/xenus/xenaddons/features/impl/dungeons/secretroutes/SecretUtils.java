@@ -35,7 +35,7 @@ public class SecretUtils {
 
         int currentIndex = OnEnterNewRoom.currentRoom.currentSecretIndex;
         boolean isCurrentSecret = (index2 == currentIndex);
-        boolean shouldRenderWaypoints = config.allSteps.getValue() || isCurrentSecret;
+        boolean shouldRenderWaypoints = isCurrentSecret;
 
         // Player to waypoint line
         if (isCurrentSecret && config.playerWaypointLine.getValue()) {
@@ -129,21 +129,23 @@ public class SecretUtils {
             AnotherRenderingUtil.addLinesFromPoints(linePoints, new Color(config.lineColor.getValue()), (float)config.lineWidth.getValue().doubleValue(), false);
         }
 
-        // Render "Start" on the first point of the currently rendered line.
+        // Render "Start" on the first point of each rendered route (visible through blocks).
         if (shouldRenderWaypoints && currentSecretWaypoints.has("locations")) {
             JsonArray currentLocations = currentSecretWaypoints.get("locations").getAsJsonArray();
             if (!currentLocations.isEmpty()) {
                 JsonArray startCoords = currentLocations.get(0).getAsJsonArray();
-                BlockPos startPos = RoomRotationUtils.relativeToActual(
-                        new BlockPos(startCoords.get(0).getAsInt(), startCoords.get(1).getAsInt(), startCoords.get(2).getAsInt()),
+                Triple<Double, Double, Double> startPos = RoomRotationUtils.relativeToActual(
+                        startCoords.get(0).getAsDouble(),
+                        startCoords.get(1).getAsDouble(),
+                        startCoords.get(2).getAsDouble(),
                         RoomDirectionUtils.roomDirection(),
                         RoomDirectionUtils.roomCorner()
                 );
                 AnotherRenderingUtil.addWorldText(new RenderTypes.WorldText(
                         Text.literal("Start"),
-                        new Vec3d(startPos.getX() + 0.5, startPos.getY() + 0.5, startPos.getZ() + 0.5),
+                        new Vec3d(startPos.getOne() + 0.5, startPos.getTwo() + 1.2, startPos.getThree() + 0.5),
                         true,
-                        3.0f
+                        1.8f
                 ));
             }
         }
@@ -257,5 +259,34 @@ public class SecretUtils {
         chestName = null;
         leverName = null;
         leverNumber = null;
+    }
+
+    public static void renderRouteStartLabel() {
+        try {
+            Room room = OnEnterNewRoom.currentRoom;
+            if (room == null || room.currentSecretRoute == null || room.currentSecretRoute.isEmpty()) return;
+
+            JsonObject firstStep = room.currentSecretRoute.get(0).getAsJsonObject();
+            if (!firstStep.has("locations")) return;
+            JsonArray locations = firstStep.get("locations").getAsJsonArray();
+            if (locations.isEmpty()) return;
+
+            JsonArray startCoords = locations.get(0).getAsJsonArray();
+            Triple<Double, Double, Double> start = RoomRotationUtils.relativeToActual(
+                startCoords.get(0).getAsDouble(),
+                startCoords.get(1).getAsDouble(),
+                startCoords.get(2).getAsDouble(),
+                RoomDirectionUtils.roomDirection(),
+                RoomDirectionUtils.roomCorner()
+            );
+
+            AnotherRenderingUtil.addWorldText(new RenderTypes.WorldText(
+                Text.literal("Start"),
+                new Vec3d(start.getOne() + 0.5, start.getTwo() + 1.3, start.getThree() + 0.5),
+                true,
+                3.0f
+            ));
+        } catch (Exception ignored) {
+        }
     }
 }

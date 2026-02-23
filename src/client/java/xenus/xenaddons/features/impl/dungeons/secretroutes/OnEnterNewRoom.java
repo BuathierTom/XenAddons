@@ -29,6 +29,7 @@ public class OnEnterNewRoom {
             SecretUtils.secrets = null;
             SecretUtils.secretLocations = new ArrayList<>();
             SecretUtils.resetValues();
+            SecretRoutesEvents.resetState();
         } catch (Exception e) {
             e.printStackTrace();
         }

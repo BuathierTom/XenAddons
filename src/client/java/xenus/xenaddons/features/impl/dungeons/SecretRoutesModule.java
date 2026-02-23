@@ -24,8 +24,8 @@ public class SecretRoutesModule extends Module {
     // Rendering Config
     public final BooleanSetting renderLines = new BooleanSetting("Render Lines", true);
     public final ColorSetting lineColor = new ColorSetting("Line color", new Color(255, 0, 0).getRGB());
-    public final NumberSetting lineWidth = new NumberSetting("Line width", 4, 1, 10, 1);
-    public final NumberSetting boxAlpha = new NumberSetting("Box Alpha", 0.5, 0, 1, 0.1);
+    public final NumberSetting lineWidth = new NumberSetting("Line width", 2, 1, 10, 1);
+    public final NumberSetting boxAlpha = new NumberSetting("Box Alpha", 1.0, 0, 1, 0.1);
 
     // Feature Toggles (matching SecretRoutesLite defaults)
     public final BooleanSetting renderEtherwarps = new BooleanSetting("Etherwarps", true);
@@ -51,11 +51,9 @@ public class SecretRoutesModule extends Module {
     public SecretRoutesModule() {
         super("SecretRoutes", "Displays secret routes in dungeons", xenus.xenaddons.features.Category.DUNGEON);
         INSTANCE = this;
+        allSteps.setValue(false);
 
         this.registerSetting(renderRoutes);
-        this.registerSetting(wholeRoute);
-        this.registerSetting(allSteps);
-        this.registerSetting(allSecrets);
 
         // Rendering subcategory
         this.registerSetting(renderLines);
@@ -112,20 +110,10 @@ public class SecretRoutesModule extends Module {
         AnotherRenderingUtil.filledBoxAlpha = (float) boxAlpha.getValue().doubleValue();
 
         try {
-            if (allSecrets.getValue()) {
-                SecretUtils.renderSecrets();
-            } else if (wholeRoute.getValue()) {
-                JsonArray csr = OnEnterNewRoom.currentRoom.currentSecretRoute;
-                if (csr != null) {
-                    for (int i = 0; i < csr.size(); i++) {
-                        SecretUtils.renderingCallback(csr.get(i).getAsJsonObject(), i);
-                    }
-                }
-            } else {
-                if (OnEnterNewRoom.currentRoom.currentSecretWaypoints != null) {
-                    SecretUtils.renderingCallback(OnEnterNewRoom.currentRoom.currentSecretWaypoints, OnEnterNewRoom.currentRoom.currentSecretIndex);
-                }
+            if (OnEnterNewRoom.currentRoom.currentSecretWaypoints != null) {
+                SecretUtils.renderingCallback(OnEnterNewRoom.currentRoom.currentSecretWaypoints, OnEnterNewRoom.currentRoom.currentSecretIndex);
             }
+            SecretUtils.renderRouteStartLabel();
         } catch (Exception e) {
             e.printStackTrace();
         }

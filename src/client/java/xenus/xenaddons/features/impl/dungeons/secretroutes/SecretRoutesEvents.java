@@ -24,6 +24,8 @@ public class SecretRoutesEvents {
 
     private static final Map<String, Integer> previousInventory = new HashMap<>();
     private static int tickCounter = 0;
+    private static long itemProximityStartMillis = 0L;
+    private static BlockPos itemProximityTarget = null;
 
     public static final String[] VALID_SECRET_ITEMS = {
             "Decoy", "Defuse Kit", "Dungeon Chest Key", "Healing VIII",
@@ -73,7 +75,10 @@ public class SecretRoutesEvents {
         ClientPlayerEntity player = client.player;
         if (player == null) return;
 
-        if (!LocationUtils.isInDungeons()) return;
+        if (!LocationUtils.isInDungeons()) {
+            resetState();
+            return;
+        }
 
         Room currentRoom = OnEnterNewRoom.currentRoom;
         if (currentRoom != null) {
@@ -93,16 +98,34 @@ public class SecretRoutesEvents {
                     }
                 }
                 
-                // ITEM proximity check (2 blocks - original "Auto" feature)
-                /* // If we want to implement the auto-bypass if player is near for a while
+                // ITEM proximity fallback: if pickup event is missed, advance after short delay near target.
                 if (secretType == Room.SECRET_TYPES.ITEM) {
-                    if (Math.abs(pPos.getX() - secretPos.getX()) <= 2 &&
+                    boolean nearItem = Math.abs(pPos.getX() - secretPos.getX()) <= 2 &&
                         Math.abs(pPos.getY() - secretPos.getY()) <= 2 &&
-                        Math.abs(pPos.getZ() - secretPos.getZ()) <= 2) {
-                        // In original it has a 1.5s delay... maybe just rely on item pickup for now.
+                        Math.abs(pPos.getZ() - secretPos.getZ()) <= 2;
+
+                    if (nearItem) {
+                        long now = System.currentTimeMillis();
+                        if (itemProximityTarget == null || !itemProximityTarget.equals(secretPos)) {
+                            itemProximityTarget = secretPos;
+                            itemProximityStartMillis = now;
+                        } else if (now - itemProximityStartMillis >= 1200L) {
+                            BlockPos stillTarget = currentRoom.getSecretLocation();
+                            if (stillTarget != null && stillTarget.equals(itemProximityTarget) && currentRoom.getSecretType() == Room.SECRET_TYPES.ITEM) {
+                                System.out.println("[SecretRoutes] Item proximity fallback triggered at " + stillTarget);
+                                currentRoom.nextSecret();
+                                itemProximityStartMillis = 0L;
+                                itemProximityTarget = null;
+                            }
+                        }
+                    } else {
+                        itemProximityStartMillis = 0L;
+                        itemProximityTarget = null;
                     }
+                } else {
+                    itemProximityStartMillis = 0L;
+                    itemProximityTarget = null;
                 }
-                */
             }
         }
 
@@ -147,9 +170,19 @@ public class SecretRoutesEvents {
     }
 
     private static boolean isSecretItem(String itemName) {
+        String normalized = itemName == null ? "" : itemName.replaceAll("§.", "").toLowerCase();
         for (String item : VALID_SECRET_ITEMS) {
-            if (itemName.contains(item)) return true;
+            if (normalized.contains(item.toLowerCase())) return true;
         }
         return false;
+    }
+
+    public static void resetState() {
+        previousInventory.clear();
+        tickCounter = 0;
+        itemProximityStartMillis = 0L;
+        itemProximityTarget = null;
+        lastInteractPos = null;
+        lastInteractTime = 0L;
     }
 }
