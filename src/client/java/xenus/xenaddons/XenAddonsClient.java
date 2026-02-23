@@ -158,6 +158,21 @@ public class XenAddonsClient implements ClientModInitializer {
                             
                             return 1;
                         }))
+                    .then(literal("procs").executes(context -> {
+                        xenus.xenaddons.features.impl.dev.DebugModule debug =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
+
+                        if (debug == null || !debug.isEnabled() || !debug.enableProcsTest.getValue()) {
+                            return 0;
+                        }
+
+                        xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule module =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule.class);
+                        if (module == null) return 0;
+
+                        module.debugTriggerProcAlert();
+                        return 1;
+                    }))
 					.executes(context -> {
 						openClickGUINextTick = true;
 						return 1;

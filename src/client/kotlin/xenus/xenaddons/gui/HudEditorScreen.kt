@@ -59,6 +59,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         renderComponent(context, mouseX, mouseY, ComponentType.AUTOPET_TITLE, getAutoPetBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.PLAYERS_LEAPED, getPlayersLeapedBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.INVISIBILITY_TIMER, getInvisibilityTimerBounds())
+        renderComponent(context, mouseX, mouseY, ComponentType.MASK_PROC_ALERT, getMaskProcAlertBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.SPOTIFY_OVERLAY, getSpotifyBounds())
 
         renderResetButton(context, mouseX, mouseY)
@@ -175,6 +176,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.AUTOPET_TITLE -> renderAutoPetPreview(context, bounds)
             ComponentType.PLAYERS_LEAPED -> renderPlayersLeapedPreview(context, bounds)
             ComponentType.INVISIBILITY_TIMER -> renderInvisibilityTimerPreview(context, bounds)
+            ComponentType.MASK_PROC_ALERT -> renderMaskProcAlertPreview(context, bounds)
             ComponentType.SPOTIFY_OVERLAY -> renderSpotifyPreview(context, bounds)
         }
     }
@@ -234,6 +236,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
                 invisibilityTimerModule?.setHudY(100)
                 invisibilityTimerModule?.setHudScale(1.0)
             }
+            ComponentType.MASK_PROC_ALERT -> {
+                invisibilityTimerModule?.setAlertHudOffsetX(0)
+                invisibilityTimerModule?.setAlertHudY(120)
+                invisibilityTimerModule?.setAlertHudScale(4.0)
+            }
             ComponentType.SPOTIFY_OVERLAY -> {
                 spotifyOverlayModule?.setHudOffsetX(0)
                 spotifyOverlayModule?.setHudY(84)
@@ -252,6 +259,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.AUTOPET_TITLE -> autoPetModule?.hudScale ?: 2.5
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.hudScale ?: 1.0
             ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.hudScale ?: 1.0
+            ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.alertHudScale ?: 4.0
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.hudScale ?: 1.0
         }
     }
@@ -263,6 +271,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.AUTOPET_TITLE -> autoPetModule?.setHudScale(clamped)
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.setHudScale(clamped)
             ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.setHudScale(clamped)
+            ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.setAlertHudScale(clamped)
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.setHudScale(clamped)
         }
     }
@@ -270,6 +279,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     private fun getActiveComponent(mouseX: Int, mouseY: Int): ComponentType? {
         val priority = listOf(
             ComponentType.SPOTIFY_OVERLAY,
+            ComponentType.MASK_PROC_ALERT,
             ComponentType.INVISIBILITY_TIMER,
             ComponentType.PLAYERS_LEAPED,
             ComponentType.AUTOPET_TITLE,
@@ -284,6 +294,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.AUTOPET_TITLE -> getAutoPetBounds()
             ComponentType.PLAYERS_LEAPED -> getPlayersLeapedBounds()
             ComponentType.INVISIBILITY_TIMER -> getInvisibilityTimerBounds()
+            ComponentType.MASK_PROC_ALERT -> getMaskProcAlertBounds()
             ComponentType.SPOTIFY_OVERLAY -> getSpotifyBounds()
         }
     }
@@ -316,6 +327,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
                 val centerX = x + (referenceBounds.w / 2)
                 invisibilityTimerModule?.setHudOffsetX(centerX - (width / 2))
                 invisibilityTimerModule?.setHudY(y)
+            }
+            ComponentType.MASK_PROC_ALERT -> {
+                val centerX = x + (referenceBounds.w / 2)
+                invisibilityTimerModule?.setAlertHudOffsetX(centerX - (width / 2))
+                invisibilityTimerModule?.setAlertHudY(y)
             }
             ComponentType.SPOTIFY_OVERLAY -> {
                 spotifyOverlayModule?.setHudOffsetX(x - (width / 2))
@@ -493,6 +509,20 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
     }
 
+    private fun getMaskProcAlertBounds(): Bounds {
+        val preview = "BONZO"
+        val textWidth = textRenderer.getWidth(preview)
+        val scale = (invisibilityTimerModule?.alertHudScale ?: 4.0).toFloat()
+        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
+        var x = (width - scaledWidth) / 2
+        var y = 120
+        invisibilityTimerModule?.let {
+            x += it.alertHudOffsetX
+            y = it.alertHudY
+        }
+        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
+    }
+
     private fun renderPosTitlesPreview(context: DrawContext, bounds: Bounds) {
         val scale = (posTitlesModule?.hudScale ?: 1.0).toFloat()
         val inv = 1.0f / scale
@@ -556,6 +586,15 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
+    private fun renderMaskProcAlertPreview(context: DrawContext, bounds: Bounds) {
+        val scale = (invisibilityTimerModule?.alertHudScale ?: 4.0).toFloat()
+        val inv = 1.0f / scale
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.drawTextWithShadow(textRenderer, "BONZO", (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFF2B2B.toInt())
+        context.matrices.popMatrix()
+    }
+
     private fun renderComponentBox(context: DrawContext, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
         val hovered = bounds.contains(mouseX, mouseY)
         val active = dragging == type
@@ -580,6 +619,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         AUTOPET_TITLE("AutoPet Title"),
         PLAYERS_LEAPED("Players Leaped"),
         INVISIBILITY_TIMER("Invisibility timer"),
+        MASK_PROC_ALERT("Mask proc alert"),
         SPOTIFY_OVERLAY("Spotify Overlay")
     }
 
