@@ -1,7 +1,5 @@
 package xenus.xenaddons.gui.config.ui
 
-import xyz.meowing.knit.api.input.KnitKeyboard
-import xyz.meowing.knit.api.render.KnitResolution
 import xyz.meowing.vexel.core.VexelScreen
 import xenus.xenaddons.gui.managers.config.ConfigManager
 import xenus.xenaddons.gui.config.ui.elements.base.ElementType
@@ -60,7 +58,6 @@ object ClickGUI : VexelScreen("Zen Config") {
 
         featureTooltip = FeatureTooltip()
         featureTooltip.childOf(window)
-
     }
 
     fun updateTooltip(description: String) {
@@ -137,34 +134,13 @@ object ClickGUI : VexelScreen("Zen Config") {
     }
 
     override fun onMouseScroll(horizontal: Double, vertical: Double) {
-        var handled = false
-        if (KnitKeyboard.isShiftKeyPressed) {
-            val scrollAmount = vertical.toFloat() * 20f
-
-            val leftmostX = panels.minOfOrNull { it.x } ?: 0f
-            val rightmostX = panels.maxOfOrNull { it.x + Panel.WIDTH } ?: 0f
-
-            val canScrollLeft = leftmostX < 50f
-            val canScrollRight = rightmostX > KnitResolution.windowWidth - 50f
-
-            if ((scrollAmount > 0 && canScrollLeft) || (scrollAmount < 0 && canScrollRight)) {
-                panels.forEach { panel ->
-                    panel.x += scrollAmount
-                }
-                handled = true
-            }
-        } else {
-            val actualAmount = (vertical.sign * 16f).toFloat()
-            for (i in panels.size - 1 downTo 0) {
-                if (panels[i].handleScroll(actualAmount)) {
-                    handled = true
-                    break
-                }
+        val actualAmount = (vertical.sign * 16f).toFloat()
+        for (i in panels.size - 1 downTo 0) {
+            if (panels[i].handleScroll(actualAmount)) {
+                return
             }
         }
-        if (!handled) {
-            super.onMouseScroll(horizontal, vertical)
-        }
+        super.onMouseScroll(horizontal, vertical)
     }
 
     override fun onCloseGui() {
