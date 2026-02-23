@@ -113,7 +113,6 @@ public class SecretRoutesModule extends Module {
             if (OnEnterNewRoom.currentRoom.currentSecretWaypoints != null) {
                 SecretUtils.renderingCallback(OnEnterNewRoom.currentRoom.currentSecretWaypoints, OnEnterNewRoom.currentRoom.currentSecretIndex);
             }
-            SecretUtils.renderRouteStartLabel();
         } catch (Exception e) {
             e.printStackTrace();
         }
