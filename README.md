@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.3-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.4-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -30,6 +30,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `/xa petrule`
 - `/xa ticlass`
 - `/xa secretroom`
+- `/xa procs`
 
 ## Modules
 
@@ -49,13 +50,24 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `SecretRoutes`
   - Renders room routes/secrets in dungeons.
   - Settings include:
-    - route rendering mode (current, full route, all steps, all secrets)
     - line color / line width / box alpha
     - render toggles (etherwarp, mines, interacts, superbooms, enderpearls, item secrets, interact secrets, bat secrets)
+  - Improved route line width consistency.
 
 - `Players Leaped`
   - Displays `x/4 Players Leaped` in F7 terms-related zones.
   - Supports HUD move/scale through `Edit HUD`.
+
+- `Invisibility timer`
+  - Shows active invincibility duration after:
+    - Bonzo's Mask proc
+    - Spirit Mask proc
+    - Phoenix Pet proc
+  - HUD element is editable through `Edit HUD` (move/scale/reset).
+  - Includes `Mask procs alert`:
+    - Large red on-screen proc alert (`BONZO`, `SPIRIT`, `PHOENIX`)
+    - Loud DING sound
+    - Alert position/scale editable through `Edit HUD` as `Mask proc alert`.
 
 ### Misc
 
