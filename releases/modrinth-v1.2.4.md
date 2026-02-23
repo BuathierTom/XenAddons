@@ -15,8 +15,3 @@
 
 - Added debug command `/xa procs` to test proc alert + sound
 
-## Changes
-
-- Version updated to `1.2.4`
-- README updated with latest feature list
-
