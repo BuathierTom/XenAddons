@@ -2,7 +2,7 @@ package xenus.xenaddons.features.impl.dev;
 
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
-import xenus.xenaddons.gui.HudEditorScreen;
+import xenus.xenaddons.utils.KotlinGuiBridge;
 
 public class EditHudModule extends Module {
 
@@ -13,6 +13,7 @@ public class EditHudModule extends Module {
     @Override
     public void onClick() {
         if (mc.currentScreen == null) return;
-        mc.setScreen(new HudEditorScreen(mc.currentScreen));
+        var hudEditor = KotlinGuiBridge.createHudEditorScreen(mc.currentScreen);
+        if (hudEditor != null) mc.setScreen(hudEditor);
     }
 }

@@ -3,8 +3,7 @@ package xenus.xenaddons.features.impl.dev;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.ColorSetting;
-import xenus.xenaddons.gui.config.ui.ClickGUI;
-import xenus.xenaddons.gui.ui.Theme;
+import xenus.xenaddons.utils.KotlinGuiBridge;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -24,17 +23,17 @@ public class ColorsModule extends Module {
         menuColor.expanded = true;
         menuColor.setListener(this::applyMenuColorWithDelay);
         this.registerSetting(menuColor);
-        Theme.setMenuPrimary(menuColor.getValue());
+        KotlinGuiBridge.applyMenuPrimary(menuColor.getValue());
     }
 
     private void applyMenuColorWithDelay(Integer newColor) {
         final int token = colorChangeToken.incrementAndGet();
         COLOR_APPLY_EXECUTOR.schedule(() -> {
             if (token != colorChangeToken.get()) return;
-            mc.execute(() -> Theme.setMenuPrimary(newColor));
+            mc.execute(() -> KotlinGuiBridge.applyMenuPrimary(newColor));
             mc.execute(() -> {
-                if (mc.currentScreen == ClickGUI.INSTANCE) {
-                    xenus.xenaddons.gui.managers.config.ConfigManager.openConfig();
+                if (KotlinGuiBridge.isClickGuiInstance(mc.currentScreen)) {
+                    KotlinGuiBridge.openConfigScreen();
                 }
             });
         }, 2, TimeUnit.SECONDS);

@@ -3,6 +3,7 @@ package xenus.xenaddons;
 import xenus.xenaddons.gui.GuiInvButtonEditor;
 import xenus.xenaddons.gui.GuiInvButtonMenu;
 import xenus.xenaddons.utils.HypixelItemManager;
+import xenus.xenaddons.utils.KotlinGuiBridge;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -193,7 +194,7 @@ public class XenAddonsClient implements ClientModInitializer {
 			}
 			if (openClickGUINextTick) {
 				openClickGUINextTick = false;
-				xenus.xenaddons.gui.managers.config.ConfigManager.openConfig();
+				KotlinGuiBridge.openConfigScreen();
 			}
 		});
 
