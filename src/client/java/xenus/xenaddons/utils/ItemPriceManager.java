@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ItemPriceManager {
     private static final String HYPIXEL_BAZAAR_API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
-    private static final String NOAMM_LOWEST_BIN_API_URL = "https://api.noammaddons.workers.dev/lowestbin";
+    private static final String LOWEST_BIN_API_URL = "https://whatyouth.ing/api/nofrills/v2/economy/get-item-pricing/";
     private static final long REFRESH_MS = 5 * 60 * 1000L;
 
     private static final Map<String, Double> LOWEST_BIN_BY_ID = new ConcurrentHashMap<>();
@@ -51,7 +51,7 @@ public final class ItemPriceManager {
                     BAZAAR_BY_ID.putAll(bz);
                 }
 
-                Map<String, Double> lb = fetchLowestBinsFromNoamm();
+                Map<String, Double> lb = fetchLowestBins();
                 if (!lb.isEmpty()) {
                     LOWEST_BIN_BY_ID.clear();
                     LOWEST_BIN_BY_ID.putAll(lb);
@@ -216,24 +216,14 @@ public final class ItemPriceManager {
         return out;
     }
 
-    private static Map<String, Double> fetchLowestBinsFromNoamm() {
+    private static Map<String, Double> fetchLowestBins() {
         Map<String, Double> out = new HashMap<>();
-        JsonElement rootElement = fetchJsonElement(NOAMM_LOWEST_BIN_API_URL);
+        JsonElement rootElement = fetchJsonElement(LOWEST_BIN_API_URL);
         if (rootElement == null || !rootElement.isJsonObject()) return out;
 
         JsonObject root = rootElement.getAsJsonObject();
-        if (root.has("success") && root.get("success").isJsonPrimitive() && !root.get("success").getAsBoolean()) {
-            return out;
-        }
-
-        JsonObject source = null;
-        if (root.has("data") && root.get("data").isJsonObject()) {
-            source = root.getAsJsonObject("data");
-        } else if (root.has("lowestbin") && root.get("lowestbin").isJsonObject()) {
-            source = root.getAsJsonObject("lowestbin");
-        } else {
-            source = root;
-        }
+        if (!root.has("auction") || !root.get("auction").isJsonObject()) return out;
+        JsonObject source = root.getAsJsonObject("auction");
 
         for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
             JsonElement value = entry.getValue();
