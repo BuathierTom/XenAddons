@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.4-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.5-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -87,10 +87,6 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
   - Keeps inventory cursor behavior closer to legacy 1.8.9 style.
   - Includes `Hard in dungeons only` mode for immediate center reset when cursor becomes visible in dungeons.
 
-- `Custom Size`
-  - Applies per-player custom scale from JSON data.
-  - Optional `In Dungeon Only` toggle.
-
 - `Copy Chat`
   - Right-click a chat line in chat screen to copy message text.
   - Integrated with VisualWords so copied text uses original message content.
@@ -99,7 +95,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
   - Shows SkyBlock item prices in tooltips.
   - Supports:
     - `Bazaar Price` (Hypixel bazaar)
-    - `Lowest BIN` (Noamm API fallback when item is not bazaar)
+    - `Lowest BIN` (from whatyouth API `auction` data)
 
 - `Spotify Overlay`
   - HUD showing current playing track in colored format:
@@ -132,7 +128,10 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 
 - `Config GUI`
   - GUI theme color settings.
-  - Includes HUD custom font toggle.
+
+- `Custom Size`
+  - Applies per-player custom scale from JSON data.
+  - Always enabled and shown in `Dev`.
 
 - `Edit HUD`
   - Move/scale/reset supported HUD elements.
