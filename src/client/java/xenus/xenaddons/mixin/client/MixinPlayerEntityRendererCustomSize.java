@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xenus.xenaddons.config.CustomPlayerScaleManager;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.misc.CustomSizeModule;
-import xenus.xenaddons.utils.DungeonUtils;
 
 @Mixin(PlayerEntityRenderer.class)
 public class MixinPlayerEntityRendererCustomSize {
@@ -22,7 +21,6 @@ public class MixinPlayerEntityRendererCustomSize {
     private void xenaddons$applyCustomSize(PlayerEntityRenderState state, MatrixStack matrices, CallbackInfo ci) {
         CustomSizeModule module = ModuleManager.getModule(CustomSizeModule.class);
         if (module == null || !module.isEnabled()) return;
-        if (module.inDungeonOnly.getValue() && !DungeonUtils.inDungeon()) return;
 
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.world == null) return;
