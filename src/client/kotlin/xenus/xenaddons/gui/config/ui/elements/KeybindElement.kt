@@ -10,33 +10,35 @@ import xyz.meowing.vexel.components.base.Pos
 import xyz.meowing.vexel.components.base.Size
 import xyz.meowing.vexel.components.base.VexelElement
 import xyz.meowing.vexel.utils.render.NVGRenderer
+import xenus.xenaddons.gui.config.ui.panels.Panel
 import xenus.xenaddons.gui.ui.Theme
 
 class KeybindElement(
     name: String,
     initialKeyCode: Int
 ) : VexelElement<KeybindElement>() {
+    private val scale = Panel.WIDTH / 240f
 
     var selectedKey: Int = initialKeyCode
         private set
     private var listening = false
 
-    private val label = Text(name, Theme.Text.color, 16f)
-        .setPositioning(6f, Pos.ParentPixels, 0f, Pos.ParentCenter)
+    private val label = Text(name, Theme.Text.color, 16f * scale)
+        .setPositioning(6f * scale, Pos.ParentPixels, 0f, Pos.ParentCenter)
         .ignoreMouseEvents()
         .childOf(this)
 
     private val keybindButton = Rectangle(Theme.BgLight.color, Theme.Border.color, 5f, 1.5f)
-        .setPositioning(-6f, Pos.ParentPixels, 0f, Pos.ParentCenter)
+        .setPositioning(-6f * scale, Pos.ParentPixels, 0f, Pos.ParentCenter)
         .alignRight()
         .childOf(this)
 
-    private val keybindText = Text(getKeyName(initialKeyCode), Theme.Text.color, 16f)
+    private val keybindText = Text(getKeyName(initialKeyCode), Theme.Text.color, 16f * scale)
         .setPositioning(0f, Pos.ParentCenter, 0f, Pos.ParentCenter)
         .childOf(keybindButton)
 
     init {
-        setSizing(240f, Size.Pixels, 32f, Size.Pixels)
+        setSizing(Panel.WIDTH, Size.Pixels, Panel.HEADER_HEIGHT, Size.Pixels)
         setPositioning(Pos.ParentPixels, Pos.AfterSibling)
         ignoreFocus()
 
@@ -111,8 +113,8 @@ class KeybindElement(
     }
 
     private fun updateButtonSize() {
-        val textWidth = NVGRenderer.textWidth(keybindText.text, 16f, NVGRenderer.defaultFont)
-        keybindButton.setSizing(textWidth + 12f, Size.Pixels, 20f, Size.Pixels)
+        val textWidth = NVGRenderer.textWidth(keybindText.text, 16f * scale, NVGRenderer.defaultFont)
+        keybindButton.setSizing(textWidth + (12f * scale), Size.Pixels, 20f * scale, Size.Pixels)
     }
 
     private fun getKeyName(keyCode: Int): String = when (keyCode) {

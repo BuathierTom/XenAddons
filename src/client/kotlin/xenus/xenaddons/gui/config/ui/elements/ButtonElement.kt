@@ -7,24 +7,32 @@ import xyz.meowing.vexel.components.core.Text
 import xyz.meowing.vexel.components.base.Pos
 import xyz.meowing.vexel.components.base.Size
 import xyz.meowing.vexel.components.base.VexelElement
+import xenus.xenaddons.gui.config.ui.panels.Panel
 import xenus.xenaddons.gui.ui.Theme
 
 class ButtonElement(
     text: String,
     private val onClick: () -> Unit
 ) : VexelElement<ButtonElement>() {
+    private val scale = Panel.WIDTH / 240f
 
-    private val button = Rectangle(Theme.Bg.color, Theme.Border.color, 5f, 1f, floatArrayOf(8f, 16f, 8f, 16f))
-        .setSizing(228f, Size.Pixels, 0f, Size.Auto)
-        .setPositioning(6f, Pos.ParentPixels, 0f, Pos.ParentCenter)
+    private val button = Rectangle(
+        Theme.Bg.color,
+        Theme.Border.color,
+        5f * scale,
+        1f,
+        floatArrayOf(8f * scale, 16f * scale, 8f * scale, 16f * scale)
+    )
+        .setSizing(Panel.WIDTH - (12f * scale), Size.Pixels, 0f, Size.Auto)
+        .setPositioning(6f * scale, Pos.ParentPixels, 0f, Pos.ParentCenter)
         .childOf(this)
 
-    private val buttonText = Text(text, Theme.Text.color, 16f)
+    private val buttonText = Text(text, Theme.Text.color, 16f * scale)
         .setPositioning(0f, Pos.ParentCenter, 0f, Pos.ParentCenter)
         .childOf(button)
 
     init {
-        setSizing(240f, Size.Pixels, 40f, Size.Pixels)
+        setSizing(Panel.WIDTH, Size.Pixels, 40f * scale, Size.Pixels)
         setPositioning(Pos.ParentPixels, Pos.AfterSibling)
 
         button.onHover(

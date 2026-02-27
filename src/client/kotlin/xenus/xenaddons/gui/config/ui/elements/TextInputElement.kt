@@ -7,6 +7,7 @@ import xyz.meowing.vexel.components.core.Text
 import xyz.meowing.vexel.components.base.Pos
 import xyz.meowing.vexel.components.base.Size
 import xyz.meowing.vexel.components.base.VexelElement
+import xenus.xenaddons.gui.config.ui.panels.Panel
 import xenus.xenaddons.gui.ui.Theme
 import java.awt.Color
 
@@ -15,10 +16,11 @@ class TextInputElement(
     initialValue: String,
     private val placeholder: String
 ) : VexelElement<TextInputElement>() {
+    private val scale = Panel.WIDTH / 240f
     private val hoverEnterColor = Color(Theme.BgLight.color).brighter().rgb
 
-    private val label = Text(name, Theme.Text.color, 16f)
-        .setPositioning(6f, Pos.ParentPixels, 6f, Pos.ParentPixels)
+    private val label = Text(name, Theme.Text.color, 16f * scale)
+        .setPositioning(6f * scale, Pos.ParentPixels, 6f * scale, Pos.ParentPixels)
         .childOf(this)
 
     val input = TextInput(
@@ -28,12 +30,12 @@ class TextInputElement(
         hoverColor = null,
         borderColor = Theme.Border.color
     )
-        .setSizing(230f, Size.Pixels, 0f, Size.Auto)
-        .setPositioning(10f, Pos.ParentCenter, 28f, Pos.ParentPixels)
+        .setSizing(230f * scale, Size.Pixels, 0f, Size.Auto)
+        .setPositioning(10f * scale, Pos.ParentCenter, 28f * scale, Pos.ParentPixels)
         .childOf(this)
 
     init {
-        setSizing(240f, Size.Pixels, 58f, Size.Pixels)
+        setSizing(Panel.WIDTH, Size.Pixels, 58f * scale, Size.Pixels)
         setPositioning(Pos.ParentPixels, Pos.AfterSibling)
 
         input

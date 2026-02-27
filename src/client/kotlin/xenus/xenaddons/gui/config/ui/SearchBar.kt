@@ -14,23 +14,25 @@ import xenus.xenaddons.gui.ui.Theme
 import java.awt.Color
 
 class SearchBar(
+    uiScale: Float,
     private val onSearch: (String) -> Unit
 ) : VexelElement<SearchBar>() {
+    private val s = uiScale
     var text: String = ""
         private set
 
     val input = TextInput(
         placeholder = "Search...",
-        fontSize = 20f,
+        fontSize = 20f * s,
         backgroundColor = Theme.Bg.color,
         borderColor = Theme.Primary.color,
         hoverColor = null,
         pressedColor = Theme.BgDark.color,
-        borderRadius = 8f,
+        borderRadius = 8f * s,
         borderThickness = 2f,
-        padding = floatArrayOf(8f, 12f, 8f, 12f)
+        padding = floatArrayOf(8f * s, 12f * s, 8f * s, 12f * s)
     )
-        .setSizing(310f, Size.Pixels, 40f, Size.Pixels)
+        .setSizing(310f * s, Size.Pixels, 40f * s, Size.Pixels)
         .setPositioning(0f, Pos.ParentPixels, 0f, Pos.ParentPixels)
         .childOf(this)
 
@@ -39,11 +41,11 @@ class SearchBar(
         borderColor = Theme.Primary.color,
         hoverColor = null,
         pressedColor = Theme.BgDark.color,
-        borderRadius = 8f,
+        borderRadius = 8f * s,
         borderThickness = 2f,
     )
-        .setSizing(40f, Size.Pixels, 40f, Size.Pixels)
-        .setPositioning(6f, Pos.AfterSibling, 0f, Pos.ParentPixels)
+        .setSizing(40f * s, Size.Pixels, 40f * s, Size.Pixels)
+        .setPositioning(6f * s, Pos.AfterSibling, 0f, Pos.ParentPixels)
         .childOf(this)
 
     val editGuiLocationsButton = SvgImage("/assets/gui/editLocations.svg", color = Color.white)
@@ -52,8 +54,8 @@ class SearchBar(
         .childOf(buttonContainer)
 
     init {
-        setSizing(350f, Size.Pixels, 40f, Size.Pixels)
-        setPositioning(0f, Pos.ScreenCenter, -50f, Pos.ScreenPixels)
+        setSizing(350f * s, Size.Pixels, 40f * s, Size.Pixels)
+        setPositioning(0f, Pos.ScreenCenter, -50f * s, Pos.ScreenPixels)
         alignBottom()
 
         val openHudEditor: () -> Boolean = {
@@ -88,7 +90,7 @@ class SearchBar(
                 { _, _ -> input.background.colorTo(Theme.BgLight.color, 200, EasingType.EASE_IN) },
                 { _, _ -> input.background.colorTo(Theme.Bg.color, 200, EasingType.EASE_IN) }
             )
-            .background.dropShadow(10f, 3f, Theme.BgDark.color)
+            .background.dropShadow(10f * s, 3f * s, Theme.BgDark.color)
     }
 
     override fun onRender(mouseX: Float, mouseY: Float) {}

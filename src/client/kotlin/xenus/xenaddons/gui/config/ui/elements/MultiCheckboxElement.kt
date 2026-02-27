@@ -10,6 +10,7 @@ import xyz.meowing.vexel.components.base.Size
 import xyz.meowing.vexel.components.base.VexelElement
 import xenus.xenaddons.gui.config.ui.elements.utils.fadeIn
 import xenus.xenaddons.gui.config.ui.elements.utils.fadeOut
+import xenus.xenaddons.gui.config.ui.panels.Panel
 import xenus.xenaddons.gui.ui.Theme
 import xenus.xenaddons.gui.config.ui.panels.SectionButton
 
@@ -18,6 +19,10 @@ class MultiCheckboxElement(
     private val options: List<String>,
     selectedIndices: Set<Int>
 ) : VexelElement<MultiCheckboxElement>() {
+    private val scale = Panel.WIDTH / 240f
+    private val rowHeight = Panel.HEADER_HEIGHT
+    private val optionHeight = 26f * scale
+    private val containerWidth = Panel.WIDTH - (12f * scale)
 
     companion object {
         var openMultiCheckbox: MultiCheckboxElement? = null
@@ -29,27 +34,27 @@ class MultiCheckboxElement(
     var selectedIndices = selectedIndices.toMutableSet()
         private set
 
-    private val label = Text(name, Theme.Text.color, 16f)
-        .setPositioning(6f, Pos.ParentPixels, 8f, Pos.ParentPixels)
+    private val label = Text(name, Theme.Text.color, 16f * scale)
+        .setPositioning(6f * scale, Pos.ParentPixels, 8f * scale, Pos.ParentPixels)
         .childOf(this)
 
     private val selectedButton = Rectangle(Theme.BgLight.color, Theme.Border.color, 5f, 1f)
-        .setPositioning(-6f, Pos.ParentPixels, 0f, Pos.MatchSibling)
+        .setPositioning(-6f * scale, Pos.ParentPixels, 0f, Pos.MatchSibling)
         .alignRight()
         .setOffset(0f, -2f)
         .childOf(this)
 
-    private val selectedText = Text("${selectedIndices.size} selected", Theme.Text.color, 16f)
+    private val selectedText = Text("${selectedIndices.size} selected", Theme.Text.color, 16f * scale)
         .setPositioning(0f, Pos.ParentCenter, 0f, Pos.ParentCenter)
         .childOf(selectedButton)
 
     private val optionsContainer = Rectangle(Theme.BgLight.color, 0x00000000, 5f, 0f)
-        .setSizing(228f, Size.Pixels, 0f, Size.Pixels)
-        .setPositioning(6f, Pos.ParentPixels, 32f, Pos.ParentPixels)
+        .setSizing(containerWidth, Size.Pixels, 0f, Size.Pixels)
+        .setPositioning(6f * scale, Pos.ParentPixels, rowHeight, Pos.ParentPixels)
         .childOf(this)
 
     init {
-        setSizing(240f, Size.Pixels, 32f, Size.Pixels)
+        setSizing(Panel.WIDTH, Size.Pixels, rowHeight, Size.Pixels)
         setPositioning(Pos.ParentPixels, Pos.AfterSibling)
 
         updateButtonSize()
@@ -87,25 +92,25 @@ class MultiCheckboxElement(
 
             val optionRect = Rectangle(0x00000000, 0x00000000, 0f, 0f)
                 .borderRadiusVarying(topRight = topRightRadius, topLeft = topLeftRadius, bottomRight = bottomRightRadius, bottomLeft = bottomLeftRadius)
-                .setSizing(228f, Size.Pixels, 26f, Size.Pixels)
+                .setSizing(containerWidth, Size.Pixels, optionHeight, Size.Pixels)
                 .setPositioning(0f, Pos.ParentPixels, 0f, Pos.AfterSibling)
                 .childOf(optionsContainer)
 
             val checkbox = Rectangle(Theme.BgLight.color, Theme.Text.color, 3f, 1f)
-                .setSizing(12f, Size.Pixels, 12f, Size.Pixels)
-                .setPositioning(6f, Pos.ParentPixels, 0f, Pos.ParentCenter)
+                .setSizing(12f * scale, Size.Pixels, 12f * scale, Size.Pixels)
+                .setPositioning(6f * scale, Pos.ParentPixels, 0f, Pos.ParentCenter)
                 .childOf(optionRect)
 
             val checkmark = Rectangle(Theme.Primary.color, 0x00000000, 2f, 0f)
-                .setSizing(8f, Size.Pixels, 8f, Size.Pixels)
+                .setSizing(8f * scale, Size.Pixels, 8f * scale, Size.Pixels)
                 .setPositioning(0f, Pos.ParentCenter, 0f, Pos.ParentCenter)
                 .childOf(checkbox)
 
             val isSelected = selectedIndices.contains(index)
             checkmark.visible = isSelected
 
-            Text(option, Theme.Text.color, 14f)
-                .setPositioning(24f, Pos.ParentPixels, 0f, Pos.ParentCenter)
+            Text(option, Theme.Text.color, 14f * scale)
+                .setPositioning(24f * scale, Pos.ParentPixels, 0f, Pos.ParentCenter)
                 .childOf(optionRect)
 
             optionRect.onHover(
@@ -121,7 +126,7 @@ class MultiCheckboxElement(
     }
 
     private fun updateButtonSize() {
-        selectedButton.setSizing(100f, Size.Pixels, 20f, Size.Pixels)
+        selectedButton.setSizing(100f * scale, Size.Pixels, 20f * scale, Size.Pixels)
     }
 
     private fun expand() {
@@ -134,14 +139,14 @@ class MultiCheckboxElement(
         isAnimating = true
 
         optionsContainer.visible = true
-        val targetHeight = 32f + options.size * 26f + 6f
-        val containerHeight = options.size * 26f
+        val targetHeight = rowHeight + options.size * optionHeight + (6f * scale)
+        val containerHeight = options.size * optionHeight
 
-        animateSize(240f, targetHeight, 200, EasingType.EASE_OUT) {
+        animateSize(Panel.WIDTH, targetHeight, 200, EasingType.EASE_OUT) {
             isAnimating = false
             invalidateParentLayout()
         }
-        optionsContainer.animateSize(228f, containerHeight, 200, EasingType.EASE_OUT) {
+        optionsContainer.animateSize(containerWidth, containerHeight, 200, EasingType.EASE_OUT) {
             optionsContainer.children.forEachIndexed { index, optionRect ->
                 optionRect.fadeIn(50, includeChildren = false)
                 optionRect.children.forEach { child ->
@@ -166,7 +171,7 @@ class MultiCheckboxElement(
         isAnimating = true
         openMultiCheckbox = null
 
-        animateSize(240f, 32f, 200, EasingType.EASE_IN) {
+        animateSize(Panel.WIDTH, rowHeight, 200, EasingType.EASE_IN) {
             optionsContainer.visible = false
             isAnimating = false
             invalidateParentLayout()
@@ -177,7 +182,7 @@ class MultiCheckboxElement(
             child.children.forEach { it.fadeOut(50) }
         }
 
-        optionsContainer.animateSize(228f, 0f, 200, EasingType.EASE_IN)
+        optionsContainer.animateSize(containerWidth, 0f, 200, EasingType.EASE_IN)
     }
 
     private fun toggleOption(index: Int, checkmark: VexelElement<*>, checkbox: Rectangle) {

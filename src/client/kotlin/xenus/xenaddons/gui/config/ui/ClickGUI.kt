@@ -30,6 +30,8 @@ object ClickGUI : VexelScreen("Zen Config") {
     private val elementRefs = mutableMapOf<String, ConfigElement>()
 
     override fun afterInitialization() {
+        UiMetrics.updateFromResolution()
+        Panel.updateMetrics()
         panels.clear()
 
         val sortedCategories = ConfigManager.configTree.sortedWith(
@@ -42,15 +44,20 @@ object ClickGUI : VexelScreen("Zen Config") {
             val col = index % 7
             val row = index / 7
 
-            val x = if (row > 0) 50f + (col + 1) * 260f else 50f + col * 260f
-            val y = 50f + row * 400f
+            val xStep = Panel.WIDTH + UiMetrics.px(20f)
+            val xBase = UiMetrics.px(50f)
+            val yBase = UiMetrics.px(50f)
+            val yStep = UiMetrics.px(400f)
+
+            val x = if (row > 0) xBase + (col + 1) * xStep else xBase + col * xStep
+            val y = yBase + row * yStep
 
             val panel = Panel(category, x, y, ::updateConfig)
             panel.childOf(window)
             panels.add(panel)
         }
 
-        searchBar = SearchBar { query ->
+        searchBar = SearchBar(UiMetrics.scale) { query ->
             filterPanels(query)
         }
 
@@ -134,7 +141,7 @@ object ClickGUI : VexelScreen("Zen Config") {
     }
 
     override fun onMouseScroll(horizontal: Double, vertical: Double) {
-        val actualAmount = (vertical.sign * 16f).toFloat()
+        val actualAmount = (-vertical.sign * 16f).toFloat()
         for (i in panels.size - 1 downTo 0) {
             if (panels[i].handleScroll(actualAmount)) {
                 return

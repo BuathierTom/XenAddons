@@ -8,6 +8,7 @@ import xyz.meowing.vexel.components.base.Pos
 import xyz.meowing.vexel.components.base.Size
 import xyz.meowing.vexel.components.base.VexelElement
 import xenus.xenaddons.gui.managers.config.CategoryElement
+import xenus.xenaddons.gui.config.ui.UiMetrics
 import xenus.xenaddons.gui.ui.Theme
 import kotlin.math.max
 
@@ -23,6 +24,8 @@ class Panel(
     private var deltaY = 0f
     private var extended = true
     private var totalContentHeight = HEADER_HEIGHT
+    private var lastMouseX = 0f
+    private var lastMouseY = 0f
 
     private val background = Rectangle(
         Theme.BgLight.withAlpha(0.04f),
@@ -33,7 +36,7 @@ class Panel(
     )
         .setSizing(WIDTH, Size.Pixels, 0f, Size.Auto)
         .setMaxAutoSize(null, 800f)
-        .scrollable(false)
+        .scrollable(true)
         .showScrollbar(false)
         .dropShadow(10f, 3f, Theme.BgDark.color)
         .childOf(this)
@@ -58,7 +61,7 @@ class Panel(
         .setPositioning(WIDTH - 5f, Pos.ParentPixels, HEADER_HEIGHT - 5f, Pos.ParentPixels)
         .childOf(headerContainer)
 
-    private val titleText = Text(category.name, Theme.Text.color, 22f)
+    private val titleText = Text(category.name, Theme.Text.color, UiMetrics.px(22f))
         .setPositioning(0f, Pos.ParentCenter, 0f, Pos.ParentCenter)
         .childOf(header)
 
@@ -75,11 +78,20 @@ class Panel(
     private val sections = mutableListOf<SectionButton>()
 
     companion object {
-        const val WIDTH = 240f
-        const val HEADER_HEIGHT = 32f
-        private const val MAX_PANEL_HEIGHT_CAP = 800f
-        private const val BOTTOM_MARGIN = 40f
+        var WIDTH = 240f
+            private set
+        var HEADER_HEIGHT = 32f
+            private set
+        private var MAX_PANEL_HEIGHT_CAP = 800f
+        private var BOTTOM_MARGIN = 40f
         private val panelPositions = mutableMapOf<String, Pair<Float, Float>>()
+
+        fun updateMetrics() {
+            WIDTH = UiMetrics.px(240f)
+            HEADER_HEIGHT = UiMetrics.px(32f)
+            MAX_PANEL_HEIGHT_CAP = UiMetrics.px(800f)
+            BOTTOM_MARGIN = UiMetrics.px(40f)
+        }
     }
 
     init {
@@ -131,10 +143,10 @@ class Panel(
     }
 
     fun adjustScrollAfterResize() {
-        val maxScroll = max(0f, totalContentHeight - getPanelHeightLimit())
-        val minOffset = -maxScroll
-
-        background.scrollOffset = background.scrollOffset.coerceIn(minOffset, 0f)
+        val contentHeight = background.getContentHeight()
+        val viewHeight = background.height - background.padding[0] - background.padding[2]
+        val overflow = max(0f, contentHeight - viewHeight)
+        background.scrollOffset = background.scrollOffset.coerceIn(0f, overflow)
     }
 
     fun matchesSearch(query: String): Boolean {
@@ -143,13 +155,14 @@ class Panel(
     }
 
     fun scrollBy(delta: Float): Boolean {
-        val maxScroll = max(0f, totalContentHeight - getPanelHeightLimit())
-        if (maxScroll <= 0f) {
+        val contentHeight = background.getContentHeight()
+        val viewHeight = background.height - background.padding[0] - background.padding[2]
+        val overflow = max(0f, contentHeight - viewHeight)
+        if (overflow <= 0f) {
             background.scrollOffset = 0f
-            return true
+            return false
         }
-
-        background.scrollOffset = (background.scrollOffset + delta).coerceIn(-maxScroll, 0f)
+        background.scrollOffset = (background.scrollOffset + delta).coerceIn(0f, overflow)
         return true
     }
 
@@ -160,13 +173,16 @@ class Panel(
 
     private fun isMouseOverExtended(): Boolean {
         if (!visible || !extended) return false
-        val mouseX = KnitMouse.Raw.x.toFloat()
-        val mouseY = KnitMouse.Raw.y.toFloat()
+        val mouseX = lastMouseX
+        val mouseY = lastMouseY
         val panelHeight = max(height, totalContentHeight).coerceAtMost(getPanelHeightLimit())
         return mouseX >= x && mouseX <= x + WIDTH && mouseY >= y && mouseY <= y + panelHeight
     }
 
     override fun onRender(mouseX: Float, mouseY: Float) {
+        lastMouseX = mouseX
+        lastMouseY = mouseY
+
         if (dragging) {
             x = deltaX + KnitMouse.Raw.x.toFloat()
             y = deltaY + KnitMouse.Raw.y.toFloat()
@@ -183,10 +199,6 @@ class Panel(
             .filter { !it.isPointInside(mouseX, mouseY) && isHovered }
             .forEach { it.handleMouseMove(mouseX, mouseY) }
         
-        if (totalContentHeight <= getPanelHeightLimit() && background.scrollOffset != 0f) {
-            background.scrollOffset = 0f
-        }
-
         adjustScrollAfterResize()
     }
 

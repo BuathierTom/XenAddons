@@ -5,6 +5,7 @@ import xyz.meowing.vexel.components.core.Text
 import xyz.meowing.vexel.components.base.Pos
 import xyz.meowing.vexel.components.base.Size
 import xyz.meowing.vexel.components.base.VexelElement
+import xenus.xenaddons.gui.config.ui.panels.Panel
 import xenus.xenaddons.gui.ui.Theme
 import java.awt.Color
 
@@ -31,15 +32,16 @@ class MCColorPickerElement(
     name: String,
     private var selectedColor: MCColorCode
 ) : VexelElement<MCColorPickerElement>() {
+    private val scale = Panel.WIDTH / 240f
 
     private val colorBoxes = mutableListOf<Rectangle>()
 
-    private val label = Text(name, Theme.Text.color, 16f)
-        .setPositioning(6f, Pos.ParentPixels, 6f, Pos.ParentPixels)
+    private val label = Text(name, Theme.Text.color, 16f * scale)
+        .setPositioning(6f * scale, Pos.ParentPixels, 6f * scale, Pos.ParentPixels)
         .childOf(this)
 
     init {
-        setSizing(240f, Size.Pixels, 48f, Size.Pixels)
+        setSizing(Panel.WIDTH, Size.Pixels, 48f * scale, Size.Pixels)
         setPositioning(Pos.ParentPixels, Pos.AfterSibling)
 
         createColorGrid()
@@ -55,11 +57,11 @@ class MCColorPickerElement(
                 2f,
                 if (mcColor == selectedColor) 2f else 0f
             )
-                .setSizing(13f, Size.Pixels, 13f, Size.Pixels)
+                .setSizing(13f * scale, Size.Pixels, 13f * scale, Size.Pixels)
                 .setPositioning(
-                    6f + index * 14f,
+                    6f * scale + index * (14f * scale),
                     Pos.ParentPixels,
-                    26f,
+                    26f * scale,
                     Pos.ParentPixels
                 )
                 .childOf(this)

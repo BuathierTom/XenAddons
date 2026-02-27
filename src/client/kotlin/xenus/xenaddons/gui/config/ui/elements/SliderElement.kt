@@ -6,6 +6,7 @@ import xyz.meowing.vexel.components.base.Pos
 import xyz.meowing.vexel.components.base.Size
 import xyz.meowing.vexel.components.base.VexelElement
 import xyz.meowing.vexel.elements.Slider
+import xenus.xenaddons.gui.config.ui.panels.Panel
 import xenus.xenaddons.gui.ui.Theme
 
 class SliderElement(
@@ -15,12 +16,13 @@ class SliderElement(
     private val max: Double,
     private val showDouble: Boolean
 ) : VexelElement<SliderElement>() {
+    private val scale = Panel.WIDTH / 240f
 
-    private val label = Text(name, Theme.Text.color, 16f)
+    private val label = Text(name, Theme.Text.color, 16f * scale)
         .setPositioning(6f, Pos.ParentPixels, 8f, Pos.ParentPixels)
         .childOf(this)
 
-    private val valueText = Text(formatValue(initialValue), Theme.TextMuted.color, 16f)
+    private val valueText = Text(formatValue(initialValue), Theme.TextMuted.color, 16f * scale)
         .setPositioning(-6f, Pos.ParentPixels, 8f, Pos.ParentPixels)
         .alignRight()
         .childOf(this)
@@ -30,18 +32,18 @@ class SliderElement(
         minValue = 0f,
         maxValue = 1f,
         thumbColor = 0xFFFFFFFF.toInt(),
-        thumbWidth = 15f,
-        thumbHeight = 15f,
+        thumbWidth = 15f * scale,
+        thumbHeight = 15f * scale,
         trackColor = Theme.Bg.color,
         trackFillColor = Theme.Primary.color
     )
-        .setSizing(220f, Size.Pixels, 24f, Size.Pixels)
-        .setPositioning(10f, Pos.ParentPixels, 0f, Pos.ParentPixels)
+        .setSizing(220f * scale, Size.Pixels, 24f * scale, Size.Pixels)
+        .setPositioning(10f * scale, Pos.ParentPixels, 0f, Pos.ParentPixels)
         .alignBottom()
         .childOf(this)
 
     init {
-        setSizing(240f, Size.Pixels, 48f, Size.Pixels)
+        setSizing(Panel.WIDTH, Size.Pixels, 48f * scale, Size.Pixels)
         setPositioning(Pos.ParentPixels, Pos.AfterSibling)
 
         slider.onValueChange { sliderValue ->

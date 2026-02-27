@@ -24,6 +24,7 @@ class SectionButton(
     private val onConfigUpdate: (String, Any) -> Unit,
     val isLast: Boolean
 ) : VexelElement<SectionButton>() {
+    private val rowHeight = Panel.HEADER_HEIGHT
 
     private var extended = false
     private var isAnimating = false
@@ -35,10 +36,10 @@ class SectionButton(
     private val sectionChildren = mutableMapOf<String, MutableList<VexelElement<*>>>()
 
     private val buttonBackground = Rectangle(Theme.BgLight.color, 0x00000000, 0f, 0f)
-        .setSizing(Panel.WIDTH, Size.Pixels, HEIGHT, Size.Pixels)
+        .setSizing(Panel.WIDTH, Size.Pixels, rowHeight, Size.Pixels)
         .childOf(this)
 
-    val titleText = Text(feature.featureName, Theme.Text.color, 16f)
+    val titleText = Text(feature.featureName, Theme.Text.color, 16f * (Panel.WIDTH / 240f))
         .setPositioning(4f, Pos.ParentPixels, 0f, Pos.ParentCenter)
         .childOf(buttonBackground)
 
@@ -46,22 +47,18 @@ class SectionButton(
         svgPath = "/assets/vexel/dropdown.svg",
         color = Color(Theme.TextMuted.color)
     )
-        .setSizing(16f, Size.Pixels, 16f, Size.Pixels)
-        .setPositioning(-4f, Pos.ParentPixels, 0f, Pos.ParentCenter)
+        .setSizing(16f * (Panel.WIDTH / 240f), Size.Pixels, 16f * (Panel.WIDTH / 240f), Size.Pixels)
+        .setPositioning(-4f * (Panel.WIDTH / 240f), Pos.ParentPixels, 0f, Pos.ParentCenter)
         .alignRight()
         .childOf(buttonBackground)
 
     private val optionsContainer = Rectangle(0x00000000, 0x00000000)
         .setSizing(Panel.WIDTH, Size.Pixels, 0f, Size.Pixels)
-        .setPositioning(0f, Pos.ParentPixels, HEIGHT, Pos.ParentPixels)
+        .setPositioning(0f, Pos.ParentPixels, rowHeight, Pos.ParentPixels)
         .childOf(this)
 
-    companion object {
-        const val HEIGHT = 32f
-    }
-
     init {
-        setSizing(Panel.WIDTH, Size.Pixels, HEIGHT, Size.Pixels)
+        setSizing(Panel.WIDTH, Size.Pixels, rowHeight, Size.Pixels)
         setPositioning(0f, Pos.ParentPixels, 0f, Pos.AfterSibling)
         setRadius()
         childOf(container)
@@ -163,7 +160,7 @@ class SectionButton(
             optionElements.forEach { it.visible = true }
             syncConditionalVisibility()
 
-            val targetHeight = HEIGHT + calculateOptionsHeight()
+            val targetHeight = rowHeight + calculateOptionsHeight()
             animateSize(Panel.WIDTH, targetHeight, 200, EasingType.EASE_OUT) {
                 isAnimating = false
                 parent?.let { p ->
@@ -174,7 +171,7 @@ class SectionButton(
                 }
             }
         } else {
-            animateSize(Panel.WIDTH, HEIGHT, 100, EasingType.EASE_IN) {
+            animateSize(Panel.WIDTH, rowHeight, 100, EasingType.EASE_IN) {
                 optionsContainer.visible = false
                 optionElements.forEach { it.visible = false }
                 isAnimating = false
@@ -213,7 +210,7 @@ class SectionButton(
     fun recalculateHeight() {
         if (!extended || isAnimating) return
 
-        val newHeight = HEIGHT + calculateOptionsHeight()
+        val newHeight = rowHeight + calculateOptionsHeight()
         if ((newHeight - height).absoluteValue > 1f) {
             isAnimating = true
             animateSize(Panel.WIDTH, newHeight, 200, EasingType.EASE_OUT) {
@@ -236,8 +233,9 @@ class SectionButton(
     }
 
     private fun setRadius() {
-        val bottomLeftRadius = if (isLast && !extended) 5f else 0f
-        val bottomRightRadius = if (isLast && !extended) 5f else 0f
+        val r = 5f * (Panel.WIDTH / 240f)
+        val bottomLeftRadius = if (isLast && !extended) r else 0f
+        val bottomRightRadius = if (isLast && !extended) r else 0f
         buttonBackground.borderRadiusVarying(topRight = 0f, topLeft = 0f, bottomRight = bottomRightRadius, bottomLeft = bottomLeftRadius)
     }
 

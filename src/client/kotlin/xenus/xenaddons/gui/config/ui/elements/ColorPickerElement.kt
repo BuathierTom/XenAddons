@@ -11,6 +11,7 @@ import xyz.meowing.vexel.components.base.Size
 import xyz.meowing.vexel.components.base.VexelElement
 import xyz.meowing.vexel.utils.render.NVGRenderer
 import xyz.meowing.vexel.utils.style.Gradient
+import xenus.xenaddons.gui.config.ui.panels.Panel
 import xenus.xenaddons.gui.ui.Theme
 import xenus.xenaddons.gui.config.ui.panels.SectionButton
 import java.awt.Color
@@ -20,6 +21,10 @@ class ColorPickerElement(
     name: String,
     initialColor: Color
 ) : VexelElement<ColorPickerElement>() {
+    private val scale = Panel.WIDTH / 240f
+    private val rowHeight = Panel.HEADER_HEIGHT
+    private val containerWidth = Panel.WIDTH - (12f * scale)
+
     var selectedColor: Color = initialColor
     private var expanded = false
     private var isAnimating = false
@@ -32,8 +37,8 @@ class ColorPickerElement(
     var draggingHue = false
     var draggingAlpha = false
 
-    private val label = Text(name, Theme.Text.color, 16f)
-        .setPositioning(6f, Pos.ParentPixels, 8f, Pos.ParentPixels)
+    private val label = Text(name, Theme.Text.color, 16f * scale)
+        .setPositioning(6f * scale, Pos.ParentPixels, 8f * scale, Pos.ParentPixels)
         .childOf(this)
 
     private val previewRect = Rectangle(
@@ -42,8 +47,8 @@ class ColorPickerElement(
         3f,
         1f
     )
-        .setSizing(30f, Size.Pixels, 20f, Size.Pixels)
-        .setPositioning(-6f, Pos.ParentPixels, 0f, Pos.MatchSibling)
+        .setSizing(30f * scale, Size.Pixels, 20f * scale, Size.Pixels)
+        .setPositioning(-6f * scale, Pos.ParentPixels, 0f, Pos.MatchSibling)
         .alignRight()
         .setOffset(0f, -2f)
         .childOf(this)
@@ -54,27 +59,27 @@ class ColorPickerElement(
         0f,
         0f
     )
-        .setSizing(228f, Size.Pixels, 0f, Size.Pixels)
-        .setPositioning(6f, Pos.ParentPixels, 34f, Pos.ParentPixels)
+        .setSizing(containerWidth, Size.Pixels, 0f, Size.Pixels)
+        .setPositioning(6f * scale, Pos.ParentPixels, rowHeight + (2f * scale), Pos.ParentPixels)
         .childOf(this)
 
     private val pickerArea = ColorPickerArea()
-        .setSizing(228f, Size.Pixels, 140f, Size.Pixels)
+        .setSizing(containerWidth, Size.Pixels, 140f * scale, Size.Pixels)
         .setPositioning(0f, Pos.ParentPixels, 0f, Pos.ParentPixels)
         .childOf(pickerContainer)
 
     private val hueSlider = HueSlider()
-        .setSizing(228f, Size.Pixels, 15f, Size.Pixels)
-        .setPositioning(0f, Pos.ParentPixels, 5f, Pos.AfterSibling)
+        .setSizing(containerWidth, Size.Pixels, 15f * scale, Size.Pixels)
+        .setPositioning(0f, Pos.ParentPixels, 5f * scale, Pos.AfterSibling)
         .childOf(pickerContainer)
 
     private val alphaSlider = AlphaSlider()
-        .setSizing(228f, Size.Pixels, 15f, Size.Pixels)
-        .setPositioning(0f, Pos.ParentPixels, 5f, Pos.AfterSibling)
+        .setSizing(containerWidth, Size.Pixels, 15f * scale, Size.Pixels)
+        .setPositioning(0f, Pos.ParentPixels, 5f * scale, Pos.AfterSibling)
         .childOf(pickerContainer)
 
     init {
-        setSizing(240f, Size.Pixels, 32f, Size.Pixels)
+        setSizing(Panel.WIDTH, Size.Pixels, rowHeight, Size.Pixels)
         setPositioning(Pos.ParentPixels, Pos.AfterSibling)
 
         val hsb = Color.RGBtoHSB(initialColor.red, initialColor.green, initialColor.blue, null)
@@ -186,18 +191,18 @@ class ColorPickerElement(
         isAnimating = true
         if (expanded) {
             pickerContainer.visible = true
-            val targetHeight = 32f + 190f
-            animateSize(240f, targetHeight, 200, EasingType.EASE_OUT) {
+            val targetHeight = rowHeight + (190f * scale)
+            animateSize(Panel.WIDTH, targetHeight, 200, EasingType.EASE_OUT) {
                 isAnimating = false
                 invalidateParentLayout()
             }
-            pickerContainer.animateSize(228f, 175f, 200, EasingType.EASE_OUT) {
+            pickerContainer.animateSize(containerWidth, 175f * scale, 200, EasingType.EASE_OUT) {
                 pickerArea.visible = true
                 hueSlider.visible = true
                 alphaSlider.visible = true
             }
         } else {
-            animateSize(240f, 32f, 200, EasingType.EASE_IN) {
+            animateSize(Panel.WIDTH, rowHeight, 200, EasingType.EASE_IN) {
                 pickerContainer.visible = false
                 isAnimating = false
                 invalidateParentLayout()
@@ -205,7 +210,7 @@ class ColorPickerElement(
             pickerArea.visible = false
             hueSlider.visible = false
             alphaSlider.visible = false
-            pickerContainer.animateSize(228f, 0f, 200, EasingType.EASE_IN)
+            pickerContainer.animateSize(containerWidth, 0f, 200, EasingType.EASE_IN)
         }
     }
 
