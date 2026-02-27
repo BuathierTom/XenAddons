@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 public class GoatedPlayersManager {
     private static final Pattern LEGACY_AMP_PATTERN = Pattern.compile("(?i)&([0-9A-FK-OR])");
+    private static final Pattern HEX_AMP_PATTERN = Pattern.compile("(?i)&\\#([0-9a-f]{6})");
     private static final Pattern LEGACY_SECTION_PATTERN = Pattern.compile("(?i)§[0-9A-FK-OR]");
     private static final String VISUAL_WORDS_RESOURCE = "/assets/xenaddons/visual/visualWords.json";
     private static final String CAPY_MARKER = "{capy}";
@@ -205,7 +206,7 @@ public class GoatedPlayersManager {
 
     private static boolean isLegacyCodeChar(char c) {
         char lower = Character.toLowerCase(c);
-        return (lower >= '0' && lower <= '9') || (lower >= 'a' && lower <= 'f') || (lower >= 'k' && lower <= 'o') || lower == 'r';
+        return (lower >= '0' && lower <= '9') || (lower >= 'a' && lower <= 'f') || (lower >= 'k' && lower <= 'o') || lower == 'r' || lower == 'x';
     }
 
     private static boolean isWordChar(char c) {
@@ -214,7 +215,15 @@ public class GoatedPlayersManager {
 
     public static String normalizeLegacyCodes(String text) {
         if (text == null || text.isEmpty()) return text;
-        Matcher matcher = LEGACY_AMP_PATTERN.matcher(text);
+        Matcher hexMatcher = HEX_AMP_PATTERN.matcher(text);
+        StringBuffer hexOut = new StringBuffer();
+        while (hexMatcher.find()) {
+            String hex = hexMatcher.group(1).toUpperCase();
+            hexMatcher.appendReplacement(hexOut, Matcher.quoteReplacement(toLegacyHexCode(hex)));
+        }
+        hexMatcher.appendTail(hexOut);
+
+        Matcher matcher = LEGACY_AMP_PATTERN.matcher(hexOut.toString());
         StringBuffer out = new StringBuffer();
         while (matcher.find()) {
             String code = matcher.group(1).toLowerCase();
@@ -268,6 +277,17 @@ public class GoatedPlayersManager {
         for (int i = 0; i < normalized.length(); i++) {
             char c = normalized.charAt(i);
             if (c == '§' && i + 1 < normalized.length()) {
+                int rgb = parseLegacyHexColor(normalized, i);
+                if (rgb >= 0) {
+                    if (!plain.isEmpty()) {
+                        appendWithIconTokens(out, plain.toString(), currentStyle);
+                        plain.setLength(0);
+                    }
+                    currentStyle = baseStyle.withColor(rgb);
+                    i += 13;
+                    continue;
+                }
+
                 if (!plain.isEmpty()) {
                     appendWithIconTokens(out, plain.toString(), currentStyle);
                     plain.setLength(0);
@@ -382,5 +402,32 @@ public class GoatedPlayersManager {
             this.displayName = displayName;
             this.highlightColor = highlightColor;
         }
+    }
+
+    private static String toLegacyHexCode(String upperHex) {
+        StringBuilder out = new StringBuilder(14);
+        out.append('§').append('x');
+        for (int i = 0; i < upperHex.length(); i++) {
+            out.append('§').append(upperHex.charAt(i));
+        }
+        return out.toString();
+    }
+
+    private static int parseLegacyHexColor(String input, int start) {
+        if (start < 0 || start + 13 >= input.length()) return -1;
+        if (input.charAt(start) != '§') return -1;
+        if (Character.toLowerCase(input.charAt(start + 1)) != 'x') return -1;
+
+        int[] nibble = new int[6];
+        for (int i = 0; i < 6; i++) {
+            int sectionIdx = start + 2 + i * 2;
+            int digitIdx = sectionIdx + 1;
+            if (input.charAt(sectionIdx) != '§') return -1;
+            int value = Character.digit(input.charAt(digitIdx), 16);
+            if (value < 0) return -1;
+            nibble[i] = value;
+        }
+
+        return (nibble[0] << 20) | (nibble[1] << 16) | (nibble[2] << 12) | (nibble[3] << 8) | (nibble[4] << 4) | nibble[5];
     }
 }

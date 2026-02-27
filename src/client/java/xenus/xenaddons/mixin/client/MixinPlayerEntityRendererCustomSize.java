@@ -5,6 +5,7 @@ import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -31,6 +32,16 @@ public class MixinPlayerEntityRendererCustomSize {
         CustomPlayerScaleManager.PlayerScale scale = CustomPlayerScaleManager.get(player.getUuid());
         if (scale == null) return;
 
+        if (scale.y() < 0.0F) {
+            matrices.translate(0.0F, scale.y() * 2.0F, 0.0F);
+        }
+
         matrices.scale(scale.x(), scale.y(), scale.z());
+
+        Vec3d labelPos = state.nameLabelPos;
+        if (labelPos != null) {
+            double adjustedY = (labelPos.y + 0.15D) * Math.abs(scale.y());
+            state.nameLabelPos = new Vec3d(labelPos.x, adjustedY, labelPos.z);
+        }
     }
 }
