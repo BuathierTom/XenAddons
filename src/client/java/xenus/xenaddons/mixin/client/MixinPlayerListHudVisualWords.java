@@ -1,20 +1,26 @@
 package xenus.xenaddons.mixin.client;
 
 import net.minecraft.client.gui.hud.PlayerListHud;
-import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import xenus.xenaddons.config.GoatedPlayersManager;
 
 @Mixin(PlayerListHud.class)
 public class MixinPlayerListHudVisualWords {
-
-    @Inject(method = "getPlayerName", at = @At("RETURN"), cancellable = true)
-    private void xenaddons$replaceTabPlayerName(PlayerListEntry entry, CallbackInfoReturnable<Text> cir) {
-        Text original = cir.getReturnValue();
-        cir.setReturnValue(GoatedPlayersManager.applyVisualWords(original));
+    @ModifyArg(
+        method = "render",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;III)I"
+        ),
+        index = 1,
+        require = 0
+    )
+    private Text xenaddons$replaceTabPlayerNameRenderOnly(Text original) {
+        return GoatedPlayersManager.applyVisualWords(original);
     }
 }

@@ -10,7 +10,6 @@
 		"MixinDrawContextVisualWords",
 		"MixinScreenTooltipVisualWords",
 		"MixinPlayerEntityDisplayName",
-		"MixinPlayerListHudVisualWords",
 		"MixinPlayerEntityRendererCustomSize",
 		"AccessorChatHud",
 		"HandledScreenAccessor",
