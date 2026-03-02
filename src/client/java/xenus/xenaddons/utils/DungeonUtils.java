@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.HashSet;
+import java.util.Set;
 
 public class DungeonUtils {
     
@@ -277,6 +279,45 @@ public class DungeonUtils {
             case "Archer": return "§6";
             default: return "§f";
         }
+    }
+
+    public static int getDungeonPartyCountFromTab() {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.getNetworkHandler() == null) return 0;
+
+        Map<String, java.util.UUID> realPlayers = new HashMap<>();
+        for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
+            String name = entry.getProfile().name();
+            if (name != null && !name.startsWith("!")) {
+                realPlayers.put(name, entry.getProfile().id());
+            }
+        }
+
+        String[] classes = {"Mage", "Archer", "Berserk", "Tank", "Healer"};
+        Set<String> foundPlayers = new HashSet<>();
+
+        for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
+            Text displayName = entry.getDisplayName();
+            if (displayName == null) continue;
+
+            String cleanText = displayName.getString().replaceAll("§[0-9a-fk-or]", "");
+            boolean classLine = false;
+            for (String c : classes) {
+                if (cleanText.contains(c)) {
+                    classLine = true;
+                    break;
+                }
+            }
+            if (!classLine) continue;
+
+            for (String realName : realPlayers.keySet()) {
+                if (cleanText.contains(realName)) {
+                    foundPlayers.add(realName);
+                }
+            }
+        }
+
+        return foundPlayers.size();
     }
     
     public static boolean inPhase(int phase) { return currentPhase == phase; }
