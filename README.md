@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.6-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.7-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -71,6 +71,10 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
     - Large red on-screen proc alert (`BONZO`, `SPIRIT`, `PHOENIX`)
     - Loud DING sound
     - Alert position/scale editable through `Edit HUD` as `Mask proc alert`.
+
+- `Dungeon not full alert`
+  - Shows an alert at dungeon start if the party is not full.
+  - Improved party size detection from tab/class lines to avoid false `1/5` cases.
 
 ### Misc
 
