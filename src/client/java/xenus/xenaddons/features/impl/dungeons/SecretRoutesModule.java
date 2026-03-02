@@ -102,8 +102,12 @@ public class SecretRoutesModule extends Module {
         if (!LocationUtils.isInDungeons()) return;
         if (OnEnterNewRoom.currentRoom == null) return;
         
-        // Hide routes when room is completed
-        if (OnEnterNewRoom.currentRoom.isCompleted()) return;
+        // Hide routes when room is completed (persisted per-room across re-enter)
+        if (OnEnterNewRoom.currentRoom.isCompleted()) {
+            SecretRouteProgressTracker.markCurrentRoomCompleted();
+            return;
+        }
+        if (SecretRouteProgressTracker.isCurrentRoomCompleted()) return;
 
         // Update settings bridge
         AnotherRenderingUtil.boxLineWidth = (float) lineWidth.getValue().doubleValue();
@@ -113,6 +117,7 @@ public class SecretRoutesModule extends Module {
             if (OnEnterNewRoom.currentRoom.currentSecretWaypoints != null) {
                 SecretUtils.renderingCallback(OnEnterNewRoom.currentRoom.currentSecretWaypoints, OnEnterNewRoom.currentRoom.currentSecretIndex);
             }
+            SecretUtils.renderLockedChestLever();
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,5 +1,8 @@
 package xenus.xenaddons.features.impl.dungeons.secretroutes;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -26,6 +29,8 @@ public class SecretRoutesEvents {
     private static int tickCounter = 0;
     private static long itemProximityStartMillis = 0L;
     private static BlockPos itemProximityTarget = null;
+    private static long interactProximityStartMillis = 0L;
+    private static BlockPos interactProximityTarget = null;
 
     public static final String[] VALID_SECRET_ITEMS = {
             "Decoy", "Defuse Kit", "Dungeon Chest Key", "Healing VIII",
@@ -34,6 +39,11 @@ public class SecretRoutesEvents {
 
     public static void init() {
         UseBlockCallback.EVENT.register(SecretRoutesEvents::onUseBlock);
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> handleLockedChestMessage(message.getString()));
+        ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
+            handleLockedChestMessage(message.getString());
+            return true;
+        });
     }
 
     public static ActionResult onUseBlock(net.minecraft.entity.player.PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
@@ -50,6 +60,7 @@ public class SecretRoutesEvents {
 
         lastInteractTime = currentTime;
         lastInteractPos = pos;
+        SecretUtils.lastInteract = pos;
 
         Block block = world.getBlockState(pos).getBlock();
 
@@ -67,7 +78,58 @@ public class SecretRoutesEvents {
             }
         }
 
+        if (block == Blocks.LEVER && SecretUtils.renderLever && SecretUtils.currentLeverPos != null) {
+            BlockPos targetLever = RoomRotationUtils.relativeToActual(
+                    SecretUtils.currentLeverPos,
+                    RoomDirectionUtils.roomDirection(),
+                    RoomDirectionUtils.roomCorner()
+            );
+            if (pos.equals(targetLever)) {
+                SecretUtils.resetValues();
+            }
+        }
+
         return ActionResult.PASS;
+    }
+
+    private static void handleLockedChestMessage(String message) {
+        if (!SecretRoutesModule.INSTANCE.isEnabled()) return;
+        if (!LocationUtils.isInDungeons()) return;
+        if (message == null) return;
+
+        String clean = message.replaceAll("§[0-9a-fk-or]", "");
+        if (!clean.toLowerCase().contains("that chest is locked")) return;
+
+        SecretUtils.renderLever = true;
+
+        Room currentRoom = OnEnterNewRoom.currentRoom;
+        if (currentRoom != null && currentRoom.currentSecretRoute != null && currentRoom.currentSecretIndex > 0) {
+            try {
+                JsonObject previousStep = currentRoom.currentSecretRoute
+                        .get(currentRoom.currentSecretIndex - 1)
+                        .getAsJsonObject();
+                if (previousStep.has("secret")) {
+                    JsonObject secret = previousStep.get("secret").getAsJsonObject();
+                    if (secret.has("type") && "interact".equalsIgnoreCase(secret.get("type").getAsString()) && SecretUtils.lastInteract != null) {
+                        JsonArray loc = secret.get("location").getAsJsonArray();
+                        BlockPos previousRelativeSecretPos = new BlockPos(
+                                loc.get(0).getAsInt(),
+                                loc.get(1).getAsInt(),
+                                loc.get(2).getAsInt()
+                        );
+                        BlockPos relativeLastInteract = RoomRotationUtils.actualToRelative(
+                                SecretUtils.lastInteract,
+                                RoomDirectionUtils.roomDirection(),
+                                RoomDirectionUtils.roomCorner()
+                        );
+                        if (previousRelativeSecretPos.equals(relativeLastInteract)) {
+                            currentRoom.lastSecretKeybind();
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     public static void onTick(MinecraftClient client) {
@@ -88,14 +150,43 @@ public class SecretRoutesEvents {
             if (secretPos != null) {
                 BlockPos pPos = player.getBlockPos();
                 
-                // BAT proximity check (3 blocks)
+                // BAT proximity check (slightly wider so high/offset bats don't get stuck)
                 if (secretType == Room.SECRET_TYPES.BAT) {
-                    if (Math.abs(pPos.getX() - secretPos.getX()) <= 3 &&
-                        Math.abs(pPos.getY() - secretPos.getY()) <= 3 &&
-                        Math.abs(pPos.getZ() - secretPos.getZ()) <= 3) {
+                    if (Math.abs(pPos.getX() - secretPos.getX()) <= 5 &&
+                        Math.abs(pPos.getY() - secretPos.getY()) <= 5 &&
+                        Math.abs(pPos.getZ() - secretPos.getZ()) <= 5) {
                         System.out.println("[SecretRoutes] Near bat! Moving to next secret.");
                         currentRoom.nextSecret();
                     }
+                }
+
+                // INTERACT proximity fallback: if use-block callback is missed, advance after short delay near target.
+                if (secretType == Room.SECRET_TYPES.INTERACT) {
+                    boolean nearInteract = Math.abs(pPos.getX() - secretPos.getX()) <= 2 &&
+                        Math.abs(pPos.getY() - secretPos.getY()) <= 2 &&
+                        Math.abs(pPos.getZ() - secretPos.getZ()) <= 2;
+
+                    if (nearInteract) {
+                        long now = System.currentTimeMillis();
+                        if (interactProximityTarget == null || !interactProximityTarget.equals(secretPos)) {
+                            interactProximityTarget = secretPos;
+                            interactProximityStartMillis = now;
+                        } else if (now - interactProximityStartMillis >= 1200L) {
+                            BlockPos stillTarget = currentRoom.getSecretLocation();
+                            if (stillTarget != null && stillTarget.equals(interactProximityTarget) && currentRoom.getSecretType() == Room.SECRET_TYPES.INTERACT) {
+                                System.out.println("[SecretRoutes] Interact proximity fallback triggered at " + stillTarget);
+                                currentRoom.nextSecret();
+                                interactProximityStartMillis = 0L;
+                                interactProximityTarget = null;
+                            }
+                        }
+                    } else {
+                        interactProximityStartMillis = 0L;
+                        interactProximityTarget = null;
+                    }
+                } else {
+                    interactProximityStartMillis = 0L;
+                    interactProximityTarget = null;
                 }
                 
                 // ITEM proximity fallback: if pickup event is missed, advance after short delay near target.
@@ -182,6 +273,8 @@ public class SecretRoutesEvents {
         tickCounter = 0;
         itemProximityStartMillis = 0L;
         itemProximityTarget = null;
+        interactProximityStartMillis = 0L;
+        interactProximityTarget = null;
         lastInteractPos = null;
         lastInteractTime = 0L;
     }

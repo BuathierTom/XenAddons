@@ -59,6 +59,9 @@ public class Room {
             currentSecretWaypoints = currentSecretRoute.get(currentSecretIndex).getAsJsonObject();
         } else {
             currentSecretWaypoints = null;
+            if (currentSecretRoute != null && currentSecretIndex >= currentSecretRoute.size()) {
+                SecretRouteProgressTracker.markCurrentRoomCompleted();
+            }
         }
     }
 

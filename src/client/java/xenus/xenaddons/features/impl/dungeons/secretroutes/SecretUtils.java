@@ -289,4 +289,100 @@ public class SecretUtils {
         } catch (Exception ignored) {
         }
     }
+
+    public static void renderLockedChestLever() {
+        if (!renderLever || lastInteract == null) return;
+
+        SecretRoutesModule config = SecretRoutesModule.INSTANCE;
+        if (config == null) return;
+
+        try {
+            JsonArray roomSecrets = getSecrets();
+            if (roomSecrets == null) {
+                renderLever = false;
+                return;
+            }
+
+            if (currentLeverPos == null) {
+                BlockPos relativeLastInteract = RoomRotationUtils.actualToRelative(
+                        lastInteract,
+                        RoomDirectionUtils.roomDirection(),
+                        RoomDirectionUtils.roomCorner()
+                );
+
+                String targetLeverNumbers = null;
+                for (JsonElement element : roomSecrets) {
+                    JsonObject secretInfos = element.getAsJsonObject();
+                    if (!secretInfos.has("category") || !secretInfos.has("secretName")) continue;
+
+                    String category = secretInfos.get("category").getAsString();
+                    if (!"chest".equalsIgnoreCase(category)) continue;
+
+                    int x = secretInfos.get("x").getAsInt();
+                    int y = secretInfos.get("y").getAsInt();
+                    int z = secretInfos.get("z").getAsInt();
+
+                    if (relativeLastInteract.getX() == x && relativeLastInteract.getY() == y && relativeLastInteract.getZ() == z) {
+                        chestName = secretInfos.get("secretName").getAsString();
+                        targetLeverNumbers = chestName.split(" ")[0];
+                        leverNumber = targetLeverNumbers;
+                        break;
+                    }
+                }
+
+                if (targetLeverNumbers != null) {
+                    String[] requiredNumbers = targetLeverNumbers.split("/");
+                    for (JsonElement element : roomSecrets) {
+                        JsonObject secretInfos = element.getAsJsonObject();
+                        if (!secretInfos.has("category") || !secretInfos.has("secretName")) continue;
+
+                        String category = secretInfos.get("category").getAsString();
+                        if (!"lever".equalsIgnoreCase(category)) continue;
+
+                        String leverSecretName = secretInfos.get("secretName").getAsString();
+                        boolean match = false;
+                        for (String num : requiredNumbers) {
+                            if (leverSecretName.contains(num)) {
+                                match = true;
+                                break;
+                            }
+                        }
+
+                        if (match) {
+                            currentLeverPos = new BlockPos(
+                                    secretInfos.get("x").getAsInt(),
+                                    secretInfos.get("y").getAsInt(),
+                                    secretInfos.get("z").getAsInt()
+                            );
+                            leverName = leverSecretName;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (currentLeverPos != null) {
+                BlockPos absLeverPos = RoomRotationUtils.relativeToActual(
+                        currentLeverPos,
+                        RoomDirectionUtils.roomDirection(),
+                        RoomDirectionUtils.roomCorner()
+                );
+
+                Vec3d position = new Vec3d(absLeverPos.getX(), absLeverPos.getY(), absLeverPos.getZ());
+                Color color = Color.BLUE;
+                if (config.secretsInteractFullBlock.getValue()) {
+                    AnotherRenderingUtil.addFilledBox(new RenderTypes.FilledBox(position, color, 1, 1, true));
+                } else {
+                    AnotherRenderingUtil.addOutlinedBox(new RenderTypes.OutlinedBox(position, color, 1, 1, true));
+                }
+                AnotherRenderingUtil.addWorldText(new RenderTypes.WorldText(
+                        Text.literal("Locked chest lever"),
+                        position.add(0.5, 1.0, 0.5),
+                        true,
+                        1.3f
+                ));
+            }
+        } catch (Exception ignored) {
+        }
+    }
 }

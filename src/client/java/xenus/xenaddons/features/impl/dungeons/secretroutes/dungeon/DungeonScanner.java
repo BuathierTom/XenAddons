@@ -16,6 +16,7 @@ import org.joml.Vector2i;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.LocationUtils;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.OnEnterNewRoom;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.Room;
+import xenus.xenaddons.features.impl.dungeons.secretroutes.SecretRouteProgressTracker;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -48,6 +49,7 @@ public class DungeonScanner {
                 if (currentRoom != null) {
                     currentRoom = null;
                     OnEnterNewRoom.currentRoom = new Room(null);
+                    SecretRouteProgressTracker.clear();
                 }
                 return;
             }
@@ -279,5 +281,6 @@ public class DungeonScanner {
         currentRoom = null;
         passedRooms.clear();
         OnEnterNewRoom.currentRoom = null;
+        SecretRouteProgressTracker.clear();
     }
 }
