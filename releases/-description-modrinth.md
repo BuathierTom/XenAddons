@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.5-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.6-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -24,6 +24,7 @@ XenAddons is a Fabric mod for Minecraft **1.21.10** focused on Hypixel SkyBlock 
 
 - `/xa` - Open XenAddons GUI
 - `/xenaddons` - Open XenAddons GUI
+- `/pcc` - Shortcut for `/chat party`
 
 Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `/xa title`
@@ -53,6 +54,8 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
     - line color / line width / box alpha
     - render toggles (etherwarp, mines, interacts, superbooms, enderpearls, item secrets, interact secrets, bat secrets)
   - Improved route line width consistency.
+  - Hides routes when room secrets are completed, including after re-entering the same room.
+  - Shows locked chest lever waypoint when a chest is locked.
 
 - `Players Leaped`
   - Displays `x/4 Players Leaped` in F7 terms-related zones.
@@ -131,7 +134,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 
 - `Custom Size`
   - Applies per-player custom scale from JSON data.
-  - Always enabled and shown in `Dev`.
+  - Toggleable in `Dev`.
 
 - `Edit HUD`
   - Move/scale/reset supported HUD elements.
