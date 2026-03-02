@@ -13,7 +13,6 @@ import net.minecraft.util.Formatting;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -32,17 +31,7 @@ public class GoatedPlayersManager {
     private static final Identifier CAPY_FONT = Identifier.of("xenaddons", "capybara");
     private static final Identifier FRANCE_FONT = Identifier.of("xenaddons", "france");
     private static final String[] CONCAT_STATUS_SUFFIXES = new String[] {"offline", "online"};
-    private static final int VISUAL_WORDS_CACHE_SIZE = 2048;
-
     private static final Map<String, GoatedEntry> GOATED_PLAYERS = new LinkedHashMap<>();
-    private static final Map<String, String> VISUAL_WORDS_CACHE = Collections.synchronizedMap(
-        new LinkedHashMap<>(VISUAL_WORDS_CACHE_SIZE + 1, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
-                return size() > VISUAL_WORDS_CACHE_SIZE;
-            }
-        }
-    );
 
     public static boolean isGoated(String name) {
         if (name == null) return false;
@@ -67,9 +56,6 @@ public class GoatedPlayersManager {
 
     private static String applyVisualWordsInternal(String text, boolean keepMarkers) {
         if (text == null || text.isEmpty()) return text;
-        String cacheKey = (keepMarkers ? "1:" : "0:") + text;
-        String cached = VISUAL_WORDS_CACHE.get(cacheKey);
-        if (cached != null) return cached;
         String result = text;
 
         for (Map.Entry<String, GoatedEntry> entry : GOATED_PLAYERS.entrySet()) {
@@ -83,7 +69,6 @@ public class GoatedPlayersManager {
             result = result.replace(FRANCE_MARKER, "");
         }
 
-        VISUAL_WORDS_CACHE.put(cacheKey, result);
         return result;
     }
 
@@ -358,7 +343,6 @@ public class GoatedPlayersManager {
 
     public static void init() {
         GOATED_PLAYERS.clear();
-        VISUAL_WORDS_CACHE.clear();
         loadFromResources();
     }
 
