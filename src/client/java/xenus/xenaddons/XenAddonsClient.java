@@ -50,6 +50,17 @@ public class XenAddonsClient implements ClientModInitializer {
 			);
 			dispatcher.register(literal("Invbuttons").redirect(invbuttonsNode));
 
+			// Command: /pcc -> /chat party
+			var pccNode = dispatcher.register(literal("pcc")
+					.executes(context -> {
+						net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
+						if (mc.player == null || mc.player.networkHandler == null) return 0;
+						mc.player.networkHandler.sendChatCommand("chat party");
+						return 1;
+					})
+			);
+			dispatcher.register(literal("Pcc").redirect(pccNode));
+
 			// Command: /xenaddons or /xa
 			var xenaddonsNode = dispatcher.register(literal("xenaddons")
 					.executes(context -> {
