@@ -43,22 +43,15 @@ object ConfigManager {
                 module.description
             }
             val moduleKey = "module.${sanitize(module.name)}.enabled"
-            val isAlwaysOnCustomSize = module.name.equals("Custom Size", ignoreCase = true)
             val feature = addFeature(
                 featureName,
                 featureDescription,
                 categoryName,
-                if (isAlwaysOnCustomSize) {
-                    ConfigElement(moduleKey, ElementType.TextParagraph("Always On"))
-                } else {
-                    ConfigElement(moduleKey, ElementType.Switch(module.isEnabled))
-                }
+                ConfigElement(moduleKey, ElementType.Switch(module.isEnabled))
             )
 
-            if (!isAlwaysOnCustomSize) {
-                configValueMap[moduleKey] = module.isEnabled
-                moduleEnabledRefs[moduleKey] = module
-            }
+            configValueMap[moduleKey] = module.isEnabled
+            moduleEnabledRefs[moduleKey] = module
 
             for (setting in module.settings) {
                 if (setting.name.startsWith("HUD ", ignoreCase = true)) continue

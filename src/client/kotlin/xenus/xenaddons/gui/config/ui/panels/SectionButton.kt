@@ -25,7 +25,6 @@ class SectionButton(
     val isLast: Boolean
 ) : VexelElement<SectionButton>() {
     private val rowHeight = Panel.HEADER_HEIGHT
-    private val forceAlwaysEnabled = feature.featureName.equals("Custom Size", ignoreCase = true)
 
     private var extended = false
     private var isAnimating = false
@@ -66,11 +65,7 @@ class SectionButton(
 
         chevron.visible = feature.options.values.flatten().isNotEmpty()
 
-        isEnabled = if (forceAlwaysEnabled) {
-            true
-        } else {
-            ConfigManager.getConfigValue(feature.configElement.configKey) as? Boolean ?: false
-        }
+        isEnabled = ConfigManager.getConfigValue(feature.configElement.configKey) as? Boolean ?: false
         val targetColor = if (isEnabled) Theme.Primary.color else Theme.Bg.color
         buttonBackground.backgroundColor = targetColor
 
@@ -106,9 +101,7 @@ class SectionButton(
                         val baseColor = if (isEnabled) Theme.Primary.color else Theme.Bg.color
                         buttonBackground.colorTo(baseColor, 100, EasingType.EASE_OUT)
                     }
-                    if (!forceAlwaysEnabled) {
-                        toggleEnabled()
-                    }
+                    toggleEnabled()
                     true
                 }
                 1 -> {
