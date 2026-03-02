@@ -7,9 +7,12 @@ import net.minecraft.text.Text;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
+import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.NumberSetting;
+import xenus.xenaddons.utils.DungeonUtils;
 
 public class AutoPetRuleTitleModule extends Module {
+    private final BooleanSetting inDungeonsOnly = new BooleanSetting("In Dungeons Only", false);
     private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
     private final NumberSetting hudOffsetY = new NumberSetting("HUD Offset Y", -20, -1000, 1000, 1);
     private final NumberSetting hudScale = new NumberSetting("HUD Scale", 2.5, 0.5, 6.0, 0.05);
@@ -19,6 +22,7 @@ public class AutoPetRuleTitleModule extends Module {
         hudOffsetX.setVisibility(() -> false);
         hudOffsetY.setVisibility(() -> false);
         hudScale.setVisibility(() -> false);
+        this.registerSetting(inDungeonsOnly);
         this.registerSetting(hudOffsetX);
         this.registerSetting(hudOffsetY);
         this.registerSetting(hudScale);
@@ -100,11 +104,13 @@ public class AutoPetRuleTitleModule extends Module {
     private void showSmallNotification(String petName, String colorCode) {
         int duration = 8; // 400ms (8 ticks) 
 
-        HudState.PET_NOTIFICATION.show(
-            Text.of(colorCode + petName),
-            Text.of("§cAutopet§r"),
-            duration
-        );
+        if (!inDungeonsOnly.getValue() || DungeonUtils.inDungeon()) {
+            HudState.PET_NOTIFICATION.show(
+                Text.of(colorCode + petName),
+                Text.of("§cAutopet§r"),
+                duration
+            );
+        }
 
         if (mc.player != null) {
             mc.player.sendMessage(Text.of("§cAutopet §7> " + colorCode + petName), false);
