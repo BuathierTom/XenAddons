@@ -295,6 +295,7 @@ public class DungeonUtils {
 
         String[] classes = {"Mage", "Archer", "Berserk", "Tank", "Healer"};
         Set<String> foundPlayers = new HashSet<>();
+        int classEntryCount = 0;
 
         for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
             Text displayName = entry.getDisplayName();
@@ -309,12 +310,25 @@ public class DungeonUtils {
                 }
             }
             if (!classLine) continue;
+            classEntryCount++;
 
             for (String realName : realPlayers.keySet()) {
                 if (cleanText.contains(realName)) {
                     foundPlayers.add(realName);
                 }
             }
+        }
+
+        // Prefer class lines in dungeon tab (works even if profile names are obfuscated or nicked).
+        int fromClassLines = Math.max(foundPlayers.size(), classEntryCount);
+        if (fromClassLines > 0 && fromClassLines <= 5) {
+            return fromClassLines;
+        }
+
+        // Fallback: real visible players in this instance.
+        int realCount = realPlayers.size();
+        if (realCount > 0 && realCount <= 5) {
+            return realCount;
         }
 
         return foundPlayers.size();
