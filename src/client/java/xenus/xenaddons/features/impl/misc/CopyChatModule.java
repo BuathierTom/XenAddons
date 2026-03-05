@@ -8,4 +8,3 @@ public class CopyChatModule extends Module {
         super("Copy Chat", "Right-click a chat message to copy it", Category.MISC);
     }
 }
-
