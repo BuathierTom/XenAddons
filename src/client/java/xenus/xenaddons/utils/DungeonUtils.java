@@ -31,6 +31,7 @@ public class DungeonUtils {
     
     private static final Map<String, String> PLAYER_CLASSES = new HashMap<>();
     private static final Map<java.util.UUID, String> PLAYER_CLASSES_UUID = new HashMap<>();
+    private static final Map<java.util.UUID, Integer> PLAYER_CLASS_LEVELS_UUID = new HashMap<>();
     private static int tickCounter = 0;
     
     private static final Pattern CRYPTS_PATTERN = Pattern.compile("Crypts:\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
@@ -44,6 +45,7 @@ public class DungeonUtils {
         inCatacombs = false;
         PLAYER_CLASSES.clear();
         PLAYER_CLASSES_UUID.clear();
+        PLAYER_CLASS_LEVELS_UUID.clear();
     }
 
     public static void init() {
@@ -230,6 +232,10 @@ public class DungeonUtils {
                             PLAYER_CLASSES.put(realName, c);
                             if (realPlayer.getValue() != null) {
                                 PLAYER_CLASSES_UUID.put(realPlayer.getValue(), c);
+                                int classLevel = parseClassLevel(cleanText, c);
+                                if (classLevel > 0) {
+                                    PLAYER_CLASS_LEVELS_UUID.put(realPlayer.getValue(), classLevel);
+                                }
                             }
                         }
                     }
@@ -255,6 +261,16 @@ public class DungeonUtils {
     public static String getPlayerClass(net.minecraft.entity.player.PlayerEntity player) {
         if (player == null) return null;
         return getPlayerClass(player.getUuid());
+    }
+
+    public static int getPlayerClassLevel(java.util.UUID uuid) {
+        if (uuid == null) return -1;
+        return PLAYER_CLASS_LEVELS_UUID.getOrDefault(uuid, -1);
+    }
+
+    public static int getPlayerClassLevel(net.minecraft.entity.player.PlayerEntity player) {
+        if (player == null) return -1;
+        return getPlayerClassLevel(player.getUuid());
     }
     
     public static boolean inDungeon() { return floorNumber > 0 || inCatacombs; }
@@ -356,6 +372,54 @@ public class DungeonUtils {
     }
 
     public static final java.util.List<PositionDefinition> positionDefinitions = new java.util.ArrayList<>();
+
+    private static int parseClassLevel(String cleanText, String className) {
+        if (cleanText == null || className == null) return -1;
+        Matcher afterClass = Pattern.compile("\\b" + Pattern.quote(className) + "\\b\\s*([0-9]+|[IVXLCDM]+)\\b", Pattern.CASE_INSENSITIVE).matcher(cleanText);
+        if (afterClass.find()) {
+            int parsed = parseIntOrRoman(afterClass.group(1));
+            if (parsed > 0) return parsed;
+        }
+        Matcher beforeClass = Pattern.compile("\\b([0-9]+|[IVXLCDM]+)\\b\\s*" + Pattern.quote(className) + "\\b", Pattern.CASE_INSENSITIVE).matcher(cleanText);
+        if (beforeClass.find()) {
+            int parsed = parseIntOrRoman(beforeClass.group(1));
+            if (parsed > 0) return parsed;
+        }
+        return -1;
+    }
+
+    private static int parseIntOrRoman(String token) {
+        if (token == null || token.isBlank()) return -1;
+        try {
+            return Integer.parseInt(token);
+        } catch (Exception ignored) {
+        }
+        return romanToInt(token);
+    }
+
+    private static int romanToInt(String roman) {
+        if (roman == null || roman.isBlank()) return -1;
+        String upper = roman.toUpperCase();
+        int total = 0;
+        int prev = 0;
+        for (int i = upper.length() - 1; i >= 0; i--) {
+            int curr = switch (upper.charAt(i)) {
+                case 'I' -> 1;
+                case 'V' -> 5;
+                case 'X' -> 10;
+                case 'L' -> 50;
+                case 'C' -> 100;
+                case 'D' -> 500;
+                case 'M' -> 1000;
+                default -> -1;
+            };
+            if (curr < 0) return -1;
+            if (curr < prev) total -= curr;
+            else total += curr;
+            prev = curr;
+        }
+        return total;
+    }
 
     static {
         positionDefinitions.add(new PositionDefinition("AtP2", "At P2!", (clazz) -> (currentPhase == 1 || currentPhase == 0) && !"Healer".equals(clazz), (entity) -> entity.getY() < 205 && entity.getY() > 164, "at p2", "in p2"));
