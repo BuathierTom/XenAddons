@@ -19,8 +19,3 @@
 ## Fixes
 
 - Custom Hyperon Sound now properly suppresses base hype sounds (explosion/teleport/cure/fizz) in replacement window
-
-## Docs
-
-- Updated README
-- Updated Modrinth description
