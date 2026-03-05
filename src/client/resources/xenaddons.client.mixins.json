@@ -18,7 +18,8 @@
 		"AccessorInGameHud",
 		"AccessorPlayerListHud",
 		"MixinInGameHudRenderPetNotif",
-		"MixinInGameHudSpotifyOverlay"
+		"MixinInGameHudSpotifyOverlay",
+		"MixinFluidRenderHandlerRegistry"
 	],
 	"injectors": {
 		"defaultRequire": 1
