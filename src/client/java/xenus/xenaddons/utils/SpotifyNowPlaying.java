@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class SpotifyNowPlaying {
     private static final long REFRESH_MS = 1500L;
+    private static final int DEFAULT_MAX_TITLE_LENGTH = 20;
     private static final AtomicBoolean FETCHING = new AtomicBoolean(false);
 
     private static volatile long lastFetchAt = 0L;
@@ -39,8 +40,13 @@ public final class SpotifyNowPlaying {
     }
 
     public static String getFormattedLine() {
+        return getFormattedLine(DEFAULT_MAX_TITLE_LENGTH);
+    }
+
+    public static String getFormattedLine(int maxTitleLength) {
         if ("Playing".equals(state) && !artist.isBlank() && !title.isBlank()) {
-            return "§6Spotify §7> §a" + artist + " §7- §b" + title;
+            String displayTitle = clampWithEllipsis(title, maxTitleLength);
+            return "§6Spotify §7> §a" + artist + " §7- §b" + displayTitle;
         }
         if ("Paused".equals(state)) {
             return "§6Spotify §7> §cPaused";
@@ -245,6 +251,13 @@ public final class SpotifyNowPlaying {
         if (input == null) return "";
         String noCodes = input.replaceAll("(?i)[§&][0-9A-FK-OR]", "");
         return noCodes.trim();
+    }
+
+    private static String clampWithEllipsis(String value, int maxLength) {
+        if (value == null) return "";
+        int cap = Math.max(4, maxLength);
+        if (value.length() <= cap) return value;
+        return value.substring(0, cap - 3) + "...";
     }
 
 }

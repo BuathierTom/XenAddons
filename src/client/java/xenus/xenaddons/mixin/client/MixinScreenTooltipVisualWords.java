@@ -48,7 +48,7 @@ public class MixinScreenTooltipVisualWords {
                     int multiplier = (showStack && shiftDown) ? count : 1;
 
                     addPriceSectionSpacer(replaced);
-                    if (showStack) {
+                    if (showStack && !shiftDown) {
                         replaced.add(Text.literal("§7[SHIFT show x" + count + "]"));
                     }
 
