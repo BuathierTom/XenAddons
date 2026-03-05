@@ -123,7 +123,7 @@ object ConfigManager {
     private fun toElement(moduleName: String, setting: Setting<*>, key: String, parentKey: String?): ConfigElement? {
         val type = when (setting) {
             is BooleanSetting -> ElementType.Switch(setting.value)
-            is NumberSetting -> ElementType.Slider(setting.min, setting.max, setting.value, false)
+            is NumberSetting -> ElementType.Slider(setting.min, setting.max, setting.value, setting.increment < 1.0)
             is ModeSetting -> ElementType.Dropdown(setting.modes, setting.index.coerceAtLeast(0))
             is ColorSetting -> ElementType.ColorPicker(Color(setting.value, true))
             is KeybindSetting -> ElementType.Keybind(setting.value)

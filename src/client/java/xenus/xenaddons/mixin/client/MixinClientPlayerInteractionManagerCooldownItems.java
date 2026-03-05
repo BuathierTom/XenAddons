@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xenus.xenaddons.features.impl.misc.CooldownItemsTracker;
+import xenus.xenaddons.features.impl.misc.CustomHyperionSoundHandler;
 
 @Mixin(ClientPlayerInteractionManager.class)
 public class MixinClientPlayerInteractionManagerCooldownItems {
@@ -23,6 +24,7 @@ public class MixinClientPlayerInteractionManagerCooldownItems {
         if (player == null || hand == null) return;
         ItemStack stack = player.getStackInHand(hand);
         CooldownItemsTracker.onItemRightClick(stack);
+        CustomHyperionSoundHandler.onItemUse(stack);
     }
 
     @Inject(method = "attackEntity", at = @At("HEAD"))
