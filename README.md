@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.7-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.8-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -96,7 +96,23 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 
 - `Copy Chat`
   - Right-click a chat line in chat screen to copy message text.
+  - `Alt/Option + right-click` copies formatted text.
   - Integrated with VisualWords so copied text uses original message content.
+
+- `Lava Remplacement`
+  - Replaces lava visual rendering with water visual rendering.
+
+- `Compact Potion Message`
+  - Shortens potion effect chat messages into compact colored lines.
+
+- `Cooldown Items`
+  - Item ability cooldown overlay inspired by SkyHanni.
+  - Supports ready state (`R`), cooldown text/colors, and inventory display options.
+  - Includes mage cooldown reduction handling in dungeons.
+
+- `Custom Hyperon Sound`
+  - Replaces Wither Blade hype sound with a selectable custom sound.
+  - Includes sound selector, volume/pitch controls, and `Play Sound` test button.
 
 - `Item Price`
   - Shows SkyBlock item prices in tooltips.
@@ -107,6 +123,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `Spotify Overlay`
   - HUD showing current playing track in colored format:
     - `Spotify > Author - Song`
+  - Long titles are truncated with `...` to keep HUD readable.
   - Supports HUD move/scale through `Edit HUD`.
   - Tab list remains visually on top of the overlay.
 
