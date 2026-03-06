@@ -1,6 +1,5 @@
 package xenus.xenaddons;
 
-import xenus.xenaddons.gui.GuiInvButtonEditor;
 import xenus.xenaddons.gui.GuiInvButtonMenu;
 import xenus.xenaddons.utils.HypixelItemManager;
 import xenus.xenaddons.utils.KotlinGuiBridge;
@@ -70,6 +69,10 @@ public class XenAddonsClient implements ClientModInitializer {
 			);
 			dispatcher.register(literal("Xenaddons").redirect(xenaddonsNode));
 			var xaNode = dispatcher.register(literal("xa")
+					.then(literal("hud").executes(context -> {
+						openEditorNextTick = true;
+						return 1;
+					}))
 					.then(literal("title").executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug = 
                             xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
@@ -201,7 +204,10 @@ public class XenAddonsClient implements ClientModInitializer {
 			}
 			if (openEditorNextTick) {
 				openEditorNextTick = false;
-				client.setScreen(new GuiInvButtonEditor(null));
+				var hudEditor = KotlinGuiBridge.createHudEditorScreen(client.currentScreen);
+				if (hudEditor != null) {
+					client.setScreen(hudEditor);
+				}
 			}
 			if (openClickGUINextTick) {
 				openClickGUINextTick = false;

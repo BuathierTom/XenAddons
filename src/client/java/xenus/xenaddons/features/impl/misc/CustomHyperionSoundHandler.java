@@ -15,6 +15,9 @@ import java.util.Set;
 public final class CustomHyperionSoundHandler {
     private static final Set<String> WITHER_BLADES = Set.of("HYPERION", "VALKYRIE", "SCYLLA", "ASTRAEA");
     private static final long MAX_DELAY_MS = 2_000L;
+    private static final float VOLUME_BOOST = 2.5f;
+    private static final float MAX_EFFECTIVE_VOLUME = 8.0f;
+    private static final int LOUDNESS_PASSES = 1;
     private static long suppressUntilMs = -1L;
     private static boolean customPlayedInWindow = false;
 
@@ -88,9 +91,12 @@ public final class CustomHyperionSoundHandler {
         if (event == null) return;
 
         float volume = (float) module.volume.getValue().doubleValue();
+        float effectiveVolume = Math.min(MAX_EFFECTIVE_VOLUME, volume * VOLUME_BOOST);
         float pitch = (float) module.pitch.getValue().doubleValue();
-        // Reliable client-side playback for preview and replacement.
-        mc.player.playSound(event, volume, pitch);
+        // Play multiple local passes to make the custom hype clearly louder than vanilla.
+        for (int i = 0; i < LOUDNESS_PASSES; i++) {
+            mc.player.playSound(event, effectiveVolume, pitch);
+        }
     }
 
     private static Identifier resolveSoundId(String selected) {
