@@ -24,7 +24,9 @@
 		"MixinInGameHudSpotifyOverlay",
 		"MixinSoundManagerCustomHyperionSound",
 		"MixinClientPlayerInteractionManagerCooldownItems",
-		"MixinFluidRenderHandlerRegistry"
+		"MixinFluidRenderHandlerRegistry",
+		"MixinClientWorldBatDeathAlert",
+		"MixinClientPlayNetworkHandlerBatDeathAlert"
 	],
 	"injectors": {
 		"defaultRequire": 1
