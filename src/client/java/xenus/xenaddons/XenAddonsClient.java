@@ -185,19 +185,6 @@ public class XenAddonsClient implements ClientModInitializer {
                         module.debugTriggerProcAlert();
                         return 1;
                     }))
-                    .then(literal("cooldowndebug").executes(context -> {
-                        net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
-                        if (mc.player == null) return 0;
-                        net.minecraft.item.ItemStack held = mc.player.getMainHandStack();
-                        String name = held.isEmpty() ? "empty" : held.getName().getString();
-                        String id = xenus.xenaddons.features.impl.misc.CooldownItemsTracker.debugGetItemId(held);
-                        String uuid = xenus.xenaddons.features.impl.misc.CooldownItemsTracker.debugGetItemUuid(held);
-                        java.util.List<String> abilities = xenus.xenaddons.features.impl.misc.CooldownItemsTracker.debugGetAbilities(held);
-                        xenus.xenaddons.utils.ChatUtils.info("CooldownDebug item=" + name);
-                        xenus.xenaddons.utils.ChatUtils.info("id=" + id + " uuid=" + uuid);
-                        xenus.xenaddons.utils.ChatUtils.info("abilities=" + abilities);
-                        return 1;
-                    }))
 					.executes(context -> {
 						openClickGUINextTick = true;
 						return 1;
