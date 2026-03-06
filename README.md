@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.8-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.9-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -13,6 +13,19 @@
 </div>
 
 XenAddons is a Fabric mod for Minecraft **1.21.10** focused on Hypixel SkyBlock quality-of-life features.
+
+## Latest Update (1.2.9)
+
+- Added `Better Party Finder` in `Dungeon`:
+  - Reworked Party Finder join/class messages.
+  - Detailed dungeon stats display for joining players.
+  - Clickable quick actions (`kick`, `block`, `pv`) with direct execution.
+- Added `Bat Death Alert` in `Dungeon`.
+- Added `Experimentation Table Solver` in `Misc`:
+  - Chronomatron and Ultrasequencer solver logic.
+  - Superpairs discovered-item visibility and XP overlay.
+- Added `/xa hud` command to open the HUD editor directly.
+- Improved several overlays and chat interactions for stability/consistency.
 
 ## Compatibility
 

@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.8-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.9-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -24,6 +24,7 @@ XenAddons is a Fabric mod for Minecraft **1.21.10** focused on Hypixel SkyBlock 
 
 - `/xa` - Open XenAddons GUI
 - `/xenaddons` - Open XenAddons GUI
+- `/xa hud` - Open HUD editor
 - `/pcc` - Shortcut for `/chat party`
 
 Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
@@ -76,6 +77,14 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
   - Shows an alert at dungeon start if the party is not full.
   - Improved party size detection from tab/class lines to avoid false `1/5` cases.
 
+- `Bat Death Alert`
+  - Shows an alert when a bat dies in dungeons.
+
+- `Better Party Finder`
+  - Reworked Party Finder join/class messages.
+  - Detailed dungeon stats display for joining players.
+  - Clickable quick actions (`kick`, `block`, `pv`) with direct execution.
+
 ### Misc
 
 - `Command Aliases`
@@ -113,6 +122,10 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `Custom Hyperon Sound`
   - Replaces Wither Blade hype sound with a selectable custom sound.
   - Includes sound selector, volume/pitch controls, and `Play Sound` test button.
+
+- `Experimentation Table Solver`
+  - Chronomatron and Ultrasequencer solver.
+  - Superpairs discovered-item visibility and XP overlay.
 
 - `Item Price`
   - Shows SkyBlock item prices in tooltips.
