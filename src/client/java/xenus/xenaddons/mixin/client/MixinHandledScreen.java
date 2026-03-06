@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
+import xenus.xenaddons.features.impl.misc.ExperimentationTableSolverTracker;
 
 @Mixin(HandledScreen.class)
 public abstract class MixinHandledScreen extends Screen {
@@ -102,6 +103,13 @@ public abstract class MixinHandledScreen extends Screen {
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void onMouseClicked(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
+        if ((Object) this instanceof HandledScreen<?> handled) {
+            if (ExperimentationTableSolverTracker.onHandledScreenMouseClicked(handled, click.button())) {
+                cir.setReturnValue(true);
+                return;
+            }
+        }
+
         if (!XenAddons.instance.enabled) return;
 
         double mouseX = click.x();

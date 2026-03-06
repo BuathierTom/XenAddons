@@ -21,6 +21,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.misc.CompactPotionMessageModule());
         modules.add(new xenus.xenaddons.features.impl.misc.CooldownItemsModule());
         modules.add(new xenus.xenaddons.features.impl.misc.CustomHyperionSoundModule());
+        modules.add(new xenus.xenaddons.features.impl.misc.ExperimentationTableSolverModule());
         modules.add(new xenus.xenaddons.features.impl.misc.ItemPriceModule());
         modules.add(new xenus.xenaddons.features.impl.misc.SpotifyOverlayModule());
         
