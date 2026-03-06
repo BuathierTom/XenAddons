@@ -14,19 +14,6 @@
 
 XenAddons is a Fabric mod for Minecraft **1.21.10** focused on Hypixel SkyBlock quality-of-life features.
 
-## Latest Update (1.2.9)
-
-- Added `Better Party Finder` in `Dungeon`:
-  - Reworked Party Finder join/class messages.
-  - Detailed dungeon stats display for joining players.
-  - Clickable quick actions (`kick`, `block`, `pv`) with direct execution.
-- Added `Bat Death Alert` in `Dungeon`.
-- Added `Experimentation Table Solver` in `Misc`:
-  - Chronomatron and Ultrasequencer solver logic.
-  - Superpairs discovered-item visibility and XP overlay.
-- Added `/xa hud` command to open the HUD editor directly.
-- Improved several overlays and chat interactions for stability/consistency.
-
 ## Compatibility
 
 - Minecraft: `1.21.10`
@@ -37,6 +24,7 @@ XenAddons is a Fabric mod for Minecraft **1.21.10** focused on Hypixel SkyBlock 
 
 - `/xa` - Open XenAddons GUI
 - `/xenaddons` - Open XenAddons GUI
+- `/xa hud` - Open HUD editor
 - `/pcc` - Shortcut for `/chat party`
 
 Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
@@ -89,6 +77,14 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
   - Shows an alert at dungeon start if the party is not full.
   - Improved party size detection from tab/class lines to avoid false `1/5` cases.
 
+- `Bat Death Alert`
+  - Shows an alert when a bat dies in dungeons.
+
+- `Better Party Finder`
+  - Reworked Party Finder join/class messages.
+  - Detailed dungeon stats display for joining players.
+  - Clickable quick actions (`kick`, `block`, `pv`) with direct execution.
+
 ### Misc
 
 - `Command Aliases`
@@ -126,6 +122,10 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `Custom Hyperon Sound`
   - Replaces Wither Blade hype sound with a selectable custom sound.
   - Includes sound selector, volume/pitch controls, and `Play Sound` test button.
+
+- `Experimentation Table Solver`
+  - Chronomatron and Ultrasequencer solver.
+  - Superpairs discovered-item visibility and XP overlay.
 
 - `Item Price`
   - Shows SkyBlock item prices in tooltips.
