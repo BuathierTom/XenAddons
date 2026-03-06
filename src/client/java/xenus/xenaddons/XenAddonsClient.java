@@ -3,8 +3,10 @@ package xenus.xenaddons;
 import xenus.xenaddons.gui.GuiInvButtonMenu;
 import xenus.xenaddons.utils.HypixelItemManager;
 import xenus.xenaddons.utils.KotlinGuiBridge;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
@@ -74,6 +76,26 @@ public class XenAddonsClient implements ClientModInitializer {
 						openEditorNextTick = true;
 						return 1;
 					}))
+					.then(literal("pf").executes(context -> {
+                        xenus.xenaddons.features.impl.dev.DebugModule debug =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
+                        if (debug == null || !debug.isEnabled() || !debug.enablePfStatsTest.getValue()) {
+                            return 0;
+                        }
+                        xenus.xenaddons.features.impl.dungeons.DungeonsStatsPFModule.debugTrigger("dtXenus");
+                        xenus.xenaddons.utils.ChatUtils.info("PF debug launched for dtXenus");
+                        return 1;
+                    }).then(ClientCommandManager.argument("player", StringArgumentType.word()).executes(context -> {
+                        xenus.xenaddons.features.impl.dev.DebugModule debug =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
+                        if (debug == null || !debug.isEnabled() || !debug.enablePfStatsTest.getValue()) {
+                            return 0;
+                        }
+                        String player = StringArgumentType.getString(context, "player");
+                        xenus.xenaddons.features.impl.dungeons.DungeonsStatsPFModule.debugTrigger(player);
+                        xenus.xenaddons.utils.ChatUtils.info("PF debug launched for " + player);
+                        return 1;
+                    })))
 					.then(literal("title").executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug = 
                             xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);

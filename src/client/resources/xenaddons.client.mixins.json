@@ -7,6 +7,7 @@
 		"MixinHandledScreenCooldownItems",
 		"MixinChatHud",
 		"MixinChatScreenCopyChat",
+		"MixinScreenDirectChatCommands",
 		"MixinChatScreenVisualWords",
 		"MixinDrawContextVisualWords",
 		"MixinDrawContextCooldownItems",
