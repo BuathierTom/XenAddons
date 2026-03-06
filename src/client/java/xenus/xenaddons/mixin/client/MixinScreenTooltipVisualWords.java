@@ -27,7 +27,7 @@ public class MixinScreenTooltipVisualWords {
 
         List<Text> replaced = new ArrayList<>(original.size());
         for (Text line : original) {
-            replaced.add(GoatedPlayersManager.applyVisualWords(line));
+            replaced.add(GoatedPlayersManager.applyVisualWordsForTooltip(line));
         }
 
         ItemPriceModule itemPrice = ModuleManager.getModule(ItemPriceModule.class);

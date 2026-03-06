@@ -253,6 +253,46 @@ public class GoatedPlayersManager {
         return rebuilt;
     }
 
+    public static Text applyVisualWordsForTooltip(Text text) {
+        if (text == null) return null;
+        String original = text.getString();
+        if (original == null || original.isEmpty()) return text;
+
+        String replaced = applyVisualWordsInternal(original, true);
+        if (replaced.equals(original)) return text;
+
+        // If the tooltip line uses multiple distinct styles, keep the safe path
+        // to avoid stripping unrelated colors/formatting.
+        final Style[] firstSeenStyle = new Style[] {null};
+        final boolean[] multipleStyles = new boolean[] {false};
+        text.visit((style, string) -> {
+            if (string == null || string.isEmpty()) return Optional.empty();
+            if (firstSeenStyle[0] == null) {
+                firstSeenStyle[0] = style == null ? Style.EMPTY : style;
+            } else if (!firstSeenStyle[0].equals(style)) {
+                multipleStyles[0] = true;
+                return Optional.of(Boolean.TRUE);
+            }
+            return Optional.empty();
+        }, Style.EMPTY);
+        if (multipleStyles[0]) {
+            return applyVisualWords(text);
+        }
+
+        final Style[] firstStyle = new Style[] {Style.EMPTY};
+        text.visit((style, string) -> {
+            if (string != null && !string.isEmpty()) {
+                firstStyle[0] = style == null ? Style.EMPTY : style;
+                return Optional.of(Boolean.TRUE);
+            }
+            return Optional.empty();
+        }, Style.EMPTY);
+
+        MutableText rebuilt = Text.empty();
+        appendLegacyFormatted(rebuilt, replaced, firstStyle[0]);
+        return rebuilt;
+    }
+
     private static void appendLegacyFormatted(MutableText out, String input, Style baseStyle) {
         if (input == null || input.isEmpty()) return;
         String normalized = normalizeLegacyCodes(input);

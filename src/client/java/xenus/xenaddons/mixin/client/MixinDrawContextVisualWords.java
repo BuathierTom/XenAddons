@@ -20,7 +20,7 @@ public class MixinDrawContextVisualWords {
         require = 0
     )
     private Text xenaddons$drawTooltipSingle(Text text) {
-        return GoatedPlayersManager.applyVisualWords(text);
+        return GoatedPlayersManager.applyVisualWordsForTooltip(text);
     }
 
     @ModifyVariable(
@@ -31,7 +31,7 @@ public class MixinDrawContextVisualWords {
         require = 0
     )
     private Text xenaddons$drawTooltipSingleWithId(Text text) {
-        return GoatedPlayersManager.applyVisualWords(text);
+        return GoatedPlayersManager.applyVisualWordsForTooltip(text);
     }
 
     @ModifyVariable(
@@ -42,7 +42,7 @@ public class MixinDrawContextVisualWords {
         require = 0
     )
     private Text xenaddons$drawTooltipNoRenderer(Text text) {
-        return GoatedPlayersManager.applyVisualWords(text);
+        return GoatedPlayersManager.applyVisualWordsForTooltip(text);
     }
 
     @ModifyVariable(
@@ -56,7 +56,7 @@ public class MixinDrawContextVisualWords {
         if (lines == null || lines.isEmpty()) return lines;
         List<Text> replaced = new ArrayList<>(lines.size());
         for (Text line : lines) {
-            replaced.add(GoatedPlayersManager.applyVisualWords(line));
+            replaced.add(GoatedPlayersManager.applyVisualWordsForTooltip(line));
         }
         return replaced;
     }
@@ -72,7 +72,7 @@ public class MixinDrawContextVisualWords {
         if (lines == null || lines.isEmpty()) return lines;
         List<Text> replaced = new ArrayList<>(lines.size());
         for (Text line : lines) {
-            replaced.add(GoatedPlayersManager.applyVisualWords(line));
+            replaced.add(GoatedPlayersManager.applyVisualWordsForTooltip(line));
         }
         return replaced;
     }
