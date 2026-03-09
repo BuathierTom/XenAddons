@@ -197,20 +197,30 @@ public class XenAddonsClient implements ClientModInitializer {
                             return 1;
                         }))
                     .then(literal("procs").executes(context -> {
-                        xenus.xenaddons.features.impl.dev.DebugModule debug =
-                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
-
-                        if (debug == null || !debug.isEnabled() || !debug.enableProcsTest.getValue()) {
-                            return 0;
-                        }
-
                         xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule module =
                                 xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule.class);
                         if (module == null) return 0;
+                        if (!module.isEnabled()) module.setEnabled(true);
 
                         module.debugTriggerProcAlert();
                         return 1;
-                    }))
+                    }).then(ClientCommandManager.argument("type", StringArgumentType.word()).executes(context -> {
+                        xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule module =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule.class);
+                        if (module == null) return 0;
+                        if (!module.isEnabled()) module.setEnabled(true);
+
+                        String type = StringArgumentType.getString(context, "type");
+                        String normalized = type == null ? "" : type.toLowerCase(java.util.Locale.ROOT);
+                        if (!normalized.equals("spirit") && !normalized.equals("bonzo")
+                                && !normalized.equals("phoenix") && !normalized.equals("pheonix")) {
+                            xenus.xenaddons.utils.ChatUtils.error("Usage: /xa procs <spirit|bonzo|phoenix>");
+                            return 0;
+                        }
+
+                        module.debugTriggerProc(normalized);
+                        return 1;
+                    })))
 					.executes(context -> {
 						openClickGUINextTick = true;
 						return 1;
