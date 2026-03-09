@@ -422,7 +422,7 @@ public class DungeonUtils {
     }
 
     static {
-        positionDefinitions.add(new PositionDefinition("AtP2", "At P2!", (clazz) -> (currentPhase == 1 || currentPhase == 0) && !"Healer".equals(clazz), (entity) -> entity.getY() < 205 && entity.getY() > 164, "at p2", "in p2"));
+        positionDefinitions.add(new PositionDefinition("AtP2", "At P2!", (clazz) -> (currentPhase == 1 || currentPhase == 0), (entity) -> entity.getY() < 205 && entity.getY() > 164, "at p2", "in p2"));
         positionDefinitions.add(new PositionDefinition("AtSS", "At SS!", (clazz) -> inPhase(new int[]{2, 3}), (entity) -> isInBox(106, 110, 118, 122, 92, 96, entity), "at ss", "at simon says", "at ssc"));
         positionDefinitions.add(new PositionDefinition("AtEE2", "At Pre Enter 2!", (clazz) -> inStage(1), (entity) -> isInBox(49, 58, 108, 115, 129, 133, entity), "early enter 2", "pre enter 2", "at ee2", "entered 3.2"));
         positionDefinitions.add(new PositionDefinition("AtEE2High", "At Pre Enter 2 (High)!", (clazz) -> inStage(1), (entity) -> isInBox(62, 59, 132, 135, 143, 138, entity), "high pre enter 2", "high ee2", "ee2 high", "early enter high", "high early enter 2", "pre enter 2 (high)"));
@@ -432,7 +432,7 @@ public class DungeonUtils {
         positionDefinitions.add(new PositionDefinition("AtCore", "At Core!", (clazz) -> inPhase(new int[]{2, 3}), (entity) -> isInBox(52, 56, 113, 117, 49, 53, entity), "at core", "pre enter 4", "early enter 4", "at ee4", "entered 3.4"));
         positionDefinitions.add(new PositionDefinition("InGoldorTunnel", "Inside Goldor Tunnel!", (clazz) -> inStage(4), (entity) -> isInBox(41, 68, 110, 150, 59, 117, entity), "in goldor tunnel", "inside goldor tunnel", "in core", "entered 3.5", "at ee5", "pre enter 5"));
         positionDefinitions.add(new PositionDefinition("AtMid", "At Mid!", (clazz) -> inPhase(4), (entity) -> isInBox(47, 61, 64, 75, 69, 83, entity), "at mid", "in mid"));
-        positionDefinitions.add(new PositionDefinition("AtPre4Entry", "At Pre4 Entry!", (clazz) -> inPhase(2) && !"Healer".equals(clazz), (entity) -> isInBox(91, 93, 129, 133, 44, 46, entity), "i4 entry", "pre4 entry"));
+        positionDefinitions.add(new PositionDefinition("AtPre4Entry", "At Pre4 Entry!", (clazz) -> inPhase(2), (entity) -> isInBox(91, 93, 129, 133, 44, 46, entity), "i4 entry", "pre4 entry"));
         positionDefinitions.add(new PositionDefinition("AtP5", "At P5!", (clazz) -> inPhase(4) && "Healer".equals(clazz), (entity) -> entity.getY() < 50 && entity.getY() > 4, "at p5", "in p5"));
     }
 }

@@ -15,7 +15,7 @@ public class PosMsgModule extends Module {
     private long lastSendTime = 0;
 
     public PosMsgModule() {
-        super("Pos Message", "Sends a chat message when you reach specific points in F7", Category.DUNGEON);
+        super("Pos Message", "Sends a chat message when you reach specific points in F7/M7", Category.DUNGEON);
         
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (this.isEnabled()) onTick();

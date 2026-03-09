@@ -39,7 +39,7 @@ public class PlayersLeapedModule extends Module {
     private boolean inBounds = false;
 
     public PlayersLeapedModule() {
-        super("Players Leaped", "Shows how many players leaped in F7 terms", Category.DUNGEON);
+        super("Players Leaped", "Shows how many players leaped in F7/M7 terms", Category.DUNGEON);
 
         hudOffsetX.setVisibility(() -> false);
         hudY.setVisibility(() -> false);
