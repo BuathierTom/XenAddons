@@ -184,7 +184,7 @@ public class CommandAliasesModule extends Module {
                 if (MinecraftClient.getInstance().player != null) 
                     MinecraftClient.getInstance().player.networkHandler.sendChatCommand("play sb");
                     
-                Thread.sleep(1000);
+                Thread.sleep(2200);
                 
                 if (MinecraftClient.getInstance().player != null) 
                     MinecraftClient.getInstance().player.networkHandler.sendChatCommand("warp dungeon_hub");
