@@ -422,30 +422,31 @@ public class DungeonUtils {
     }
 
     static {
-        positionDefinitions.add(new PositionDefinition("AtP2", "At P2!", (clazz) -> (currentPhase == 1 || currentPhase == 0), (entity) -> entity.getY() < 205 && entity.getY() > 164, "at p2", "in p2"));
-        positionDefinitions.add(new PositionDefinition("AtSS", "At SS!", (clazz) -> inPhase(new int[]{2, 3}), (entity) -> isInBox(106, 110, 118, 122, 92, 96, entity), "at ss", "at simon says", "at ssc"));
-        positionDefinitions.add(new PositionDefinition("AtEE2", "At Pre Enter 2!", (clazz) -> inStage(1), (entity) -> isInBox(49, 58, 108, 115, 129, 133, entity), "early enter 2", "pre enter 2", "at ee2", "entered 3.2"));
-        positionDefinitions.add(new PositionDefinition("AtEE2High", "At Pre Enter 2 (High)!", (clazz) -> inStage(1), (entity) -> isInBox(62, 59, 132, 135, 143, 138, entity), "high pre enter 2", "high ee2", "ee2 high", "early enter high", "high early enter 2", "pre enter 2 (high)"));
-        positionDefinitions.add(new PositionDefinition("AtSafespot2", "At Early Enter 2 Safe Spot!", (clazz) -> inStage(1), (entity) -> {
+        // Phase checks disabled: allow position messages any time regardless of boss phase/stage.
+        positionDefinitions.add(new PositionDefinition("AtP2", "At P2!", (clazz) -> true, (entity) -> entity.getY() < 205 && entity.getY() > 164, "at p2", "in p2"));
+        positionDefinitions.add(new PositionDefinition("AtSS", "At SS!", (clazz) -> true, (entity) -> isInBox(106, 110, 118, 122, 92, 96, entity), "at ss", "at simon says", "at ssc"));
+        positionDefinitions.add(new PositionDefinition("AtEE2", "At Pre Enter 2!", (clazz) -> true, (entity) -> isInBox(49, 58, 108, 115, 129, 133, entity), "early enter 2", "pre enter 2", "at ee2", "entered 3.2"));
+        positionDefinitions.add(new PositionDefinition("AtEE2High", "At Pre Enter 2 (High)!", (clazz) -> true, (entity) -> isInBox(62, 59, 132, 135, 143, 138, entity), "high pre enter 2", "high ee2", "ee2 high", "early enter high", "high early enter 2", "pre enter 2 (high)"));
+        positionDefinitions.add(new PositionDefinition("AtSafespot2", "At Early Enter 2 Safe Spot!", (clazz) -> true, (entity) -> {
             double radiusSq = 0.4999 * 0.4999;
             return entity.squaredDistanceTo(69.5, 109.0, 121.5) <= radiusSq
                     || entity.squaredDistanceTo(67.5, 109.0, 121.5) <= radiusSq
                     || entity.squaredDistanceTo(48.5, 109.0, 121.5) <= radiusSq
                     || entity.squaredDistanceTo(46.5, 109.0, 121.5) <= radiusSq;
         }, "2 safespot", "safespot 2", "early enter 2 safe spot"));
-        positionDefinitions.add(new PositionDefinition("AtEE3", "At Pre Enter 3!", (clazz) -> inStage(2), (entity) -> isInBox(0, 4, 108, 115, 98, 107, entity), "early enter 3", "pre enter 3", "at ee3", "entered 3.3"));
-        positionDefinitions.add(new PositionDefinition("AtSafespot3", "At Early Enter 3 Safe Spot!", (clazz) -> inStage(2), (entity) -> {
+        positionDefinitions.add(new PositionDefinition("AtEE3", "At Pre Enter 3!", (clazz) -> true, (entity) -> isInBox(0, 4, 108, 115, 98, 107, entity), "early enter 3", "pre enter 3", "at ee3", "entered 3.3"));
+        positionDefinitions.add(new PositionDefinition("AtSafespot3", "At Early Enter 3 Safe Spot!", (clazz) -> true, (entity) -> {
             double radiusSq = 0.45 * 0.45;
             for (double z = 91.5; z <= 99.5; z += 1.0) {
                 if (entity.squaredDistanceTo(18.5, 121.5, z) <= radiusSq) return true;
             }
             return false;
         }, "safespot 3", "3 safespot", "early enter 3 safe spot"));
-        positionDefinitions.add(new PositionDefinition("AtCore", "At Core!", (clazz) -> inPhase(new int[]{2, 3}), (entity) -> isInBox(52, 56, 113, 117, 49, 53, entity), "at core", "pre enter 4", "early enter 4", "at ee4", "entered 3.4"));
-        positionDefinitions.add(new PositionDefinition("InGoldorTunnel", "Inside Goldor Tunnel!", (clazz) -> inStage(4), (entity) -> isInBox(41, 68, 110, 150, 59, 117, entity), "in goldor tunnel", "inside goldor tunnel", "in core", "entered 3.5", "at ee5", "pre enter 5"));
+        positionDefinitions.add(new PositionDefinition("AtCore", "At Core!", (clazz) -> true, (entity) -> isInBox(52, 56, 113, 117, 49, 53, entity), "at core", "pre enter 4", "early enter 4", "at ee4", "entered 3.4"));
+        positionDefinitions.add(new PositionDefinition("InGoldorTunnel", "Inside Goldor Tunnel!", (clazz) -> true, (entity) -> isInBox(41, 68, 110, 150, 59, 117, entity), "in goldor tunnel", "inside goldor tunnel", "in core", "entered 3.5", "at ee5", "pre enter 5"));
         positionDefinitions.add(new PositionDefinition("AtPewPewDev", "At pew pew dev!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(63.5, 127.0, 35.5) <= (1.5 * 1.5), "at pew pew dev"));
-        positionDefinitions.add(new PositionDefinition("AtMid", "At Mid!", (clazz) -> inPhase(4), (entity) -> isInBox(47, 61, 64, 75, 69, 83, entity), "at mid", "in mid"));
-        positionDefinitions.add(new PositionDefinition("AtPre4Entry", "At Pre4 Entry!", (clazz) -> inPhase(2), (entity) -> isInBox(91, 93, 129, 133, 44, 46, entity), "i4 entry", "pre4 entry"));
-        positionDefinitions.add(new PositionDefinition("AtP5", "At P5!", (clazz) -> inPhase(4) && "Healer".equals(clazz), (entity) -> entity.getY() < 50 && entity.getY() > 4, "at p5", "in p5"));
+        positionDefinitions.add(new PositionDefinition("AtMid", "At Mid!", (clazz) -> true, (entity) -> isInBox(47, 61, 64, 75, 69, 83, entity), "at mid", "in mid"));
+        positionDefinitions.add(new PositionDefinition("AtPre4Entry", "At Pre4 Entry!", (clazz) -> true, (entity) -> isInBox(91, 93, 129, 133, 44, 46, entity), "i4 entry", "pre4 entry"));
+        positionDefinitions.add(new PositionDefinition("AtP5", "At P5!", (clazz) -> "Healer".equals(clazz), (entity) -> entity.getY() < 50 && entity.getY() > 4, "at p5", "in p5"));
     }
 }

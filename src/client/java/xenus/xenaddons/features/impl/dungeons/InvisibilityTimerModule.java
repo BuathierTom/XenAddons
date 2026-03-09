@@ -137,9 +137,6 @@ public class InvisibilityTimerModule extends Module {
         }
 
         if (ticks <= 0 || type == null) return;
-        // Strict gate: only trigger on a fresh proc window.
-        // If an invincibility timer is already running, ignore repeated messages/sounds.
-        if (activeTicks > 0) return;
 
         long now = System.currentTimeMillis();
         String key = type + "|" + clean;
