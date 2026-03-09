@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.9-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.10-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -32,7 +32,9 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `/xa petrule`
 - `/xa ticlass`
 - `/xa secretroom`
-- `/xa procs`
+
+Additional proc test command:
+- `/xa procs <spirit|bonzo|phoenix>`
 
 ## Modules
 
@@ -44,6 +46,11 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 
 - `Pos Message`
   - Sends party callouts when your character reaches configured dungeon spots.
+  - Updated safespot detection:
+    - Early Enter 2 safespots use specific point checks.
+    - Early Enter 3 safespots use specific point checks.
+  - Added custom point `At pew pew dev!`.
+  - Removed class restriction on `At P2` and `At Pre4 Entry`.
 
 - `Pos Titles`
   - Displays teammate callouts as HUD text.
@@ -68,9 +75,24 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
     - Spirit Mask proc
     - Phoenix Pet proc
   - HUD element is editable through `Edit HUD` (move/scale/reset).
+  - Display mode selector:
+    - `Seconds` (`3.000`)
+    - `Ticks` (`60t`)
+  - Color thresholds:
+    - green: `3000 -> 1500`
+    - yellow: `1500 -> 700`
+    - red: `700 -> 0`
+  - Proc durations:
+    - Spirit: `3s`
+    - Bonzo: `3s`
+    - Phoenix: `4s`
   - Includes `Mask procs alert`:
-    - Large red on-screen proc alert (`BONZO`, `SPIRIT`, `PHOENIX`)
-    - Loud DING sound
+    - Large red on-screen proc alert (`Bonzo`, `Spirit`, `Phoenix`)
+    - Configurable proc sound:
+      - sound selector
+      - `Sound Volume` (`0.0 -> 5.0`)
+      - `Sound Pitch` (`0.0 -> 2.0`)
+      - `Note play` preview button
     - Alert position/scale editable through `Edit HUD` as `Mask proc alert`.
 
 - `Dungeon not full alert`
@@ -98,6 +120,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
     - `/lsb`, `/ld`
     - `/f1`..`/f7`
     - `/m1`..`/m7`
+  - `/ld` now waits longer before `/warp dungeon_hub`.
 
 - `Cursor 1.8.9`
   - Keeps inventory cursor behavior closer to legacy 1.8.9 style.
