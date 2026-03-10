@@ -31,6 +31,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosMsgModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosTitlesModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule());
+        modules.add(new xenus.xenaddons.features.impl.dungeons.ItemQualityModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.DungeonNotFullAlertModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.SecretRoutesModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule());
