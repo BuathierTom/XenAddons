@@ -472,7 +472,7 @@ public class DungeonUtils {
         positionDefinitions.add(new PositionDefinition("EnteringCore", "Entering Core!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(58.0, 120.0, 122.0) <= (0.3 * 0.3), "entering core"));
         positionDefinitions.add(new PositionDefinition("AtCore", "At Core!", (clazz) -> true, (entity) -> isInBox(52, 56, 113, 117, 49, 53, entity), "at core", "pre enter 4", "early enter 4", "at ee4", "entered 3.4"));
         positionDefinitions.add(new PositionDefinition("InGoldorTunnel", "Inside Goldor Tunnel!", (clazz) -> true, (entity) -> isInBox(41, 68, 110, 150, 59, 117, entity), "in goldor tunnel", "inside goldor tunnel", "in core", "entered 3.5", "at ee5", "pre enter 5"));
-        positionDefinitions.add(new PositionDefinition("AtPewPewDev", "At pew pew dev!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(63.5, 127.0, 35.5) <= (1.5 * 1.5), "at pew pew dev"));
+        positionDefinitions.add(new PositionDefinition("AtPewPewDev", "At Pew Pew Dev!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(63.5, 127.0, 35.5) <= (1.5 * 1.5), "at pew pew dev"));
         positionDefinitions.add(new PositionDefinition("AtMid", "At Mid!", (clazz) -> true, (entity) -> isInBox(47, 61, 64, 75, 69, 83, entity), "at mid", "in mid"));
         positionDefinitions.add(new PositionDefinition("AtPre4Entry", "At Pre4 Entry!", (clazz) -> true, (entity) -> isInBox(91, 93, 129, 133, 44, 46, entity), "i4 entry", "pre4 entry"));
         positionDefinitions.add(new PositionDefinition("AtP5", "At P5!", (clazz) -> "Healer".equals(clazz), (entity) -> entity.getY() < 50 && entity.getY() > 4, "at p5", "in p5"));
