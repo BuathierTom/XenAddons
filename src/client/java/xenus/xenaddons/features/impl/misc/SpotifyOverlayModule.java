@@ -31,7 +31,7 @@ public class SpotifyOverlayModule extends Module {
     }
 
     public void renderPreview(DrawContext drawContext) {
-        renderLine(drawContext, "§6Spotify §7> §aAuteur §7- §bNom musique");
+        renderLine(drawContext, "§6Spotify §7> §aAuthor §7- §bSong Title");
     }
 
     private void renderLine(DrawContext drawContext, String line) {
