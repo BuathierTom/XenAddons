@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.10-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.11-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -99,6 +99,10 @@ Additional proc test command:
   - Detailed dungeon stats display for joining players.
   - Clickable quick actions (`kick`, `block`, `pv`) with direct execution.
 
+- `Item Quality`
+  - Adds `Quality Bonus: +...% (...)` to dungeon item tooltips.
+  - Quality line is shown under item rarity.
+
 ### Misc
 
 - `Command Aliases`
@@ -147,6 +151,12 @@ Additional proc test command:
   - Supports:
     - `Bazaar Price` (Hypixel bazaar)
     - `Lowest BIN` (from whatyouth API `auction` data)
+
+- `Bazaar/AH Quick Search`
+  - Search hovered item instantly with a keybind (default `M`).
+  - Auto-selects `/bz` or `/ahs`.
+  - Cleans reforges and decorative symbols from item name before search.
+  - Keybind setting supports `ESC -> Not Bound`.
 
 - `Spotify Overlay`
   - HUD showing current playing track in colored format:
