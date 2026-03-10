@@ -27,12 +27,15 @@ public class PosMsgModule extends Module {
             if (!lastLocation.isEmpty()) lastLocation.clear();
             return;
         }
+        if (!DungeonUtils.inBoss()) {
+            return;
+        }
         
         ClientPlayerEntity player = mc.player;
         if (player == null || player.isInvisible()) return;
 
         String playerClass = DungeonUtils.getPlayerClass(player);
-        if (playerClass == null) return;
+        if (playerClass == null) playerClass = "";
 
         for (DungeonUtils.PositionDefinition pos : DungeonUtils.positionDefinitions) {
             if (lastLocation.getOrDefault(pos.id, false)) continue;

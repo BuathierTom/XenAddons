@@ -28,6 +28,7 @@ public class DungeonUtils {
     public static int crypts = 0;
     public static int dungeonSeconds = 0;
     public static boolean inCatacombs = false;
+    public static boolean inBoss = false;
     
     private static final Map<String, String> PLAYER_CLASSES = new HashMap<>();
     private static final Map<java.util.UUID, String> PLAYER_CLASSES_UUID = new HashMap<>();
@@ -43,6 +44,7 @@ public class DungeonUtils {
         crypts = 0;
         dungeonSeconds = 0;
         inCatacombs = false;
+        inBoss = false;
         PLAYER_CLASSES.clear();
         PLAYER_CLASSES_UUID.clear();
         PLAYER_CLASS_LEVELS_UUID.clear();
@@ -65,6 +67,7 @@ public class DungeonUtils {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.world == null) return;
             tickCounter++;
+            updateBossState();
             
             if (tickCounter % 20 == 0) { // Every 1 second
                 updateFromTab();
@@ -274,6 +277,29 @@ public class DungeonUtils {
     }
     
     public static boolean inDungeon() { return floorNumber > 0 || inCatacombs; }
+
+    public static boolean inBoss() {
+        return inDungeon() && (inBoss || currentPhase > 0);
+    }
+
+    private static void updateBossState() {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.player == null || !inDungeon()) {
+            inBoss = false;
+            return;
+        }
+
+        double x = mc.player.getX();
+        double z = mc.player.getZ();
+
+        if (inCatacombs || floorNumber == 7) {
+            inBoss = x > -7.0 && z > -7.0;
+            return;
+        }
+
+        // Fallback for unknown floor data.
+        inBoss = currentPhase > 0;
+    }
     
     public static boolean isInBox(double x1, double x2, double y1, double y2, double z1, double z2, Entity entity) {
         if (entity == null) return false;
@@ -442,6 +468,8 @@ public class DungeonUtils {
             }
             return false;
         }, "safespot 3", "3 safespot", "early enter 3 safe spot"));
+        positionDefinitions.add(new PositionDefinition("AtArrowsDevice", "At Arrows Device!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(-0.5, 120.0, 77.5) <= (1.5 * 1.5), "at arrows device"));
+        positionDefinitions.add(new PositionDefinition("EnteringCore", "Entering Core!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(58.0, 120.0, 122.0) <= (0.3 * 0.3), "entering core"));
         positionDefinitions.add(new PositionDefinition("AtCore", "At Core!", (clazz) -> true, (entity) -> isInBox(52, 56, 113, 117, 49, 53, entity), "at core", "pre enter 4", "early enter 4", "at ee4", "entered 3.4"));
         positionDefinitions.add(new PositionDefinition("InGoldorTunnel", "Inside Goldor Tunnel!", (clazz) -> true, (entity) -> isInBox(41, 68, 110, 150, 59, 117, entity), "in goldor tunnel", "inside goldor tunnel", "in core", "entered 3.5", "at ee5", "pre enter 5"));
         positionDefinitions.add(new PositionDefinition("AtPewPewDev", "At pew pew dev!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(63.5, 127.0, 35.5) <= (1.5 * 1.5), "at pew pew dev"));
