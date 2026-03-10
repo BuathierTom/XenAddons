@@ -12,7 +12,7 @@ public class ExperimentationTableSolverModule extends Module {
     private static boolean initialized = false;
 
     public ExperimentationTableSolverModule() {
-        super("Experimentation Table Solver", "Solver for Chronomatron and Ultrasequencer", Category.MISC);
+        super("Exp Table Solver", "Solver for Chronomatron and Ultrasequencer", Category.MISC);
         this.registerSetting(highlightNextClick);
         this.registerSetting(preventMisclicks);
         this.registerSetting(keepItemsVisible);
