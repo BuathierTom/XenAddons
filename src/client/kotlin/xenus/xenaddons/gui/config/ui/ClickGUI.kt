@@ -1,8 +1,11 @@
 package xenus.xenaddons.gui.config.ui
 
+import net.minecraft.client.input.KeyInput
+import org.lwjgl.glfw.GLFW
 import xyz.meowing.vexel.core.VexelScreen
 import xenus.xenaddons.gui.managers.config.ConfigManager
 import xenus.xenaddons.gui.config.ui.elements.base.ElementType
+import xenus.xenaddons.gui.config.ui.elements.KeybindElement
 import xenus.xenaddons.gui.managers.config.ConfigElement
 import xenus.xenaddons.gui.managers.config.CategoryElement
 import xenus.xenaddons.gui.utils.toColorFromMap
@@ -148,6 +151,13 @@ object ClickGUI : VexelScreen("Zen Config") {
             }
         }
         super.onMouseScroll(horizontal, vertical)
+    }
+
+    override fun keyPressed(input: KeyInput?): Boolean {
+        if (input?.key() == GLFW.GLFW_KEY_ESCAPE && KeybindElement.consumeEscapeIfListening()) {
+            return true
+        }
+        return super.keyPressed(input)
     }
 
     override fun onCloseGui() {

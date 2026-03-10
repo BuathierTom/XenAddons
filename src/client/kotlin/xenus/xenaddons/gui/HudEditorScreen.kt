@@ -572,7 +572,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         val inv = 1.0f / scale
         context.matrices.pushMatrix()
         context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, "§6Spotify §7> §aAuteur §7- §bNom musique", (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFFFFF.toInt())
+        context.drawTextWithShadow(textRenderer, "§6Spotify §7> §aAuthor §7- §bSong Title", (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFFFFF.toInt())
         context.matrices.popMatrix()
     }
 
@@ -634,7 +634,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         private val AUTOPET_TITLE_PREVIEW = Text.literal("Golden Dragon")
         private val AUTOPET_SUB_PREVIEW = Text.literal("Autopet")
         private val PLAYERS_LEAPED_PREVIEW = Text.literal("2/4 Players Leaped")
-        private val SPOTIFY_PREVIEW = Text.literal("Spotify > Auteur - Nom musique")
+        private val SPOTIFY_PREVIEW = Text.literal("Spotify > Author - Song Title")
 
         private const val RESET_BTN_W = 120
         private const val RESET_BTN_H = 16

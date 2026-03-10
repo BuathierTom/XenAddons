@@ -17,6 +17,17 @@ class KeybindElement(
     name: String,
     initialKeyCode: Int
 ) : VexelElement<KeybindElement>() {
+    companion object {
+        private var listeningElement: KeybindElement? = null
+
+        fun consumeEscapeIfListening(): Boolean {
+            val current = listeningElement ?: return false
+            if (!current.listening) return false
+            current.setKey(-1)
+            return true
+        }
+    }
+
     private val scale = Panel.WIDTH / 240f
 
     var selectedKey: Int = initialKeyCode
@@ -73,11 +84,11 @@ class KeybindElement(
             if (!listening) return@onCharType false
             when (keyCode) {
                 GLFW.GLFW_KEY_ESCAPE -> {
-                    stopListening()
+                    setKey(-1)
                     true
                 }
                 GLFW.GLFW_KEY_BACKSPACE -> {
-                    setKey(0)
+                    setKey(-1)
                     true
                 }
                 GLFW.GLFW_KEY_ENTER -> {
@@ -93,6 +104,7 @@ class KeybindElement(
     }
 
     private fun startListening() {
+        listeningElement = this
         listening = true
         keybindText.text = "..."
         updateButtonSize()
@@ -100,6 +112,9 @@ class KeybindElement(
     }
 
     private fun stopListening() {
+        if (listeningElement === this) {
+            listeningElement = null
+        }
         listening = false
         keybindText.text = getKeyName(selectedKey)
         updateButtonSize()
@@ -118,7 +133,7 @@ class KeybindElement(
     }
 
     private fun getKeyName(keyCode: Int): String = when (keyCode) {
-        0 -> "None"
+        0, -1 -> "Not Bound"
         in -100..-1 -> "Mouse ${keyCode + 100}"
         else -> KnitInputs.getDisplayName(keyCode)
     }

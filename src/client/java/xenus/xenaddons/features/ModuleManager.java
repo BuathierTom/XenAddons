@@ -24,6 +24,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.misc.ExperimentationTableSolverModule());
         modules.add(new xenus.xenaddons.features.impl.misc.ItemPriceModule());
         modules.add(new xenus.xenaddons.features.impl.misc.SpotifyOverlayModule());
+        modules.add(new xenus.xenaddons.features.impl.misc.BazaarAHQuickSearchModule());
         
         modules.add(new xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.BatDeathAlertModule());
