@@ -24,9 +24,3 @@ Minecraft `1.21.10` • Fabric
 
 - **Custom Size**
   - Toggleable from `Dev` category
-
-## Documentation
-
-- Bumped mod version to `1.2.6`
-- Updated `README.md`
-- Updated Modrinth long description (`releases/-description-modrinth.md`)

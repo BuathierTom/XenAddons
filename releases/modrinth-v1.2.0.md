@@ -1,7 +1,3 @@
-# XenAddons 1.2.0
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## Changes
 
 - Added resource-based visual configuration:

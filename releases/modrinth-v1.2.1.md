@@ -1,7 +1,3 @@
-# XenAddons 1.2.1
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## Fixes
 
 - **Copy Chat** now selects the clicked line more reliably

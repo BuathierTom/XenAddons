@@ -1,7 +1,3 @@
-# XenAddons 1.2.8
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## Added
 
 - `Lava Remplacement` (lava visual replacement)

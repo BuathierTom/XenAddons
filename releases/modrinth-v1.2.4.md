@@ -1,7 +1,3 @@
-# XenAddons 1.2.4
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## New
 
 - Added **Invisibility timer** (Dungeon)

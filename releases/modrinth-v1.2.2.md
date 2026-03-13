@@ -1,7 +1,3 @@
-# XenAddons 1.2.2
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## New
 
 - **Spotify Overlay** (Misc)

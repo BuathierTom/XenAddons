@@ -36,9 +36,3 @@ Minecraft `1.21.10` • Fabric
 - Custom Hyperon Sound:
   - Improved Wither Blade click detection and sound suppression window.
   - Mutes base hype explosion/teleport/cure/fizz sounds while playing custom sound.
-
-## Documentation
-
-- Bumped mod version to `1.2.8`
-- Updated `README.md`
-- Updated Modrinth long description (`releases/-description-modrinth.md`)

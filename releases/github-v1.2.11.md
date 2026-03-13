@@ -26,9 +26,3 @@ Minecraft `1.21.10` • Fabric
 - **Config GUI / Keybinds**
   - Pressing `ESC` while recording a keybind now sets `Not Bound` and does not close the config menu.
   - `Backspace` while recording also sets `Not Bound`.
-
-## Documentation
-
-- Bumped mod version to `1.2.11`.
-- Updated `README.md`.
-- Updated Modrinth long description (`releases/-description-modrinth.md`).

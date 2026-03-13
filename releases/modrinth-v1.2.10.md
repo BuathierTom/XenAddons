@@ -1,7 +1,3 @@
-# XenAddons 1.2.10
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## Added
 
 - `Invisibility timer` display mode selector (`Seconds` / `Ticks`)

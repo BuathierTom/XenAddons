@@ -25,8 +25,3 @@ Minecraft `1.21.10` • Fabric
 - New debug command: `/xa procs`
   - Triggers mask proc alert + sound for testing
 
-## Changed
-
-- Bumped mod version to `1.2.4`
-- Updated README with new Dungeon functionality and debug command list
-

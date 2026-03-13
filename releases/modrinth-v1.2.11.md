@@ -1,7 +1,3 @@
-# XenAddons 1.2.11
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## Added
 
 - `Item Quality` (Dungeon)
@@ -23,9 +19,3 @@
   - `ESC` now sets keybind to `Not Bound`
   - `ESC` no longer closes the config menu while recording
   - `Backspace` also sets `Not Bound`
-
-## Docs
-
-- Version bumped to `1.2.11`
-- README updated
-- Modrinth description updated

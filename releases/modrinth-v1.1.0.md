@@ -1,7 +1,3 @@
-# XenAddons 1.1.0
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## Changes
 
 - Added new **Misc** feature: **Cursor 1.8.9**

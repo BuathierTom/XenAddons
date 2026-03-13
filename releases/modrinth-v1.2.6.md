@@ -1,7 +1,3 @@
-# XenAddons 1.2.6
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## New
 
 - Added `/pcc` command shortcut (`/chat party`)
@@ -13,8 +9,3 @@
 - `SecretRoutes` now stays hidden after room secrets are completed, even if you leave and re-enter the same room
 - Improved secret progression fallback logic for interact/bat/item
 - `Custom Size` is now toggleable in `Dev`
-
-## Docs
-
-- Updated README
-- Updated Modrinth description

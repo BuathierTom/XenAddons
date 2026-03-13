@@ -30,9 +30,3 @@ Minecraft `1.21.10` • Fabric
 - Fixed chat click confirmation edge cases on PF action lines.
 - Fixed several Experimentation Table rendering/solver timing issues.
 - General stability fixes across new dungeon and misc modules.
-
-## Documentation
-
-- Bumped mod version to `1.2.9`.
-- Updated `README.md`.
-- Updated Modrinth long description (`releases/-description-modrinth.md`).

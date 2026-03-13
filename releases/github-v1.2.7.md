@@ -12,9 +12,3 @@ Minecraft `1.21.10` • Fabric
 - **VisualWords**
   - Restored name replacement hook on in-world nametags (above players)
   - Removed tab-list replacement hook for this feature
-
-## Documentation
-
-- Bumped mod version to `1.2.7`
-- Updated `README.md`
-- Updated Modrinth long description (`releases/-description-modrinth.md`)

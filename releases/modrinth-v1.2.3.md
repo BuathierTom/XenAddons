@@ -1,7 +1,3 @@
-# XenAddons 1.2.3
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## Improvements
 
 - Click GUI scroll reworked (panel/column-based behavior)

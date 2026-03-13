@@ -15,9 +15,3 @@ Minecraft `1.21.10` • Fabric
 
 - **VisualWords**
   - Added `DungeonsRat` rainbow/chroma style formatting
-
-## Documentation
-
-- Bumped mod version to `1.2.5`
-- Updated `README.md`
-- Updated Modrinth long description (`releases/-description-modrinth.md`)

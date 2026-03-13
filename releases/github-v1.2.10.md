@@ -35,9 +35,3 @@ Minecraft `1.21.10` • Fabric
 
 - **Misc / Command Aliases**
   - `/ld` now waits longer before running `/warp dungeon_hub`.
-
-## Documentation
-
-- Bumped mod version to `1.2.10`.
-- Updated `README.md`.
-- Updated Modrinth long description (`releases/-description-modrinth.md`).

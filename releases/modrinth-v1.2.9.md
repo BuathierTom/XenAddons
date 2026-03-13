@@ -1,7 +1,3 @@
-# XenAddons 1.2.9
-
-**Minecraft 1.21.10 (Fabric)**
-
 ## Added
 
 - `Better Party Finder` (Party Finder join/class improvements + dungeon stats + quick actions)
