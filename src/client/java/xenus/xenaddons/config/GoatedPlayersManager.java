@@ -125,11 +125,35 @@ public class GoatedPlayersManager {
         while (from <= max) {
             int found = indexOfIgnoreCase(input, target, from);
             if (found < 0) break;
+            if (isInsideExistingReplacement(input, found, target, replacement)) {
+                out.append(input, from, found + target.length());
+                from = found + target.length();
+                continue;
+            }
             out.append(input, from, found).append(replacement);
             from = found + target.length();
         }
         if (from < input.length()) out.append(input, from, input.length());
         return out.toString();
+    }
+
+    private static boolean isInsideExistingReplacement(String input, int targetStart, String target, String replacement) {
+        if (replacement == null || replacement.isEmpty()) return false;
+        int targetLen = target.length();
+        String loweredReplacement = replacement.toLowerCase();
+        String loweredTarget = target.toLowerCase();
+
+        int pos = loweredReplacement.indexOf(loweredTarget);
+        while (pos >= 0) {
+            int wholeStart = targetStart - pos;
+            int wholeEnd = wholeStart + replacement.length();
+            if (wholeStart >= 0 && wholeEnd <= input.length()
+                && input.regionMatches(true, wholeStart, replacement, 0, replacement.length())) {
+                return true;
+            }
+            pos = loweredReplacement.indexOf(loweredTarget, pos + 1);
+        }
+        return false;
     }
 
     private static int indexOfIgnoreCase(String text, String needle, int fromIndex) {
