@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.11-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.12-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -32,9 +32,8 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `/xa petrule`
 - `/xa ticlass`
 - `/xa secretroom`
-
-Additional proc test command:
 - `/xa procs <spirit|bonzo|phoenix>`
+- `/xa pf <pseudo>`
 
 ## Modules
 
@@ -137,6 +136,7 @@ Additional proc test command:
   - Item ability cooldown overlay inspired by SkyHanni.
   - Supports ready state (`R`), cooldown text/colors, and inventory display options.
   - Includes mage cooldown reduction handling in dungeons.
+  - Cooldown reduction now scales from your class level and unique-class bonus.
 
 - `Custom Hyperon Sound`
   - Replaces Wither Blade hype sound with a selectable custom sound.
