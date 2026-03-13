@@ -217,7 +217,8 @@ public class DungeonsStatsPFModule extends Module {
                 }
             }
             boolean hasTerminator = allItemIds.contains("TERMINATOR");
-            boolean hasHyperion = allItemIds.contains("HYPERION");
+            String witherBladeName = detectWitherBladeName(allItemIds);
+            boolean hasWitherBlade = witherBladeName != null;
 
             int lineWidth = getStatsLineWidth(playerName);
             sendLine(buildStatsHeader(playerName, lineWidth + 5));
@@ -226,8 +227,9 @@ public class DungeonsStatsPFModule extends Module {
             sendLine("  Pets: " + pets);
             sendLine("  §9Power Stone: §e" + (powerStone == null ? "N/A" : powerStone)
                     + " §f| §6Arrows: §e" + (selectedArrow == null ? "N/A" : selectedArrow));
-            sendLine("  §6Key Items: §eTerminator " + (hasTerminator ? "§aYes" : "§cNo")
-                    + " §7| §eHyperion " + (hasHyperion ? "§aYes" : "§cNo"));
+            String bladeLabel = hasWitherBlade ? witherBladeName : "Hyperion";
+            sendLine("  §6Key Items → §eTerminator: " + (hasTerminator ? "§aYes" : "§cNo")
+                    + " §7| §e" + bladeLabel + ": " + (hasWitherBlade ? "§aYes" : "§cNo"));
             sendLine(" ");
             if (!inventoryApi) {
                 sendLine("  §cInventory Api is Off");
@@ -609,6 +611,15 @@ public class DungeonsStatsPFModule extends Module {
         String up = type.toUpperCase();
         if (up.endsWith("_DRAGON")) return up.startsWith("GOLDEN") ? "GDRAG" : "EDRAG";
         return up;
+    }
+
+    private static String detectWitherBladeName(Set<String> allItemIds) {
+        if (allItemIds == null || allItemIds.isEmpty()) return null;
+        if (allItemIds.contains("HYPERION")) return "Hyperion";
+        if (allItemIds.contains("ASTRAEA")) return "Astraea";
+        if (allItemIds.contains("SCYLLA")) return "Scylla";
+        if (allItemIds.contains("VALKYRIE")) return "Valkyrie";
+        return null;
     }
 
     private static void sendArmorLine(DecodedItem armor) {
