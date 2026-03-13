@@ -42,15 +42,16 @@ public class MixinScreenTooltipVisualWords {
 
                 // Bazaar has priority; if missing, fallback to Lowest BIN.
                 if (bazaar != null) {
-                    boolean showStack = count > 1;
+                    int stackAmountForShift = count > 1 ? count : 64;
+                    boolean showStack = true;
                     long handle = client.getWindow().getHandle();
                     boolean shiftDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
                         || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-                    int multiplier = (showStack && shiftDown) ? count : 1;
+                    int multiplier = (showStack && shiftDown) ? stackAmountForShift : 1;
 
                     addPriceSectionSpacer(replaced);
                     if (showStack && !shiftDown) {
-                        replaced.add(Text.literal("§7[SHIFT show x" + count + "]"));
+                        replaced.add(Text.literal("§7[SHIFT show x" + stackAmountForShift + "]"));
                     }
 
                     addBazaarLine(replaced, "Bazaar Buy", bazaar.buy(), multiplier);
