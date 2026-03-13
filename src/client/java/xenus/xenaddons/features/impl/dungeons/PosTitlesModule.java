@@ -122,6 +122,7 @@ public class PosTitlesModule extends Module {
 
     private void handleChat(String msg) {
         if (!DungeonUtils.inDungeon()) return;
+        if (mc == null || mc.player == null) return;
         
         String clean = msg.replaceAll("§[0-9a-fk-or]", "");
         Matcher matcher = CHAT_PATTERN.matcher(clean);
@@ -167,6 +168,7 @@ public class PosTitlesModule extends Module {
     }
 
     public void showAlert(String playerName, String playerClass, String text) {
+        if (mc == null || mc.player == null) return;
         String classColor = DungeonUtils.getClassColor(playerClass);
         String classLetter = playerClass.substring(0, 1);
         String formatted = String.format("%s%s (%s) §e%s", classColor, playerName, classLetter, text);
