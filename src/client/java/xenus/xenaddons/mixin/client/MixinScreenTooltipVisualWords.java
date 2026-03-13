@@ -25,6 +25,7 @@ public class MixinScreenTooltipVisualWords {
     private static void xenaddons$replaceItemTooltipText(MinecraftClient client, ItemStack stack, CallbackInfoReturnable<List<Text>> cir) {
         List<Text> original = cir.getReturnValue();
         if (original == null || original.isEmpty()) return;
+        if (isPartyFinderScreen(client)) return;
 
         List<Text> replaced = new ArrayList<>(original.size());
         for (Text line : original) {
@@ -71,6 +72,11 @@ public class MixinScreenTooltipVisualWords {
         ItemQualityTooltip.appendQualityBonus(replaced, stack);
 
         cir.setReturnValue(replaced);
+    }
+
+    private static boolean isPartyFinderScreen(MinecraftClient client) {
+        if (client == null || client.currentScreen == null || client.currentScreen.getTitle() == null) return false;
+        return "Party Finder".equals(client.currentScreen.getTitle().getString());
     }
 
     private static void addBazaarLine(List<Text> tooltip, String label, Double price, int multiplier) {

@@ -3,19 +3,34 @@ package xenus.xenaddons.config;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,45 +38,74 @@ public class GoatedPlayersManager {
     private static final Pattern LEGACY_AMP_PATTERN = Pattern.compile("(?i)&([0-9A-FK-OR])");
     private static final Pattern HEX_AMP_PATTERN = Pattern.compile("(?i)&\\#([0-9a-f]{6})");
     private static final Pattern LEGACY_SECTION_PATTERN = Pattern.compile("(?i)§[0-9A-FK-OR]");
-    private static final String VISUAL_WORDS_RESOURCE = "/assets/xenaddons/visual/visualWords.json";
+
+    private static final String COSMETIC_PEOPLE_RESOURCE = "/assets/xenaddons/visual/cosmeticPeople.json";
+    private static final String MOJANG_PROFILE_BY_UUID = "https://sessionserver.mojang.com/session/minecraft/profile/";
+
     private static final String CAPY_MARKER = "{capy}";
     private static final String FRANCE_MARKER = "{france}";
     private static final String CAPY_GLYPH = "\uE100";
     private static final String FRANCE_GLYPH = "\uE101";
     private static final Identifier CAPY_FONT = Identifier.of("xenaddons", "capybara");
     private static final Identifier FRANCE_FONT = Identifier.of("xenaddons", "france");
+
     private static final String[] CONCAT_STATUS_SUFFIXES = new String[] {"offline", "online"};
-    private static final Map<String, GoatedEntry> GOATED_PLAYERS = new LinkedHashMap<>();
+    private static final Map<String, String> NAMED_COLOR_TO_LEGACY = buildNamedColorMap();
+    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+
+    private static final Map<UUID, CosmeticEntry> UUID_COSMETICS = new LinkedHashMap<>();
+    private static final Map<String, CosmeticEntry> STATIC_NAME_COSMETICS = new LinkedHashMap<>();
+    private static final Map<String, CosmeticEntry> RUNTIME_NAME_COSMETICS = new LinkedHashMap<>();
+    private static final Map<UUID, String> UUID_NAME_CACHE = new ConcurrentHashMap<>();
+    private static final Set<UUID> UUID_LOOKUP_IN_FLIGHT = ConcurrentHashMap.newKeySet();
 
     public static boolean isGoated(String name) {
-        if (name == null) return false;
-        return GOATED_PLAYERS.containsKey(name.toLowerCase());
+        return getEntryForName(name) != null;
     }
 
     public static String getDisplayName(String name) {
-        if (name == null) return "";
-        GoatedEntry entry = GOATED_PLAYERS.get(name.toLowerCase());
-        return entry != null ? entry.displayName : name;
+        CosmeticEntry entry = getEntryForName(name);
+        return entry != null ? entry.displayName : (name == null ? "" : name);
     }
 
     public static int[] getHighlightColor(String name) {
-        if (name == null) return null;
-        GoatedEntry entry = GOATED_PLAYERS.get(name.toLowerCase());
+        CosmeticEntry entry = getEntryForName(name);
         return entry != null ? entry.highlightColor.clone() : null;
+    }
+
+    private static CosmeticEntry getEntryForName(String name) {
+        if (name == null || name.isBlank()) return null;
+        rebuildRuntimeNameMap();
+        return RUNTIME_NAME_COSMETICS.get(name.toLowerCase());
     }
 
     public static String applyVisualWords(String text) {
         return applyVisualWordsInternal(text, false);
     }
 
+    public static Map<String, String> getRuntimeReplaceMap() {
+        rebuildRuntimeNameMap();
+        LinkedHashMap<String, String> out = new LinkedHashMap<>();
+        for (Map.Entry<String, CosmeticEntry> entry : RUNTIME_NAME_COSMETICS.entrySet()) {
+            CosmeticEntry value = entry.getValue();
+            if (value == null || !value.hasDisplayName()) continue;
+            out.put(entry.getKey(), value.displayName);
+        }
+        return out;
+    }
+
     private static String applyVisualWordsInternal(String text, boolean keepMarkers) {
         if (text == null || text.isEmpty()) return text;
+
+        rebuildRuntimeNameMap();
         String result = text;
 
-        for (Map.Entry<String, GoatedEntry> entry : GOATED_PLAYERS.entrySet()) {
+        for (Map.Entry<String, CosmeticEntry> entry : getNameEntriesSorted()) {
             String key = entry.getKey();
             String replacement = boundarySafeDisplayName(entry.getValue().displayName);
-            result = replaceWithSmartBoundaries(result, key, replacement);
+            if (key == null || key.isEmpty() || replacement == null) continue;
+            if (!result.contains(key) && !result.toLowerCase().contains(key.toLowerCase())) continue;
+            result = replaceIgnoreCase(result, key, replacement);
         }
 
         if (!keepMarkers) {
@@ -72,131 +116,88 @@ public class GoatedPlayersManager {
         return result;
     }
 
-    private static String replaceWithSmartBoundaries(String input, String needle, String replacement) {
-        if (input == null || input.isEmpty() || needle == null || needle.isEmpty()) return input;
-
-        String loweredInput = input.toLowerCase();
-        String[] friendListStatusPrefixes = new String[] {
-            needle + " is ",
-            needle + " est ",
-            needle + " was ",
-            needle + " has "
-        };
-        for (String prefix : friendListStatusPrefixes) {
-            int idx = loweredInput.indexOf(prefix.toLowerCase());
-            while (idx >= 0) {
-                input = input.substring(0, idx) + replacement + input.substring(idx + needle.length());
-                loweredInput = input.toLowerCase();
-                idx = loweredInput.indexOf(prefix.toLowerCase(), idx + replacement.length());
-            }
-        }
+    private static String replaceIgnoreCase(String input, String target, String replacement) {
+        if (input == null || input.isEmpty() || target == null || target.isEmpty()) return input;
 
         StringBuilder out = new StringBuilder(input.length());
-        int i = 0;
-        int n = input.length();
-        int m = needle.length();
-
-        while (i < n) {
-            if (i + m <= n && input.regionMatches(true, i, needle, 0, m) && hasSmartBoundary(input, i, i + m)) {
-                out.append(replacement);
-                i += m;
-            } else {
-                out.append(input.charAt(i));
-                i++;
-            }
+        int from = 0;
+        int max = input.length() - target.length();
+        while (from <= max) {
+            int found = indexOfIgnoreCase(input, target, from);
+            if (found < 0) break;
+            out.append(input, from, found).append(replacement);
+            from = found + target.length();
         }
+        if (from < input.length()) out.append(input, from, input.length());
         return out.toString();
     }
 
-    private static boolean hasSmartBoundary(String s, int start, int end) {
-        char first = s.charAt(start);
-        char last = s.charAt(end - 1);
-
-        boolean leftOk;
-        if (start == 0) {
-            leftOk = true;
-        } else {
-            int prevIdx = previousVisibleCharIndex(s, start - 1);
-            char prev = prevIdx >= 0 ? s.charAt(prevIdx) : '\0';
-            leftOk = !isWordChar(prev)
-                || (Character.isLowerCase(prev) && Character.isUpperCase(first))
-                || hasConcatenatedStatusPrefix(s, start);
-        }
-
-        boolean rightOk;
-        if (end >= s.length()) {
-            rightOk = true;
-        } else {
-            int nextIdx = nextVisibleCharIndex(s, end);
-            char next = nextIdx >= 0 ? s.charAt(nextIdx) : '\0';
-            rightOk = !isWordChar(next) || (Character.isLowerCase(last) && Character.isUpperCase(next));
-        }
-
-        return leftOk && rightOk;
-    }
-
-    private static boolean hasConcatenatedStatusPrefix(String s, int start) {
-        String leftWord = readLeftVisibleWord(s, start).toLowerCase();
-        for (String suffix : CONCAT_STATUS_SUFFIXES) {
-            if (leftWord.endsWith(suffix)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static String readLeftVisibleWord(String s, int start) {
-        StringBuilder out = new StringBuilder();
-        int i = previousVisibleCharIndex(s, start - 1);
-        while (i >= 0) {
-            char c = s.charAt(i);
-            if (!isWordChar(c)) break;
-            out.append(c);
-            i = previousVisibleCharIndex(s, i - 1);
-        }
-        return out.reverse().toString();
-    }
-
-    private static int previousVisibleCharIndex(String s, int from) {
-        int i = from;
-        while (i >= 0) {
-            if (isLegacyCodePairAt(s, i - 1)) {
-                i -= 2;
-                continue;
-            }
-            if (s.charAt(i) == '§' && i + 1 < s.length() && isLegacyCodeChar(s.charAt(i + 1))) {
-                i--;
-                continue;
-            }
-            return i;
+    private static int indexOfIgnoreCase(String text, String needle, int fromIndex) {
+        int max = text.length() - needle.length();
+        for (int i = Math.max(0, fromIndex); i <= max; i++) {
+            if (text.regionMatches(true, i, needle, 0, needle.length())) return i;
         }
         return -1;
     }
 
-    private static int nextVisibleCharIndex(String s, int from) {
-        int i = from;
-        while (i < s.length()) {
-            if (isLegacyCodePairAt(s, i)) {
-                i += 2;
-                continue;
+    private static List<Map.Entry<String, CosmeticEntry>> getNameEntriesSorted() {
+        List<Map.Entry<String, CosmeticEntry>> entries = new ArrayList<>(RUNTIME_NAME_COSMETICS.entrySet());
+        entries.sort((a, b) -> Integer.compare(b.getKey().length(), a.getKey().length()));
+        return entries;
+    }
+
+    private static void rebuildRuntimeNameMap() {
+        LinkedHashMap<String, CosmeticEntry> merged = new LinkedHashMap<>(STATIC_NAME_COSMETICS);
+
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc != null) {
+            if (mc.getNetworkHandler() != null) {
+                for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
+                    if (entry == null || entry.getProfile() == null) continue;
+                    UUID uuid = entry.getProfile().id();
+                    if (uuid == null) continue;
+
+                    CosmeticEntry cosmetic = UUID_COSMETICS.get(uuid);
+                    if (cosmetic == null || !cosmetic.hasDisplayName()) continue;
+
+                    String profileName = entry.getProfile().name();
+                    if (profileName == null || profileName.isBlank()) continue;
+
+                    UUID_NAME_CACHE.put(uuid, profileName);
+                    merged.put(profileName.toLowerCase(), cosmetic);
+                }
             }
-            return i;
+
+            if (mc.world != null) {
+                for (PlayerEntity player : mc.world.getPlayers()) {
+                    if (player == null) continue;
+                    UUID uuid = player.getUuid();
+                    if (uuid == null) continue;
+
+                    CosmeticEntry cosmetic = UUID_COSMETICS.get(uuid);
+                    if (cosmetic == null || !cosmetic.hasDisplayName()) continue;
+
+                    String name = player.getGameProfile().name();
+                    if (name == null || name.isBlank()) continue;
+
+                    UUID_NAME_CACHE.put(uuid, name);
+                    merged.put(name.toLowerCase(), cosmetic);
+                }
+            }
         }
-        return -1;
+
+        for (Map.Entry<UUID, String> cached : UUID_NAME_CACHE.entrySet()) {
+            CosmeticEntry cosmetic = UUID_COSMETICS.get(cached.getKey());
+            if (cosmetic == null || !cosmetic.hasDisplayName()) continue;
+            String name = cached.getValue();
+            if (name == null || name.isBlank()) continue;
+            merged.put(name.toLowerCase(), cosmetic);
+        }
+
+        RUNTIME_NAME_COSMETICS.clear();
+        RUNTIME_NAME_COSMETICS.putAll(merged);
     }
 
-    private static boolean isLegacyCodePairAt(String s, int idx) {
-        return idx >= 0 && idx + 1 < s.length() && s.charAt(idx) == '§' && isLegacyCodeChar(s.charAt(idx + 1));
-    }
-
-    private static boolean isLegacyCodeChar(char c) {
-        char lower = Character.toLowerCase(c);
-        return (lower >= '0' && lower <= '9') || (lower >= 'a' && lower <= 'f') || (lower >= 'k' && lower <= 'o') || lower == 'r' || lower == 'x';
-    }
-
-    private static boolean isWordChar(char c) {
-        return Character.isLetterOrDigit(c) || c == '_';
-    }
 
     public static String normalizeLegacyCodes(String text) {
         if (text == null || text.isEmpty()) return text;
@@ -253,6 +254,35 @@ public class GoatedPlayersManager {
         return rebuilt;
     }
 
+    public static OrderedText applyVisualWords(OrderedText text) {
+        if (text == null) return null;
+
+        MutableText rebuilt = Text.empty();
+        final Style[] currentStyle = new Style[] {null};
+        final StringBuilder buffer = new StringBuilder();
+
+        text.accept((index, style, codePoint) -> {
+            Style effective = style == null ? Style.EMPTY : style;
+            if (currentStyle[0] == null) {
+                currentStyle[0] = effective;
+            } else if (!currentStyle[0].equals(effective)) {
+                if (!buffer.isEmpty()) {
+                    rebuilt.append(Text.literal(buffer.toString()).setStyle(currentStyle[0]));
+                    buffer.setLength(0);
+                }
+                currentStyle[0] = effective;
+            }
+            buffer.append((char) codePoint);
+            return true;
+        });
+
+        if (!buffer.isEmpty()) {
+            rebuilt.append(Text.literal(buffer.toString()).setStyle(currentStyle[0] == null ? Style.EMPTY : currentStyle[0]));
+        }
+
+        return applyVisualWords(rebuilt).asOrderedText();
+    }
+
     public static Text applyVisualWordsForTooltip(Text text) {
         if (text == null) return null;
         String original = text.getString();
@@ -261,8 +291,6 @@ public class GoatedPlayersManager {
         String replaced = applyVisualWordsInternal(original, true);
         if (replaced.equals(original)) return text;
 
-        // If the tooltip line uses multiple distinct styles, keep the safe path
-        // to avoid stripping unrelated colors/formatting.
         final Style[] firstSeenStyle = new Style[] {null};
         final boolean[] multipleStyles = new boolean[] {false};
         text.visit((style, string) -> {
@@ -382,50 +410,249 @@ public class GoatedPlayersManager {
     }
 
     public static void init() {
-        GOATED_PLAYERS.clear();
-        loadFromResources();
+        UUID_COSMETICS.clear();
+        STATIC_NAME_COSMETICS.clear();
+        RUNTIME_NAME_COSMETICS.clear();
+        UUID_NAME_CACHE.clear();
+
+        loadUuidCosmetics();
+        rebuildRuntimeNameMap();
     }
 
-    private static boolean loadFromResources() {
-        InputStream stream = GoatedPlayersManager.class.getResourceAsStream(VISUAL_WORDS_RESOURCE);
+    public static CosmeticScale getScale(UUID uuid) {
+        if (uuid == null) return null;
+        CosmeticEntry entry = UUID_COSMETICS.get(uuid);
+        return entry != null ? entry.scale : null;
+    }
+
+    private static boolean loadUuidCosmetics() {
+        InputStream stream = GoatedPlayersManager.class.getResourceAsStream(COSMETIC_PEOPLE_RESOURCE);
         if (stream == null) return false;
 
         try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
             JsonElement element = JsonParser.parseReader(reader);
             if (!element.isJsonObject()) return false;
-            return loadFromJsonObject(element.getAsJsonObject());
+            return loadFromUuidJsonObject(element.getAsJsonObject());
         } catch (Exception ignored) {
             return false;
         }
     }
 
-    private static boolean loadFromJsonObject(JsonObject root) {
+    private static boolean loadFromUuidJsonObject(JsonObject root) {
         for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
-            String key = entry.getKey().toLowerCase();
-            JsonElement value = entry.getValue();
-
-            if (value.isJsonPrimitive()) {
-                String displayName = sanitizeDisplayName(value.getAsString());
-                GOATED_PLAYERS.put(key, new GoatedEntry(displayName, new int[] {255, 255, 255, 127}));
-            } else if (value.isJsonObject()) {
-                JsonObject obj = value.getAsJsonObject();
-                String displayName = obj.has("displayName")
-                    ? sanitizeDisplayName(obj.get("displayName").getAsString())
-                    : sanitizeDisplayName(entry.getKey());
-                GOATED_PLAYERS.put(key, new GoatedEntry(displayName, new int[] {255, 255, 255, 127}));
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(entry.getKey());
+            } catch (Exception ignored) {
+                continue;
             }
+
+            CosmeticEntry cosmetic = parseUuidCosmeticEntry(entry.getValue());
+            if (cosmetic == null) continue;
+
+            UUID_COSMETICS.put(uuid, cosmetic);
+            addStaticAliases(entry.getValue(), cosmetic);
+            requestNameLookupIfNeeded(uuid, cosmetic);
         }
-        return !GOATED_PLAYERS.isEmpty();
+        return !UUID_COSMETICS.isEmpty();
     }
 
-    private static final class GoatedEntry {
-        private final String displayName;
-        private final int[] highlightColor;
+    private static void requestNameLookupIfNeeded(UUID uuid, CosmeticEntry cosmetic) {
+        if (uuid == null || cosmetic == null || !cosmetic.hasDisplayName()) return;
+        if (UUID_NAME_CACHE.containsKey(uuid)) return;
+        if (!UUID_LOOKUP_IN_FLIGHT.add(uuid)) return;
 
-        private GoatedEntry(String displayName, int[] highlightColor) {
-            this.displayName = displayName;
-            this.highlightColor = highlightColor;
+        Thread.startVirtualThread(() -> {
+            try {
+                String cleanUuid = uuid.toString().replace("-", "");
+                HttpRequest request = HttpRequest.newBuilder(URI.create(MOJANG_PROFILE_BY_UUID + cleanUuid))
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+
+                HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() < 200 || response.statusCode() >= 300) return;
+
+                JsonElement root = JsonParser.parseString(response.body());
+                if (!root.isJsonObject()) return;
+                JsonObject obj = root.getAsJsonObject();
+                if (!obj.has("name") || !obj.get("name").isJsonPrimitive()) return;
+
+                String name = obj.get("name").getAsString();
+                if (name == null || name.isBlank()) return;
+
+                synchronized (UUID_NAME_CACHE) {
+                    UUID_NAME_CACHE.put(uuid, name);
+                }
+            } catch (Exception ignored) {
+            } finally {
+                UUID_LOOKUP_IN_FLIGHT.remove(uuid);
+            }
+        });
+    }
+
+    private static void addStaticAliases(JsonElement value, CosmeticEntry cosmetic) {
+        if (!value.isJsonObject() || cosmetic == null || !cosmetic.hasDisplayName()) return;
+        JsonObject obj = value.getAsJsonObject();
+
+        addStaticAlias(obj, "username", cosmetic);
+        addStaticAlias(obj, "pseudo", cosmetic);
+
+        if (obj.has("aliases") && obj.get("aliases").isJsonArray()) {
+            for (JsonElement aliasEl : obj.getAsJsonArray("aliases")) {
+                if (!aliasEl.isJsonPrimitive()) continue;
+                String alias = aliasEl.getAsString();
+                if (alias == null || alias.isBlank()) continue;
+                STATIC_NAME_COSMETICS.put(alias.toLowerCase(), cosmetic);
+            }
         }
+    }
+
+    private static void addStaticAlias(JsonObject obj, String key, CosmeticEntry cosmetic) {
+        if (!obj.has(key) || !obj.get(key).isJsonPrimitive()) return;
+        String alias = obj.get(key).getAsString();
+        if (alias == null || alias.isBlank()) return;
+        STATIC_NAME_COSMETICS.put(alias.toLowerCase(), cosmetic);
+    }
+
+    private static CosmeticEntry parseUuidCosmeticEntry(JsonElement value) {
+        if (!value.isJsonObject()) return null;
+        JsonObject obj = value.getAsJsonObject();
+
+        String display = null;
+        if (obj.has("displayName") && obj.get("displayName").isJsonPrimitive()) {
+            display = sanitizeDisplayName(obj.get("displayName").getAsString());
+        } else if (obj.has("name") && obj.get("name").isJsonPrimitive()) {
+            display = sanitizeDisplayName(decodeNoammJsonName(obj.get("name").getAsString()));
+        }
+
+        CosmeticScale scale = readScale(obj);
+        if ((display == null || display.isBlank()) && scale == null) return null;
+
+        return new CosmeticEntry(display == null ? "" : display, new int[] {255, 255, 255, 127}, scale);
+    }
+
+    private static CosmeticScale readScale(JsonObject obj) {
+        Float x = getOptionalFloat(obj, "sizeX");
+        Float y = getOptionalFloat(obj, "sizeY");
+        Float z = getOptionalFloat(obj, "sizeZ");
+
+        if (x == null) x = getOptionalFloat(obj, "x");
+        if (y == null) y = getOptionalFloat(obj, "y");
+        if (z == null) z = getOptionalFloat(obj, "z");
+
+        if (x == null && y == null && z == null) return null;
+
+        return new CosmeticScale(
+            x != null ? x : 1.0F,
+            y != null ? y : 1.0F,
+            z != null ? z : 1.0F
+        );
+    }
+
+    private static Float getOptionalFloat(JsonObject obj, String key) {
+        if (!obj.has(key)) return null;
+        try {
+            return obj.get(key).getAsFloat();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static String decodeNoammJsonName(String input) {
+        if (input == null || input.isBlank()) return input;
+        String trimmed = input.trim();
+        if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) return input;
+
+        try {
+            JsonElement root = JsonParser.parseString(trimmed);
+            StringBuilder out = new StringBuilder();
+            appendJsonTextComponent(root, TextStyle.EMPTY, out);
+            return out.isEmpty() ? input : out.toString();
+        } catch (Exception ignored) {
+            return input;
+        }
+    }
+
+    private static void appendJsonTextComponent(JsonElement element, TextStyle inherited, StringBuilder out) {
+        if (element == null || element.isJsonNull()) return;
+
+        if (element.isJsonPrimitive()) {
+            String text = element.getAsString();
+            if (!text.isEmpty()) out.append(styledChunk(text, inherited));
+            return;
+        }
+
+        if (element.isJsonArray()) {
+            for (JsonElement child : element.getAsJsonArray()) {
+                appendJsonTextComponent(child, inherited, out);
+            }
+            return;
+        }
+
+        if (!element.isJsonObject()) return;
+        JsonObject obj = element.getAsJsonObject();
+        TextStyle merged = TextStyle.from(obj, inherited);
+
+        if (obj.has("text") && obj.get("text").isJsonPrimitive()) {
+            String text = obj.get("text").getAsString();
+            if (!text.isEmpty()) out.append(styledChunk(text, merged));
+        }
+
+        if (obj.has("extra") && obj.get("extra").isJsonArray()) {
+            for (JsonElement child : obj.getAsJsonArray("extra")) {
+                appendJsonTextComponent(child, merged, out);
+            }
+        }
+    }
+
+    private static String styledChunk(String text, TextStyle style) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("§r");
+        appendStyleCodes(sb, style);
+        sb.append(text);
+        return sb.toString();
+    }
+
+    private static void appendStyleCodes(StringBuilder sb, TextStyle style) {
+        if (style == null) return;
+
+        if (style.color != null && !style.color.isBlank()) {
+            String color = style.color.trim();
+            if (color.startsWith("#") && color.length() == 7) {
+                sb.append('&').append(color);
+            } else {
+                String legacy = NAMED_COLOR_TO_LEGACY.get(color.toLowerCase());
+                if (legacy != null) sb.append('&').append(legacy);
+            }
+        }
+
+        if (style.bold != null && style.bold) sb.append("&l");
+        if (style.italic != null && style.italic) sb.append("&o");
+        if (style.underlined != null && style.underlined) sb.append("&n");
+        if (style.strikethrough != null && style.strikethrough) sb.append("&m");
+        if (style.obfuscated != null && style.obfuscated) sb.append("&k");
+    }
+
+    private static Map<String, String> buildNamedColorMap() {
+        Map<String, String> map = new HashMap<>();
+        map.put("black", "0");
+        map.put("dark_blue", "1");
+        map.put("dark_green", "2");
+        map.put("dark_aqua", "3");
+        map.put("dark_red", "4");
+        map.put("dark_purple", "5");
+        map.put("gold", "6");
+        map.put("gray", "7");
+        map.put("dark_gray", "8");
+        map.put("blue", "9");
+        map.put("green", "a");
+        map.put("aqua", "b");
+        map.put("red", "c");
+        map.put("light_purple", "d");
+        map.put("yellow", "e");
+        map.put("white", "f");
+        return map;
     }
 
     private static String toLegacyHexCode(String upperHex) {
@@ -454,4 +681,65 @@ public class GoatedPlayersManager {
 
         return (nibble[0] << 20) | (nibble[1] << 16) | (nibble[2] << 12) | (nibble[3] << 8) | (nibble[4] << 4) | nibble[5];
     }
+
+    private static final class CosmeticEntry {
+        private final String displayName;
+        private final int[] highlightColor;
+        private final CosmeticScale scale;
+
+        private CosmeticEntry(String displayName, int[] highlightColor, CosmeticScale scale) {
+            this.displayName = displayName;
+            this.highlightColor = highlightColor;
+            this.scale = scale;
+        }
+
+        private boolean hasDisplayName() {
+            return displayName != null && !displayName.isBlank();
+        }
+    }
+
+    private static final class TextStyle {
+        private static final TextStyle EMPTY = new TextStyle(null, null, null, null, null, null);
+
+        private final String color;
+        private final Boolean bold;
+        private final Boolean italic;
+        private final Boolean underlined;
+        private final Boolean strikethrough;
+        private final Boolean obfuscated;
+
+        private TextStyle(String color, Boolean bold, Boolean italic, Boolean underlined, Boolean strikethrough, Boolean obfuscated) {
+            this.color = color;
+            this.bold = bold;
+            this.italic = italic;
+            this.underlined = underlined;
+            this.strikethrough = strikethrough;
+            this.obfuscated = obfuscated;
+        }
+
+        private static TextStyle from(JsonObject obj, TextStyle inherited) {
+            if (obj == null) return inherited;
+            TextStyle base = inherited == null ? EMPTY : inherited;
+
+            String color = obj.has("color") && obj.get("color").isJsonPrimitive() ? obj.get("color").getAsString() : base.color;
+            Boolean bold = readBoolean(obj, "bold", base.bold);
+            Boolean italic = readBoolean(obj, "italic", base.italic);
+            Boolean underlined = readBoolean(obj, "underlined", base.underlined);
+            Boolean strikethrough = readBoolean(obj, "strikethrough", base.strikethrough);
+            Boolean obfuscated = readBoolean(obj, "obfuscated", base.obfuscated);
+
+            return new TextStyle(color, bold, italic, underlined, strikethrough, obfuscated);
+        }
+
+        private static Boolean readBoolean(JsonObject obj, String key, Boolean fallback) {
+            if (!obj.has(key)) return fallback;
+            try {
+                return obj.get(key).getAsBoolean();
+            } catch (Exception ignored) {
+                return fallback;
+            }
+        }
+    }
+
+    public record CosmeticScale(float x, float y, float z) {}
 }
