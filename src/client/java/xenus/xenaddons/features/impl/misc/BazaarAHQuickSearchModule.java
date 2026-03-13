@@ -96,6 +96,9 @@ public class BazaarAHQuickSearchModule extends Module {
         if (raw == null) return "";
         String name = stripFormatting(raw);
 
+        // Pets: "[Lvl 100] Sheep" -> "Sheep"
+        name = name.replaceFirst("(?i)^\\[\\s*lvl\\s*\\d+\\s*]\\s*", "");
+
         // First pass: strip obvious decorative prefixes so reforge detection can match.
         name = name.replace("✪", "")
             .replace("➊", "")
