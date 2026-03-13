@@ -85,7 +85,7 @@ public enum ItemAbility {
 
     public void activate(AbilityColor color, int customCooldownMs) {
         this.specialColor = color;
-        long total = cooldownInSeconds * 1000L;
+        long total = getCooldownMs();
         this.lastActivationMs = System.currentTimeMillis() - Math.max(0L, total - customCooldownMs);
     }
 
@@ -115,10 +115,10 @@ public enum ItemAbility {
 
     public String getDurationText() {
         double remaining = remainingCooldownMs() / 1000.0;
-        if (remaining < 1.6) {
+        if (remaining < 2.0) {
             return String.format(java.util.Locale.US, "%.1f", Math.round(remaining * 10.0) / 10.0);
         }
-        return Integer.toString((int) Math.floor(remaining) + 1);
+        return Integer.toString((int) Math.floor(remaining));
     }
 
     public AbilityColor getSpecialColor() {
@@ -142,13 +142,16 @@ public enum ItemAbility {
         var mc = net.minecraft.client.MinecraftClient.getInstance();
         if (mc == null || mc.player == null) return 1.0;
         String playerClass = DungeonUtils.getPlayerClass(mc.player);
+        if (playerClass == null) {
+            playerClass = DungeonUtils.getPlayerClass(mc.player.getGameProfile().name());
+        }
         if (!"Mage".equals(playerClass)) return 1.0;
 
-        int classLevel = DungeonUtils.getPlayerClassLevel(mc.player);
-        if (classLevel <= 0) return 1.0;
-
-        double reduction = Math.min(50, Math.max(0, classLevel)) / 100.0;
-        return Math.max(0.5, 1.0 - reduction);
+        int classLevel = Math.max(0, DungeonUtils.getPlayerClassLevel(mc.player));
+        double abilityCooldownMultiplier = 1.0;
+        abilityCooldownMultiplier -= DungeonUtils.isUniqueClass() ? 0.5 : 0.25;
+        abilityCooldownMultiplier -= 0.01 * Math.floor(classLevel / 2.0);
+        return Math.max(0.0, abilityCooldownMultiplier);
     }
 
     public void resetState() {

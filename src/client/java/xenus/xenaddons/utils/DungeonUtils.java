@@ -29,6 +29,7 @@ public class DungeonUtils {
     public static int dungeonSeconds = 0;
     public static boolean inCatacombs = false;
     public static boolean inBoss = false;
+    public static boolean isUniqueClass = false;
     
     private static final Map<String, String> PLAYER_CLASSES = new HashMap<>();
     private static final Map<java.util.UUID, String> PLAYER_CLASSES_UUID = new HashMap<>();
@@ -36,6 +37,8 @@ public class DungeonUtils {
     private static int tickCounter = 0;
     
     private static final Pattern CRYPTS_PATTERN = Pattern.compile("Crypts:\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern UNIQUE_CLASS_BONUS_PATTERN =
+            Pattern.compile("^Your\\s+([A-Za-z]+)\\s+stats are doubled because you are the only player using this class!$", Pattern.CASE_INSENSITIVE);
 
     public static void reset() {
         floorNumber = 0;
@@ -45,6 +48,7 @@ public class DungeonUtils {
         dungeonSeconds = 0;
         inCatacombs = false;
         inBoss = false;
+        isUniqueClass = false;
         PLAYER_CLASSES.clear();
         PLAYER_CLASSES_UUID.clear();
         PLAYER_CLASS_LEVELS_UUID.clear();
@@ -199,6 +203,11 @@ public class DungeonUtils {
         if (msg.contains("is now ready!")) {
             reset(); 
         }
+
+        Matcher uniqueClass = UNIQUE_CLASS_BONUS_PATTERN.matcher(msg.trim());
+        if (uniqueClass.matches()) {
+            isUniqueClass = true;
+        }
     }
 
     public static void updateClasses() {
@@ -274,6 +283,10 @@ public class DungeonUtils {
     public static int getPlayerClassLevel(net.minecraft.entity.player.PlayerEntity player) {
         if (player == null) return -1;
         return getPlayerClassLevel(player.getUuid());
+    }
+
+    public static boolean isUniqueClass() {
+        return isUniqueClass;
     }
     
     public static boolean inDungeon() { return floorNumber > 0 || inCatacombs; }

@@ -150,8 +150,16 @@ public class XenAddonsClient implements ClientModInitializer {
                             if (mc.player != null) {
                                 String myName = mc.player.getName().getString();
                                 String myClass = xenus.xenaddons.utils.DungeonUtils.getPlayerClass(mc.player);
+                                int myClassLevel = xenus.xenaddons.utils.DungeonUtils.getPlayerClassLevel(mc.player);
+                                boolean uniqueClass = xenus.xenaddons.utils.DungeonUtils.isUniqueClass();
                                 xenus.xenaddons.features.impl.dungeons.PosTitlesModule pm = 
                                     xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.PosTitlesModule.class);
+
+                                xenus.xenaddons.utils.ChatUtils.info(
+                                    "Self -> Class: " + myClass
+                                        + " | Level: " + myClassLevel
+                                        + " | UniqueClass: " + uniqueClass
+                                );
                                 
                                 if (pm != null && pm.isEnabled()) {
                                     // Pass the detected class, or if null, indicate failure in the alert text instead of faking Mage
