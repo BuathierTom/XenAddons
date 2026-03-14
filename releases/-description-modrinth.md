@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.13-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.14-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -13,6 +13,12 @@
 </div>
 
 XenAddons is a Fabric mod for Minecraft **1.21.10** focused on Hypixel SkyBlock quality-of-life features.
+
+## Latest Update (v1.2.14)
+
+- Fixed disconnects caused by malformed legacy formatting in chat replacement flows.
+- Improved Visual Words sanitization for better compatibility with chat tab/filter mods.
+- Hardened text rebuild paths to prevent invalid `§` formatting output.
 
 ## Compatibility
 

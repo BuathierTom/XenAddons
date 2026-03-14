@@ -14,7 +14,8 @@ public class MixinTextRendererVisualWords {
 
     @ModifyVariable(method = "getWidth(Ljava/lang/String;)I", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
     private String xenaddons$replaceStringWidth(String text) {
-        return GoatedPlayersManager.applyVisualWords(text);
+        if (text == null || text.indexOf('§') >= 0 || text.indexOf('&') >= 0) return text;
+        return GoatedPlayersManager.applyVisualWordsPlain(text);
     }
 
     @ModifyVariable(method = "getWidth(Lnet/minecraft/text/StringVisitable;)I", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
@@ -30,26 +31,12 @@ public class MixinTextRendererVisualWords {
 
     @ModifyVariable(method = "prepare(Ljava/lang/String;FFIZI)Lnet/minecraft/client/font/TextRenderer$GlyphDrawable;", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
     private String xenaddons$replaceStringPrepare(String text) {
-        return GoatedPlayersManager.applyVisualWords(text);
+        if (text == null || text.indexOf('§') >= 0 || text.indexOf('&') >= 0) return text;
+        return GoatedPlayersManager.applyVisualWordsPlain(text);
     }
 
     @ModifyVariable(method = "prepare(Lnet/minecraft/text/OrderedText;FFIZI)Lnet/minecraft/client/font/TextRenderer$GlyphDrawable;", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
     private OrderedText xenaddons$replaceOrderedPrepare(OrderedText text) {
-        return GoatedPlayersManager.applyVisualWords(text);
-    }
-
-    @ModifyVariable(method = "draw(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;II)V", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
-    private String xenaddons$replaceStringDraw(String text) {
-        return GoatedPlayersManager.applyVisualWords(text);
-    }
-
-    @ModifyVariable(method = "draw(Lnet/minecraft/text/Text;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;II)V", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
-    private Text xenaddons$replaceTextDraw(Text text) {
-        return GoatedPlayersManager.applyVisualWords(text);
-    }
-
-    @ModifyVariable(method = "draw(Lnet/minecraft/text/OrderedText;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;II)V", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
-    private OrderedText xenaddons$replaceOrderedDraw(OrderedText text) {
         return GoatedPlayersManager.applyVisualWords(text);
     }
 }

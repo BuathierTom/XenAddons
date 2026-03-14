@@ -23,9 +23,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -58,6 +60,18 @@ public class GoatedPlayersManager {
     private static final Map<String, CosmeticEntry> RUNTIME_NAME_COSMETICS = new LinkedHashMap<>();
     private static final Map<UUID, String> UUID_NAME_CACHE = new ConcurrentHashMap<>();
     private static final Set<UUID> UUID_LOOKUP_IN_FLIGHT = ConcurrentHashMap.newKeySet();
+    private static final long RUNTIME_REBUILD_INTERVAL_MS = 1_000L;
+    private static final int VISUAL_STRING_CACHE_MAX = 4096;
+    private static volatile long lastRuntimeRebuildMs = 0L;
+    private static volatile List<Map.Entry<String, CosmeticEntry>> SORTED_RUNTIME_ENTRIES = List.of();
+    private static volatile Map<String, CosmeticEntry> TOKEN_NAME_COSMETICS = Map.of();
+    private static volatile List<Map.Entry<String, CosmeticEntry>> SPECIAL_NAME_ENTRIES = List.of();
+    private static final Map<String, String> VISUAL_STRING_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(VISUAL_STRING_CACHE_MAX, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+            return size() > VISUAL_STRING_CACHE_MAX;
+        }
+    });
 
     public static boolean isGoated(String name) {
         return getEntryForName(name) != null;
@@ -83,6 +97,13 @@ public class GoatedPlayersManager {
         return applyVisualWordsInternal(text, false);
     }
 
+    // Safe path for plain String rendering contexts (chat tabs filters, etc.).
+    // Never return raw legacy formatting markers here.
+    public static String applyVisualWordsPlain(String text) {
+        String replaced = applyVisualWordsInternal(text, false);
+        return stripLegacyCodes(replaced);
+    }
+
     public static Map<String, String> getRuntimeReplaceMap() {
         rebuildRuntimeNameMap();
         LinkedHashMap<String, String> out = new LinkedHashMap<>();
@@ -96,16 +117,33 @@ public class GoatedPlayersManager {
 
     private static String applyVisualWordsInternal(String text, boolean keepMarkers) {
         if (text == null || text.isEmpty()) return text;
+        String cacheKey = (keepMarkers ? "1|" : "0|") + text;
+        String cached = VISUAL_STRING_CACHE.get(cacheKey);
+        if (cached != null) return cached;
 
         rebuildRuntimeNameMap();
+        if (SORTED_RUNTIME_ENTRIES.isEmpty()) {
+            String plain = keepMarkers ? text : text.replace(CAPY_MARKER, "").replace(FRANCE_MARKER, "");
+            VISUAL_STRING_CACHE.put(cacheKey, plain);
+            return plain;
+        }
         String result = text;
 
-        for (Map.Entry<String, CosmeticEntry> entry : getNameEntriesSorted()) {
-            String key = entry.getKey();
-            String replacement = boundarySafeDisplayName(entry.getValue().displayName);
-            if (key == null || key.isEmpty() || replacement == null) continue;
-            if (!result.contains(key) && !result.toLowerCase().contains(key.toLowerCase())) continue;
-            result = replaceIgnoreCase(result, key, replacement);
+        if (!TOKEN_NAME_COSMETICS.isEmpty()) {
+            result = replaceTokenizedNames(result);
+        }
+
+        if (!SPECIAL_NAME_ENTRIES.isEmpty()) {
+            String loweredResult = result.toLowerCase(Locale.ROOT);
+            for (Map.Entry<String, CosmeticEntry> entry : SPECIAL_NAME_ENTRIES) {
+                String key = entry.getKey();
+                String replacement = boundarySafeDisplayName(entry.getValue().displayName);
+                if (key == null || key.isEmpty() || replacement == null) continue;
+                String lowerKey = key.toLowerCase(Locale.ROOT);
+                if (!loweredResult.contains(lowerKey)) continue;
+                result = replaceIgnoreCase(result, key, replacement);
+                loweredResult = result.toLowerCase(Locale.ROOT);
+            }
         }
 
         if (!keepMarkers) {
@@ -113,6 +151,9 @@ public class GoatedPlayersManager {
             result = result.replace(FRANCE_MARKER, "");
         }
 
+        result = trimDanglingSectionSigns(result);
+
+        VISUAL_STRING_CACHE.put(cacheKey, result);
         return result;
     }
 
@@ -164,6 +205,67 @@ public class GoatedPlayersManager {
         return -1;
     }
 
+    private static boolean isTokenChar(char c) {
+        return (c >= 'a' && c <= 'z')
+            || (c >= 'A' && c <= 'Z')
+            || (c >= '0' && c <= '9')
+            || c == '_';
+    }
+
+    private static String trimDanglingSectionSigns(String input) {
+        if (input == null || input.isEmpty()) return input;
+        int end = input.length();
+        while (end > 0 && input.charAt(end - 1) == '§') {
+            end--;
+        }
+        return end == input.length() ? input : input.substring(0, end);
+    }
+
+    private static String stripLegacyCodes(String input) {
+        if (input == null || input.isEmpty()) return input;
+        StringBuilder out = new StringBuilder(input.length());
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == '§') {
+                if (i + 1 < input.length()) {
+                    i++;
+                }
+                continue;
+            }
+            out.append(c);
+        }
+        return out.toString();
+    }
+
+    private static String replaceTokenizedNames(String input) {
+        if (input == null || input.isEmpty()) return input;
+        StringBuilder out = new StringBuilder(input.length() + 16);
+        int i = 0;
+        while (i < input.length()) {
+            char c = input.charAt(i);
+            if (!isTokenChar(c)) {
+                out.append(c);
+                i++;
+                continue;
+            }
+
+            int start = i;
+            i++;
+            while (i < input.length() && isTokenChar(input.charAt(i))) i++;
+            String token = input.substring(start, i);
+            CosmeticEntry entry = TOKEN_NAME_COSMETICS.get(token.toLowerCase(Locale.ROOT));
+            if (entry != null && entry.hasDisplayName()) {
+                String replacement = boundarySafeDisplayName(entry.displayName);
+                if (replacement != null) {
+                    out.append(replacement);
+                    continue;
+                }
+            }
+            out.append(token);
+        }
+        return out.toString();
+    }
+
     private static List<Map.Entry<String, CosmeticEntry>> getNameEntriesSorted() {
         List<Map.Entry<String, CosmeticEntry>> entries = new ArrayList<>(RUNTIME_NAME_COSMETICS.entrySet());
         entries.sort((a, b) -> Integer.compare(b.getKey().length(), a.getKey().length()));
@@ -171,6 +273,12 @@ public class GoatedPlayersManager {
     }
 
     private static void rebuildRuntimeNameMap() {
+        long now = System.currentTimeMillis();
+        if (now - lastRuntimeRebuildMs < RUNTIME_REBUILD_INTERVAL_MS && !RUNTIME_NAME_COSMETICS.isEmpty()) return;
+        synchronized (GoatedPlayersManager.class) {
+            now = System.currentTimeMillis();
+            if (now - lastRuntimeRebuildMs < RUNTIME_REBUILD_INTERVAL_MS && !RUNTIME_NAME_COSMETICS.isEmpty()) return;
+
         LinkedHashMap<String, CosmeticEntry> merged = new LinkedHashMap<>(STATIC_NAME_COSMETICS);
 
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -220,6 +328,28 @@ public class GoatedPlayersManager {
 
         RUNTIME_NAME_COSMETICS.clear();
         RUNTIME_NAME_COSMETICS.putAll(merged);
+        SORTED_RUNTIME_ENTRIES = getNameEntriesSorted();
+        LinkedHashMap<String, CosmeticEntry> tokenEntries = new LinkedHashMap<>();
+        List<Map.Entry<String, CosmeticEntry>> specialEntries = new ArrayList<>();
+        for (Map.Entry<String, CosmeticEntry> entry : SORTED_RUNTIME_ENTRIES) {
+            String key = entry.getKey();
+            CosmeticEntry value = entry.getValue();
+            if (key == null || key.isEmpty() || value == null || !value.hasDisplayName()) continue;
+            boolean tokenOnly = true;
+            for (int idx = 0; idx < key.length(); idx++) {
+                if (!isTokenChar(key.charAt(idx))) {
+                    tokenOnly = false;
+                    break;
+                }
+            }
+            if (tokenOnly) tokenEntries.put(key.toLowerCase(Locale.ROOT), value);
+            else specialEntries.add(entry);
+        }
+        TOKEN_NAME_COSMETICS = tokenEntries.isEmpty() ? Map.of() : tokenEntries;
+        SPECIAL_NAME_ENTRIES = specialEntries.isEmpty() ? List.of() : specialEntries;
+        VISUAL_STRING_CACHE.clear();
+        lastRuntimeRebuildMs = now;
+        }
     }
 
 
@@ -270,6 +400,12 @@ public class GoatedPlayersManager {
 
     public static Text applyVisualWords(Text text) {
         if (text == null) return null;
+        String original = text.getString();
+        if (original == null || original.isEmpty()) return text;
+        String replacedCombined = applyVisualWordsInternal(original, true);
+        boolean hasLegacyMarkers = original.indexOf('§') >= 0 || original.indexOf('&') >= 0;
+        if (replacedCombined.equals(original) && !hasLegacyMarkers) return text;
+
         MutableText rebuilt = Text.empty();
         text.visit((style, string) -> {
             appendLegacyFormatted(rebuilt, applyVisualWordsInternal(string, true), style);
@@ -280,6 +416,16 @@ public class GoatedPlayersManager {
 
     public static OrderedText applyVisualWords(OrderedText text) {
         if (text == null) return null;
+        StringBuilder plainBuilder = new StringBuilder();
+        text.accept((index, style, codePoint) -> {
+            plainBuilder.appendCodePoint(codePoint);
+            return true;
+        });
+        String original = plainBuilder.toString();
+        if (original.isEmpty()) return text;
+        String replacedCombined = applyVisualWordsInternal(original, true);
+        boolean hasLegacyMarkers = original.indexOf('§') >= 0 || original.indexOf('&') >= 0;
+        if (replacedCombined.equals(original) && !hasLegacyMarkers) return text;
 
         MutableText rebuilt = Text.empty();
         final Style[] currentStyle = new Style[] {null};
@@ -353,7 +499,13 @@ public class GoatedPlayersManager {
 
         for (int i = 0; i < normalized.length(); i++) {
             char c = normalized.charAt(i);
-            if (c == '§' && i + 1 < normalized.length()) {
+            if (c == '§') {
+                // Drop dangling section markers to avoid downstream parser crashes
+                // in other chat mods expecting valid code pairs.
+                if (i + 1 >= normalized.length()) {
+                    break;
+                }
+
                 int rgb = parseLegacyHexColor(normalized, i);
                 if (rgb >= 0) {
                     if (!plain.isEmpty()) {
@@ -438,6 +590,11 @@ public class GoatedPlayersManager {
         STATIC_NAME_COSMETICS.clear();
         RUNTIME_NAME_COSMETICS.clear();
         UUID_NAME_CACHE.clear();
+        SORTED_RUNTIME_ENTRIES = List.of();
+        TOKEN_NAME_COSMETICS = Map.of();
+        SPECIAL_NAME_ENTRIES = List.of();
+        VISUAL_STRING_CACHE.clear();
+        lastRuntimeRebuildMs = 0L;
 
         loadUuidCosmetics();
         rebuildRuntimeNameMap();
