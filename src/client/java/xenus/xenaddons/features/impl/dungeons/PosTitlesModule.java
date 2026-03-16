@@ -106,6 +106,7 @@ public class PosTitlesModule extends Module {
 
             for (DungeonUtils.PositionDefinition pos : DungeonUtils.positionDefinitions) {
                 if (playerVisits.getOrDefault(pos.id, false)) continue;
+                if ("AtP5".equals(pos.id) && !DungeonUtils.hasHealerBeenAtMidThisRun()) continue;
 
                 if (pos.checkCondition.apply(playerClass) && pos.checkPosition.apply(entity)) {
                     if (pos.checkPosition.apply(mc.player)) {
@@ -139,6 +140,7 @@ public class PosTitlesModule extends Module {
 
             for (DungeonUtils.PositionDefinition pos : DungeonUtils.positionDefinitions) {
                 if (playerVisits.getOrDefault(pos.id, false)) continue;
+                if ("AtP5".equals(pos.id) && !DungeonUtils.hasHealerBeenAtMidThisRun()) continue;
 
                 if (pos.checkCondition.apply(playerClass)) {
                     boolean match = false;
