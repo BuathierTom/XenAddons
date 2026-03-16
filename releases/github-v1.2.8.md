@@ -15,7 +15,7 @@ Minecraft `1.21.10` • Fabric
       - colored cooldown text
       - inventory visibility option
     - Added mage cooldown reduction handling in dungeons.
-  - `Custom Hyperon Sound`
+  - `Custom Hyperion Sound`
     - Custom Wither Blade hype sound replacement.
     - Sound selector with short labels.
     - Volume/Pitch range `0.0 -> 2.0` with `0.1` step.
@@ -33,6 +33,6 @@ Minecraft `1.21.10` • Fabric
 
 ## Fixes
 
-- Custom Hyperon Sound:
+- Custom Hyperion Sound:
   - Improved Wither Blade click detection and sound suppression window.
   - Mutes base hype explosion/teleport/cure/fizz sounds while playing custom sound.

@@ -144,7 +144,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
   - Includes mage cooldown reduction handling in dungeons.
   - Cooldown reduction now scales from your class level and unique-class bonus.
 
-- `Custom Hyperon Sound`
+- `Custom Hyperion Sound`
   - Replaces Wither Blade hype sound with a selectable custom sound.
   - Includes sound selector, volume/pitch controls, and `Play Sound` test button.
 

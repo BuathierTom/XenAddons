@@ -29,7 +29,7 @@ public class CustomHyperionSoundModule extends Module {
     public final ActionSetting playSound = new ActionSetting("Play Sound", CustomHyperionSoundHandler::playPreviewSound);
 
     public CustomHyperionSoundModule() {
-        super("Custom Hyperon Sound", "Changes Wither Blade explosion sound to a custom one", Category.MISC);
+        super("Custom Hyperion Sound", "Changes Wither Blade explosion sound to a custom one", Category.MISC);
         this.registerSetting(sound);
         this.registerSetting(volume);
         this.registerSetting(pitch);
