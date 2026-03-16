@@ -17,18 +17,18 @@ public interface AccessorChatHud {
     @Invoker("toChatLineY")
     double xenaddons$toChatLineY(double y);
 
-    @Invoker("getMessageIndex")
-    int xenaddons$getMessageIndex(double x, double y);
-
     @Invoker("getMessageLineIndex")
     int xenaddons$getMessageLineIndex(double x, double y);
-
-    @Invoker("refresh")
-    void xenaddons$refresh();
 
     @Accessor("messages")
     List<ChatHudLine> xenaddons$getMessages();
 
     @Accessor("visibleMessages")
     List<Visible> xenaddons$getVisibleMessages();
+
+    @Accessor("scrolledLines")
+    int xenaddons$getScrolledLines();
+
+    @Accessor("scrolledLines")
+    void xenaddons$setScrolledLines(int value);
 }

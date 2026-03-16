@@ -111,8 +111,12 @@ public class MixinChatScreenCopyChat {
                 : LEGACY_COLOR_CODE.matcher(source.getString()).replaceAll("");
         if (copied.isBlank()) return;
 
+        int previousScrolledLines = accessor.xenaddons$getScrolledLines();
         mc.keyboard.setClipboard(copied);
         ChatUtils.success(formattedCopy ? "Copied formatted message to clipboard" : "Copied message to clipboard");
+        accessor.xenaddons$setScrolledLines(previousScrolledLines);
+        // Consume the click to avoid vanilla handling interfering with copy behavior.
+        cir.setReturnValue(true);
     }
 
     private ChatHudLine resolveClickedMessage(List<ChatHudLine> allMessages, Visible visibleLine) {

@@ -5,8 +5,8 @@ import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xenus.xenaddons.config.GoatedPlayersManager;
 import xenus.xenaddons.config.VisualWordsChatStore;
@@ -56,16 +56,6 @@ public class MixinChatHud {
         XENADDONS_REPLACED_MESSAGE.set(replaced);
         VisualWordsChatStore.put(replaced, text);
         return replaced;
-    }
-
-    @Inject(method = "addMessage(Lnet/minecraft/text/Text;)V", at = @At("TAIL"))
-    private void xenaddons$refreshAfterSimpleAdd(CallbackInfo ci) {
-        ((AccessorChatHud) (Object) this).xenaddons$refresh();
-    }
-
-    @Inject(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V", at = @At("TAIL"))
-    private void xenaddons$refreshAfterAdvancedAdd(CallbackInfo ci) {
-        ((AccessorChatHud) (Object) this).xenaddons$refresh();
     }
 
     @Inject(method = "render", at = @At("HEAD"))
