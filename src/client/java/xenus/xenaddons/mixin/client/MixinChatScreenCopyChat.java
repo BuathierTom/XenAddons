@@ -99,6 +99,7 @@ public class MixinChatScreenCopyChat {
 
         CopyChatModule module = ModuleManager.getModule(CopyChatModule.class);
         if (module == null || !module.isEnabled()) return;
+        if (module.isRequireCtrlClickEnabled() && !isCtrlDown(mc)) return;
 
         Text original = VisualWordsChatStore.getOriginalOrNull(line.content());
         Text source = (original != null ? original : line.content());
@@ -159,6 +160,13 @@ public class MixinChatScreenCopyChat {
         long handle = mc.getWindow().getHandle();
         return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS
                 || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
+    }
+
+    private boolean isCtrlDown(MinecraftClient mc) {
+        if (mc == null || mc.getWindow() == null) return false;
+        long handle = mc.getWindow().getHandle();
+        return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS;
     }
 
     private String toLegacyFormatted(Text text) {
