@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardEntry;
@@ -30,6 +31,7 @@ public class DungeonUtils {
     public static boolean inCatacombs = false;
     public static boolean inBoss = false;
     public static boolean isUniqueClass = false;
+    private static boolean healerSeenAtMidThisRun = false;
     
     private static final Map<String, String> PLAYER_CLASSES = new HashMap<>();
     private static final Map<java.util.UUID, String> PLAYER_CLASSES_UUID = new HashMap<>();
@@ -49,6 +51,7 @@ public class DungeonUtils {
         inCatacombs = false;
         inBoss = false;
         isUniqueClass = false;
+        healerSeenAtMidThisRun = false;
         PLAYER_CLASSES.clear();
         PLAYER_CLASSES_UUID.clear();
         PLAYER_CLASS_LEVELS_UUID.clear();
@@ -72,6 +75,7 @@ public class DungeonUtils {
             if (client.world == null) return;
             tickCounter++;
             updateBossState();
+            updateHealerMidSeenState();
             
             if (tickCounter % 20 == 0) { // Every 1 second
                 updateFromTab();
@@ -153,15 +157,39 @@ public class DungeonUtils {
                 if (c != -1) foundCrypts = c;
             }
         } catch (Exception ignored) {}
-        
+
+        if (!foundDungeon) {
+            clearDungeonRuntimeState();
+        }
         inCatacombs = foundDungeon;
         crypts = foundCrypts;
+    }
+
+    private static void clearDungeonRuntimeState() {
+        floorNumber = 0;
+        currentPhase = 0;
+        currentStage = 0;
+        dungeonSeconds = 0;
+        inBoss = false;
+        isUniqueClass = false;
+        healerSeenAtMidThisRun = false;
+        PLAYER_CLASSES.clear();
+        PLAYER_CLASSES_UUID.clear();
+        PLAYER_CLASS_LEVELS_UUID.clear();
     }
     
     private static boolean checkTabLine(String text) {
         if (text == null) return false;
         String clean = text.replaceAll("§[0-9a-fk-or]", "").toLowerCase();
-        return clean.contains("dungeon:") || clean.contains("catacombs");
+        // "Dungeon: Catacombs" can appear outside active runs (profile/account tab info).
+        // Only treat as in-dungeon when run-specific stats are present.
+        return clean.contains("crypts:")
+            || clean.contains("secrets found")
+            || clean.contains("completed rooms")
+            || clean.contains("opened rooms")
+            || clean.contains("puzzles:")
+            || clean.contains("team deaths")
+            || clean.contains("your milestone:");
     }
     
     private static int parseCrypts(String text) {
@@ -289,7 +317,7 @@ public class DungeonUtils {
         return isUniqueClass;
     }
     
-    public static boolean inDungeon() { return floorNumber > 0 || inCatacombs; }
+    public static boolean inDungeon() { return inCatacombs; }
 
     public static boolean inBoss() {
         return inDungeon() && (inBoss || currentPhase > 0);
@@ -301,17 +329,23 @@ public class DungeonUtils {
             inBoss = false;
             return;
         }
-
-        double x = mc.player.getX();
-        double z = mc.player.getZ();
-
-        if (inCatacombs || floorNumber == 7) {
-            inBoss = x > -7.0 && z > -7.0;
+        if (currentPhase > 0) {
+            inBoss = true;
             return;
         }
 
-        // Fallback for unknown floor data.
-        inBoss = currentPhase > 0;
+        // Fallback while phase text has not arrived yet: F7/M7 boss-map bounds only.
+        if (floorNumber == 7) {
+            double x = mc.player.getX();
+            double y = mc.player.getY();
+            double z = mc.player.getZ();
+            inBoss = x >= -5.0 && x <= 120.0
+                && y >= 3.0 && y <= 230.0
+                && z >= 25.0 && z <= 170.0;
+            return;
+        }
+
+        inBoss = false;
     }
     
     public static boolean isInBox(double x1, double x2, double y1, double y2, double z1, double z2, Entity entity) {
@@ -322,6 +356,34 @@ public class DungeonUtils {
         return entity.getX() >= minX && entity.getX() <= maxX &&
                entity.getY() >= minY && entity.getY() <= maxY &&
                entity.getZ() >= minZ && entity.getZ() <= maxZ;
+    }
+
+    public static boolean isHealerAtMidDetected() {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc == null || mc.world == null || !inDungeon()) return false;
+
+        for (PlayerEntity player : mc.world.getPlayers()) {
+            if (player == null || player.isInvisible() || player.isSpectator()) continue;
+            String clazz = getPlayerClass(player);
+            if (clazz == null) clazz = getPlayerClass(player.getGameProfile().name());
+            if (!"Healer".equals(clazz)) continue;
+            if (isInBox(47, 61, 64, 75, 69, 83, player)) return true;
+        }
+        return false;
+    }
+
+    public static boolean hasHealerBeenAtMidThisRun() {
+        return healerSeenAtMidThisRun;
+    }
+
+    private static void updateHealerMidSeenState() {
+        if (!inDungeon()) {
+            healerSeenAtMidThisRun = false;
+            return;
+        }
+        if (!healerSeenAtMidThisRun && isHealerAtMidDetected()) {
+            healerSeenAtMidThisRun = true;
+        }
     }
     
     public static String getClassColor(String className) {
@@ -387,6 +449,13 @@ public class DungeonUtils {
         }
 
         return foundPlayers.size();
+    }
+
+    public static int getDetectedDungeonClassCount() {
+        int count = PLAYER_CLASSES_UUID.size();
+        if (count <= 0) count = PLAYER_CLASSES.size();
+        if (count < 0) return 0;
+        return Math.min(count, 5);
     }
     
     public static boolean inPhase(int phase) { return currentPhase == phase; }
