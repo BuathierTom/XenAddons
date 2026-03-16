@@ -24,10 +24,11 @@ public class PlayersLeapedModule extends Module {
             new Box(3, 5, 0, 128, 48, 140)
     };
 
-    private static final Box EE2_BOX = new Box(57, 108, 130, 59, 110, 132);
-    private static final Box HEE2_BOX = new Box(59, 132, 138, 62, 133, 140);
-    private static final Box EE3_BOX = new Box(1, 108, 103, 3, 110, 105);
-    private static final Box CORE_BOX = new Box(53.5, 114, 49.5, 55.5, 116, 51.5);
+    // Match the same coordinate ranges used by DungeonUtils position definitions.
+    private static final Box EE2_BOX = new Box(49, 108, 129, 58, 115, 133);
+    private static final Box HEE2_BOX = new Box(59, 132, 138, 62, 135, 143);
+    private static final Box EE3_BOX = new Box(0, 108, 98, 4, 115, 107);
+    private static final Box CORE_BOX = new Box(52, 113, 49, 56, 117, 53);
     private static final Box RELIC_BOX = new Box(51.5, 3, 73.5, 57.5, 8, 79.5);
 
     private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
@@ -63,7 +64,7 @@ public class PlayersLeapedModule extends Module {
     }
 
     private void tick() {
-        if (!DungeonUtils.inDungeon() || DungeonUtils.floorNumber != 7 || DungeonUtils.currentPhase <= 0) {
+        if (DungeonUtils.floorNumber != 7) {
             inBounds = false;
             return;
         }
@@ -93,16 +94,21 @@ public class PlayersLeapedModule extends Module {
 
     private int getSpot(ClientPlayerEntity player) {
         Vec3d pos = player.getEntityPos();
-        if (HEE2_BOX.contains(pos)) return 2;
-        if (EE2_BOX.contains(pos)) return 2;
-        if (EE3_BOX.contains(pos)) return 3;
-        if (CORE_BOX.contains(pos)) return 4;
-        if (RELIC_BOX.contains(pos) && !DungeonUtils.inPhase(5)) return 5;
+        if (isInBox(HEE2_BOX, pos) || isInBox(EE2_BOX, pos)) return 2;
+        if (isInBox(EE3_BOX, pos)) return 3;
+        if (isInBox(CORE_BOX, pos)) return 4;
+        if (isInBox(RELIC_BOX, pos) && !DungeonUtils.inPhase(5)) return 5;
         return 0;
     }
 
+    private static boolean isInBox(Box box, Vec3d pos) {
+        return pos.x >= Math.min(box.minX, box.maxX) && pos.x <= Math.max(box.minX, box.maxX)
+            && pos.y >= Math.min(box.minY, box.maxY) && pos.y <= Math.max(box.minY, box.maxY)
+            && pos.z >= Math.min(box.minZ, box.maxZ) && pos.z <= Math.max(box.minZ, box.maxZ);
+    }
+
     private boolean shouldDisplay() {
-        return inBounds && DungeonUtils.inDungeon() && DungeonUtils.floorNumber == 7;
+        return inBounds && DungeonUtils.floorNumber == 7;
     }
 
     private void renderHud(DrawContext drawContext) {
