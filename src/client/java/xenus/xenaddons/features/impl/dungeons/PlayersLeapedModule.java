@@ -5,11 +5,9 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.NumberSetting;
@@ -83,28 +81,28 @@ public class PlayersLeapedModule extends Module {
 
         Box box = REGIONS[currentSpot - 1];
         int currentCount = 0;
-        for (Entity entity : world.getOtherEntities(player, box)) {
-            if (!(entity instanceof PlayerEntity)) continue;
-            if (entity.isInvisible()) continue;
-            if (entity.isSpectator()) continue;
+        for (PlayerEntity other : world.getPlayers()) {
+            if (other == null || other == player) continue;
+            if (other.isSpectator()) continue;
+            if (!isInBox(box, other.getBoundingBox())) continue;
             currentCount++;
         }
         leapedCount = currentCount;
     }
 
     private int getSpot(ClientPlayerEntity player) {
-        Vec3d pos = player.getEntityPos();
-        if (isInBox(HEE2_BOX, pos) || isInBox(EE2_BOX, pos)) return 2;
-        if (isInBox(EE3_BOX, pos)) return 3;
-        if (isInBox(CORE_BOX, pos)) return 4;
-        if (isInBox(RELIC_BOX, pos) && !DungeonUtils.inPhase(5)) return 5;
+        Box playerBox = player.getBoundingBox();
+        if (isInBox(HEE2_BOX, playerBox) || isInBox(EE2_BOX, playerBox)) return 2;
+        if (isInBox(EE3_BOX, playerBox)) return 3;
+        if (isInBox(CORE_BOX, playerBox)) return 4;
+        if (isInBox(RELIC_BOX, playerBox) && !DungeonUtils.inPhase(5)) return 5;
         return 0;
     }
 
-    private static boolean isInBox(Box box, Vec3d pos) {
-        return pos.x >= Math.min(box.minX, box.maxX) && pos.x <= Math.max(box.minX, box.maxX)
-            && pos.y >= Math.min(box.minY, box.maxY) && pos.y <= Math.max(box.minY, box.maxY)
-            && pos.z >= Math.min(box.minZ, box.maxZ) && pos.z <= Math.max(box.minZ, box.maxZ);
+    private static boolean isInBox(Box box, Box target) {
+        return target.maxX >= Math.min(box.minX, box.maxX) && target.minX <= Math.max(box.minX, box.maxX)
+            && target.maxY >= Math.min(box.minY, box.maxY) && target.minY <= Math.max(box.minY, box.maxY)
+            && target.maxZ >= Math.min(box.minZ, box.maxZ) && target.minZ <= Math.max(box.minZ, box.maxZ);
     }
 
     private boolean shouldDisplay() {
