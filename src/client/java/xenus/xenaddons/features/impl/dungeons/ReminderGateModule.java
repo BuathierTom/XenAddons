@@ -58,6 +58,7 @@ public class ReminderGateModule extends Module {
     private boolean waitingGateDestroyed = false;
     private boolean notificationActive = false;
     private boolean soundPlayedForCurrentGate = false;
+    private boolean gateBrokenThisPhase = false;
     private int debugDisplayTicks = 0;
     private String lastMessage = "";
     private long lastMessageAtMs = 0L;
@@ -120,6 +121,7 @@ public class ReminderGateModule extends Module {
             waitingGateDestroyed = false;
             notificationActive = false;
             soundPlayedForCurrentGate = false;
+            gateBrokenThisPhase = true;
             return;
         }
 
@@ -144,8 +146,13 @@ public class ReminderGateModule extends Module {
             waitingGateDestroyed = false;
             notificationActive = false;
             soundPlayedForCurrentGate = false;
+            gateBrokenThisPhase = false;
         }
         lastDenominator = denominator;
+        
+        if (gateBrokenThisPhase) {
+            return;
+        }
 
         if (!waitingGateDestroyed) {
             waitingGateDestroyed = true;
@@ -272,6 +279,7 @@ public class ReminderGateModule extends Module {
         waitingGateDestroyed = false;
         notificationActive = false;
         soundPlayedForCurrentGate = false;
+        gateBrokenThisPhase = false;
         lastMessage = "";
         lastMessageAtMs = 0L;
     }
