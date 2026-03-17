@@ -11,6 +11,8 @@ public class DebugModule extends Module {
     public final BooleanSetting enableTiclassTest = new BooleanSetting("/xa ticlass", true);
     public final BooleanSetting enableSecretRoomTest = new BooleanSetting("/xa secretroom", true);
     public final BooleanSetting enableProcsTest = new BooleanSetting("/xa procs", true);
+    public final BooleanSetting enableGateTest = new BooleanSetting("/xa gate", true);
+    public final BooleanSetting enableMaskTest = new BooleanSetting("/xa mask", true);
     public final BooleanSetting enablePfStatsTest = new BooleanSetting("/xa pf [pseudo]", true);
 
     public DebugModule() {
@@ -20,6 +22,8 @@ public class DebugModule extends Module {
         this.registerSetting(enableTiclassTest);
         this.registerSetting(enableSecretRoomTest);
         this.registerSetting(enableProcsTest);
+        this.registerSetting(enableGateTest);
+        this.registerSetting(enableMaskTest);
         this.registerSetting(enablePfStatsTest);
     }
 }
