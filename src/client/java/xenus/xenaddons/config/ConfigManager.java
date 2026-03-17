@@ -11,6 +11,7 @@ import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ColorSetting;
 import xenus.xenaddons.settings.KeybindSetting;
+import xenus.xenaddons.settings.ModeSetting;
 import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.Setting;
 
@@ -40,6 +41,8 @@ public class ConfigManager {
                     settingsJson.addProperty(setting.name, (Integer) setting.getValue());
                 } else if (setting instanceof NumberSetting) {
                     settingsJson.addProperty(setting.name, (Number) setting.getValue());
+                } else if (setting instanceof ModeSetting) {
+                    settingsJson.addProperty(setting.name, (String) setting.getValue());
                 } else if (setting instanceof KeybindSetting) {
                     settingsJson.addProperty(setting.name, (Integer) setting.getValue());
                 }
@@ -98,6 +101,8 @@ public class ConfigManager {
                                         ((ColorSetting) setting).setValue(settingsJson.get(setting.name).getAsInt());
                                     } else if (setting instanceof NumberSetting) {
                                         ((NumberSetting) setting).setValue(settingsJson.get(setting.name).getAsDouble());
+                                    } else if (setting instanceof ModeSetting) {
+                                        ((ModeSetting) setting).setValue(settingsJson.get(setting.name).getAsString());
                                     } else if (setting instanceof KeybindSetting) {
                                         ((KeybindSetting) setting).setValue(settingsJson.get(setting.name).getAsInt());
                                     }

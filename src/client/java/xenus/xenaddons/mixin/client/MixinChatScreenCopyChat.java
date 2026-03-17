@@ -72,6 +72,31 @@ public class MixinChatScreenCopyChat {
         ChatHudLine line = resolveClickedMessage(accessor.xenaddons$getMessages(), visibleLine);
         if (line == null || line.content() == null) return;
 
+        CopyChatModule module = ModuleManager.getModule(CopyChatModule.class);
+        int copyButton = (module != null && module.isCopyOnLeftClickEnabled()) ? 0 : 1;
+
+        if (module != null
+                && module.isEnabled()
+                && click.button() == copyButton
+                && (!module.isRequireCtrlClickEnabled() || isCopyModifierDown(mc))) {
+            Text original = VisualWordsChatStore.getOriginalOrNull(line.content());
+            Text source = (original != null ? original : line.content());
+
+            boolean altDown = isAltOrOptionDown(mc);
+            boolean formattedCopy = altDown;
+            String copied = formattedCopy
+                    ? toLegacyFormatted(source)
+                    : LEGACY_COLOR_CODE.matcher(source.getString()).replaceAll("");
+            if (copied.isBlank()) return;
+
+            int previousScrolledLines = accessor.xenaddons$getScrolledLines();
+            mc.keyboard.setClipboard(copied);
+            ChatUtils.success(formattedCopy ? "Copied formatted message to clipboard" : "Copied message to clipboard");
+            accessor.xenaddons$setScrolledLines(previousScrolledLines);
+            cir.setReturnValue(true);
+            return;
+        }
+
         if (click.button() == 0 && mc.player != null && mc.player.networkHandler != null) {
             Style clickedStyle = chatHud.getTextStyleAt(chatX, chatY);
             ClickEvent clickEvent = clickedStyle == null ? null : clickedStyle.getClickEvent();
@@ -94,29 +119,6 @@ public class MixinChatScreenCopyChat {
                 return;
             }
         }
-
-        if (click.button() != 1) return;
-
-        CopyChatModule module = ModuleManager.getModule(CopyChatModule.class);
-        if (module == null || !module.isEnabled()) return;
-        if (module.isRequireCtrlClickEnabled() && !isCtrlDown(mc)) return;
-
-        Text original = VisualWordsChatStore.getOriginalOrNull(line.content());
-        Text source = (original != null ? original : line.content());
-
-        boolean altDown = isAltOrOptionDown(mc);
-        boolean formattedCopy = altDown;
-        String copied = formattedCopy
-                ? toLegacyFormatted(source)
-                : LEGACY_COLOR_CODE.matcher(source.getString()).replaceAll("");
-        if (copied.isBlank()) return;
-
-        int previousScrolledLines = accessor.xenaddons$getScrolledLines();
-        mc.keyboard.setClipboard(copied);
-        ChatUtils.success(formattedCopy ? "Copied formatted message to clipboard" : "Copied message to clipboard");
-        accessor.xenaddons$setScrolledLines(previousScrolledLines);
-        // Consume the click to avoid vanilla handling interfering with copy behavior.
-        cir.setReturnValue(true);
     }
 
     private ChatHudLine resolveClickedMessage(List<ChatHudLine> allMessages, Visible visibleLine) {
@@ -166,11 +168,13 @@ public class MixinChatScreenCopyChat {
                 || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
     }
 
-    private boolean isCtrlDown(MinecraftClient mc) {
+    private boolean isCopyModifierDown(MinecraftClient mc) {
         if (mc == null || mc.getWindow() == null) return false;
         long handle = mc.getWindow().getHandle();
         return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS;
+                || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SUPER) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SUPER) == GLFW.GLFW_PRESS;
     }
 
     private String toLegacyFormatted(Text text) {
