@@ -12,6 +12,8 @@ import xenus.xenaddons.utils.DungeonUtils;
 public class BatDeathAlertModule extends Module {
     private static long lastAlertAt = 0L;
     private static final long ALERT_COOLDOWN_MS = 300L;
+    private static final double MAX_ALERT_DISTANCE = 6.0D;
+    private static final double MAX_ALERT_DISTANCE_SQ = MAX_ALERT_DISTANCE * MAX_ALERT_DISTANCE;
 
     public BatDeathAlertModule() {
         super("Bat Death Alert", "Shows a title when bats die in dungeons", Category.DUNGEON);
@@ -28,6 +30,7 @@ public class BatDeathAlertModule extends Module {
         if (!DungeonUtils.inDungeon() || DungeonUtils.currentPhase > 0) return;
         if (bat == null) return;
         if (bat.hasVehicle() && bat.getVehicle() instanceof ArmorStandEntity) return;
+        if (client.player.squaredDistanceTo(bat) > MAX_ALERT_DISTANCE_SQ) return;
 
         long now = System.currentTimeMillis();
         if (now - lastAlertAt < ALERT_COOLDOWN_MS) return;
