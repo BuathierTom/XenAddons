@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.15-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.16-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -13,12 +13,6 @@
 </div>
 
 XenAddons is a Fabric mod for Minecraft **1.21.10** focused on Hypixel SkyBlock quality-of-life features.
-
-## Latest Update (v1.2.14)
-
-- Fixed disconnects caused by malformed legacy formatting in chat replacement flows.
-- Improved Visual Words sanitization for better compatibility with chat tab/filter mods.
-- Hardened text rebuild paths to prevent invalid `§` formatting output.
 
 ## Compatibility
 
@@ -39,6 +33,10 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `/xa ticlass`
 - `/xa secretroom`
 - `/xa procs <spirit|bonzo|phoenix>`
+- `/xa gate`
+- `/xa mask`
+- `/xa mask has`
+- `/xa mask nomask`
 - `/xa pf <pseudo>`
 
 ## Modules
@@ -73,6 +71,15 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `Players Leaped`
   - Displays `x/4 Players Leaped` in F7 terms-related zones.
   - Supports HUD move/scale through `Edit HUD`.
+
+- `Reminder Gate`
+  - Shows a gate reminder from lever progress messages (`(x/7)` / `(x/8)`).
+  - Includes class-based phase logic, customizable text, and custom/random sounds.
+
+- `Mask Reminder`
+  - Region-based reminder using leap regions.
+  - Triggers on Goldor start / lever / terminal / device messages.
+  - Detects `Spirit Mask` / `Bonzo's Mask` equipped and reminds once per run.
 
 - `Invisibility timer`
   - Shows active invincibility duration after:
