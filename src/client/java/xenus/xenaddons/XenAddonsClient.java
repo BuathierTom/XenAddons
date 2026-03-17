@@ -229,6 +229,15 @@ public class XenAddonsClient implements ClientModInitializer {
                         module.debugTriggerProc(normalized);
                         return 1;
                     })))
+                    .then(literal("gate").executes(context -> {
+                        xenus.xenaddons.features.impl.dungeons.ReminderGateModule module =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.ReminderGateModule.class);
+                        if (module == null) return 0;
+                        if (!module.isEnabled()) module.setEnabled(true);
+                        module.debugTrigger();
+                        xenus.xenaddons.utils.ChatUtils.info("Reminder Gate test triggered.");
+                        return 1;
+                    }))
 					.executes(context -> {
 						openClickGUINextTick = true;
 						return 1;

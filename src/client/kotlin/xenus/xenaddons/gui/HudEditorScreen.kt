@@ -13,6 +13,7 @@ import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule
 import xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule
 import xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule
 import xenus.xenaddons.features.impl.dungeons.PosTitlesModule
+import xenus.xenaddons.features.impl.dungeons.ReminderGateModule
 import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule
 import xenus.xenaddons.hud.HudState
 import xenus.xenaddons.utils.RenderUtils
@@ -23,6 +24,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     private var autoPetModule: AutoPetRuleTitleModule? = null
     private var playersLeapedModule: PlayersLeapedModule? = null
     private var invisibilityTimerModule: InvisibilityTimerModule? = null
+    private var reminderGateModule: ReminderGateModule? = null
     private var spotifyOverlayModule: SpotifyOverlayModule? = null
 
     private var dragging: ComponentType? = null
@@ -40,6 +42,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         autoPetModule = ModuleManager.getModule(AutoPetRuleTitleModule::class.java)
         playersLeapedModule = ModuleManager.getModule(PlayersLeapedModule::class.java)
         invisibilityTimerModule = ModuleManager.getModule(InvisibilityTimerModule::class.java)
+        reminderGateModule = ModuleManager.getModule(ReminderGateModule::class.java)
         spotifyOverlayModule = ModuleManager.getModule(SpotifyOverlayModule::class.java)
     }
 
@@ -60,6 +63,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         renderComponent(context, mouseX, mouseY, ComponentType.PLAYERS_LEAPED, getPlayersLeapedBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.INVISIBILITY_TIMER, getInvisibilityTimerBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.MASK_PROC_ALERT, getMaskProcAlertBounds())
+        renderComponent(context, mouseX, mouseY, ComponentType.REMINDER_GATE, getReminderGateBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.SPOTIFY_OVERLAY, getSpotifyBounds())
 
         renderResetButton(context, mouseX, mouseY)
@@ -177,6 +181,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.PLAYERS_LEAPED -> renderPlayersLeapedPreview(context, bounds)
             ComponentType.INVISIBILITY_TIMER -> renderInvisibilityTimerPreview(context, bounds)
             ComponentType.MASK_PROC_ALERT -> renderMaskProcAlertPreview(context, bounds)
+            ComponentType.REMINDER_GATE -> renderReminderGatePreview(context, bounds)
             ComponentType.SPOTIFY_OVERLAY -> renderSpotifyPreview(context, bounds)
         }
     }
@@ -241,6 +246,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
                 invisibilityTimerModule?.setAlertHudY(120)
                 invisibilityTimerModule?.setAlertHudScale(4.0)
             }
+            ComponentType.REMINDER_GATE -> {
+                reminderGateModule?.setHudOffsetX(0)
+                reminderGateModule?.setHudY(84)
+                reminderGateModule?.setHudScale(5.0)
+            }
             ComponentType.SPOTIFY_OVERLAY -> {
                 spotifyOverlayModule?.setHudOffsetX(0)
                 spotifyOverlayModule?.setHudY(84)
@@ -260,6 +270,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.hudScale ?: 1.0
             ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.hudScale ?: 1.0
             ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.alertHudScale ?: 4.0
+            ComponentType.REMINDER_GATE -> reminderGateModule?.hudScale ?: 5.0
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.hudScale ?: 1.0
         }
     }
@@ -272,6 +283,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.setHudScale(clamped)
             ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.setHudScale(clamped)
             ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.setAlertHudScale(clamped)
+            ComponentType.REMINDER_GATE -> reminderGateModule?.setHudScale(clamped)
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.setHudScale(clamped)
         }
     }
@@ -281,6 +293,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.SPOTIFY_OVERLAY,
             ComponentType.MASK_PROC_ALERT,
             ComponentType.INVISIBILITY_TIMER,
+            ComponentType.REMINDER_GATE,
             ComponentType.PLAYERS_LEAPED,
             ComponentType.AUTOPET_TITLE,
             ComponentType.POS_TITLES
@@ -295,6 +308,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.PLAYERS_LEAPED -> getPlayersLeapedBounds()
             ComponentType.INVISIBILITY_TIMER -> getInvisibilityTimerBounds()
             ComponentType.MASK_PROC_ALERT -> getMaskProcAlertBounds()
+            ComponentType.REMINDER_GATE -> getReminderGateBounds()
             ComponentType.SPOTIFY_OVERLAY -> getSpotifyBounds()
         }
     }
@@ -332,6 +346,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
                 val centerX = x + (referenceBounds.w / 2)
                 invisibilityTimerModule?.setAlertHudOffsetX(centerX - (width / 2))
                 invisibilityTimerModule?.setAlertHudY(y)
+            }
+            ComponentType.REMINDER_GATE -> {
+                val centerX = x + (referenceBounds.w / 2)
+                reminderGateModule?.setHudOffsetX(centerX - (width / 2))
+                reminderGateModule?.setHudY(y)
             }
             ComponentType.SPOTIFY_OVERLAY -> {
                 spotifyOverlayModule?.setHudOffsetX(x - (width / 2))
@@ -523,6 +542,19 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
     }
 
+    private fun getReminderGateBounds(): Bounds {
+        val textWidth = textRenderer.getWidth(REMINDER_GATE_PREVIEW)
+        val scale = (reminderGateModule?.hudScale ?: 5.0).toFloat()
+        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
+        var x = (width - scaledWidth) / 2
+        var y = 84
+        reminderGateModule?.let {
+            x += it.hudOffsetX
+            y = it.hudY
+        }
+        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
+    }
+
     private fun renderPosTitlesPreview(context: DrawContext, bounds: Bounds) {
         val scale = (posTitlesModule?.hudScale ?: 1.0).toFloat()
         val inv = 1.0f / scale
@@ -595,6 +627,15 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
+    private fun renderReminderGatePreview(context: DrawContext, bounds: Bounds) {
+        val scale = (reminderGateModule?.hudScale ?: 5.0).toFloat()
+        val inv = 1.0f / scale
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.drawTextWithShadow(textRenderer, REMINDER_GATE_PREVIEW, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFF5555.toInt())
+        context.matrices.popMatrix()
+    }
+
     private fun renderComponentBox(context: DrawContext, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
         val hovered = bounds.contains(mouseX, mouseY)
         val active = dragging == type
@@ -620,6 +661,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         PLAYERS_LEAPED("Players Leaped"),
         INVISIBILITY_TIMER("Invisibility timer"),
         MASK_PROC_ALERT("Mask proc alert"),
+        REMINDER_GATE("Reminder Gate"),
         SPOTIFY_OVERLAY("Spotify Overlay")
     }
 
@@ -634,6 +676,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         private val AUTOPET_TITLE_PREVIEW = Text.literal("Golden Dragon")
         private val AUTOPET_SUB_PREVIEW = Text.literal("Autopet")
         private val PLAYERS_LEAPED_PREVIEW = Text.literal("2/4 Players Leaped")
+        private val REMINDER_GATE_PREVIEW = Text.literal("GATEEEEEE !!!!!!!")
         private val SPOTIFY_PREVIEW = Text.literal("Spotify > Author - Song Title")
 
         private const val RESET_BTN_W = 120

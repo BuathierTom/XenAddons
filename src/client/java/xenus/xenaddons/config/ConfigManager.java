@@ -14,6 +14,7 @@ import xenus.xenaddons.settings.KeybindSetting;
 import xenus.xenaddons.settings.ModeSetting;
 import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.Setting;
+import xenus.xenaddons.settings.StringSetting;
 
 import java.io.File;
 import java.io.FileReader;
@@ -45,6 +46,8 @@ public class ConfigManager {
                     settingsJson.addProperty(setting.name, (String) setting.getValue());
                 } else if (setting instanceof KeybindSetting) {
                     settingsJson.addProperty(setting.name, (Integer) setting.getValue());
+                } else if (setting instanceof StringSetting) {
+                    settingsJson.addProperty(setting.name, (String) setting.getValue());
                 }
             }
             moduleJson.add("settings", settingsJson);
@@ -105,6 +108,8 @@ public class ConfigManager {
                                         ((ModeSetting) setting).setValue(settingsJson.get(setting.name).getAsString());
                                     } else if (setting instanceof KeybindSetting) {
                                         ((KeybindSetting) setting).setValue(settingsJson.get(setting.name).getAsInt());
+                                    } else if (setting instanceof StringSetting) {
+                                        ((StringSetting) setting).setValue(settingsJson.get(setting.name).getAsString());
                                     }
                                 }
                             }

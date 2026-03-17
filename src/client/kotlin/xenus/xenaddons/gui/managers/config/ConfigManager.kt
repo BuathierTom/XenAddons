@@ -14,6 +14,7 @@ import xenus.xenaddons.settings.KeybindSetting
 import xenus.xenaddons.settings.ModeSetting
 import xenus.xenaddons.settings.NumberSetting
 import xenus.xenaddons.settings.Setting
+import xenus.xenaddons.settings.StringSetting
 import java.awt.Color
 
 object ConfigManager {
@@ -125,6 +126,7 @@ object ConfigManager {
             is BooleanSetting -> ElementType.Switch(setting.value)
             is NumberSetting -> ElementType.Slider(setting.min, setting.max, setting.value, setting.increment < 1.0)
             is ModeSetting -> ElementType.Dropdown(setting.modes, setting.index.coerceAtLeast(0))
+            is StringSetting -> ElementType.TextInput(setting.value, "Enter text...", setting.maxLength)
             is ColorSetting -> ElementType.ColorPicker(Color(setting.value, true))
             is KeybindSetting -> ElementType.Keybind(setting.value)
             is ActionSetting -> {
@@ -232,6 +234,7 @@ object ConfigManager {
                 }
             }
             is KeybindSetting -> if (value is Number) setting.setValue(value.toInt())
+            is StringSetting -> if (value is String) setting.setValue(value)
         }
     }
 
