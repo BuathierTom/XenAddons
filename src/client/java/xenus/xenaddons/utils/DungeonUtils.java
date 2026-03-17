@@ -329,6 +329,16 @@ public class DungeonUtils {
             inBoss = false;
             return;
         }
+
+        // Fallback for clients/mods that hide boss chat lines:
+        // entering the P5 vertical range implies Wither King phase.
+        if (hasHealerBeenAtMidThisRun()) {
+            double y = mc.player.getY();
+            if (y > 4.0 && y < 50.0) {
+                currentPhase = 5;
+            }
+        }
+
         if (currentPhase > 0) {
             inBoss = true;
             return;
@@ -367,7 +377,7 @@ public class DungeonUtils {
             String clazz = getPlayerClass(player);
             if (clazz == null) clazz = getPlayerClass(player.getGameProfile().name());
             if (!"Healer".equals(clazz)) continue;
-            if (isInBox(47, 61, 64, 75, 69, 83, player)) return true;
+            if (isInBox(47, 61.999, 64, 75, 69, 83.999, player)) return true;
         }
         return false;
     }
@@ -542,6 +552,7 @@ public class DungeonUtils {
                     || entity.squaredDistanceTo(48.5, 109.0, 121.5) <= radiusSq
                     || entity.squaredDistanceTo(46.5, 109.0, 121.5) <= radiusSq;
         }, "2 safespot", "safespot 2", "early enter 2 safe spot"));
+        positionDefinitions.add(new PositionDefinition("AtSafespot2High", "At Early Enter 2 Safe Spot! (High)", (clazz) -> true, (entity) -> isInBox(63, 66, 132, 133, 146, 147, entity), "2 safespot high", "safespot 2 high", "early enter 2 safe spot high"));
         positionDefinitions.add(new PositionDefinition("AtEE3", "At Pre Enter 3!", (clazz) -> true, (entity) -> isInBox(0, 4, 108, 115, 98, 107, entity), "early enter 3", "pre enter 3", "at ee3", "entered 3.3"));
         positionDefinitions.add(new PositionDefinition("AtSafespot3", "At Early Enter 3 Safe Spot!", (clazz) -> true, (entity) -> {
             double radiusSq = 0.45 * 0.45;
@@ -551,11 +562,11 @@ public class DungeonUtils {
             return false;
         }, "safespot 3", "3 safespot", "early enter 3 safe spot"));
         positionDefinitions.add(new PositionDefinition("AtArrowsDevice", "At Arrows Device!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(-0.5, 120.0, 77.5) <= (1.5 * 1.5), "at arrows device"));
-        positionDefinitions.add(new PositionDefinition("EnteringCore", "Entering Core!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(58.0, 120.0, 122.0) <= (0.3 * 0.3), "entering core"));
-        positionDefinitions.add(new PositionDefinition("AtCore", "At Core!", (clazz) -> true, (entity) -> isInBox(52, 56, 113, 117, 49, 53, entity), "at core", "pre enter 4", "early enter 4", "at ee4", "entered 3.4"));
+        positionDefinitions.add(new PositionDefinition("EnteringCore", "Entering Core!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(58.0, 120.0, 122.0) <= (0.75 * 0.75), "entering core"));
+        positionDefinitions.add(new PositionDefinition("AtCore", "At Core!", (clazz) -> true, (entity) -> isInBox(52, 57, 113, 117, 49, 53, entity), "at core", "pre enter 4", "early enter 4", "at ee4", "entered 3.4"));
         positionDefinitions.add(new PositionDefinition("InGoldorTunnel", "Inside Goldor Tunnel!", (clazz) -> true, (entity) -> isInBox(41, 68, 110, 150, 59, 117, entity), "in goldor tunnel", "inside goldor tunnel", "in core", "entered 3.5", "at ee5", "pre enter 5"));
         positionDefinitions.add(new PositionDefinition("AtPewPewDev", "At Pew Pew Dev!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(63.5, 127.0, 35.5) <= (1.5 * 1.5), "at pew pew dev"));
-        positionDefinitions.add(new PositionDefinition("AtMid", "At Mid!", (clazz) -> true, (entity) -> isInBox(47, 61, 64, 75, 69, 83, entity), "at mid", "in mid"));
+        positionDefinitions.add(new PositionDefinition("AtMid", "At Mid!", (clazz) -> true, (entity) -> isInBox(47, 61.999, 64, 75, 69, 83.999, entity), "at mid", "in mid"));
         positionDefinitions.add(new PositionDefinition("AtPre4Entry", "At Pre4 Entry!", (clazz) -> true, (entity) -> isInBox(91, 93, 129, 133, 44, 46, entity), "i4 entry", "pre4 entry"));
         positionDefinitions.add(new PositionDefinition("AtP5", "At P5!", (clazz) -> "Healer".equals(clazz), (entity) -> entity.getY() < 50 && entity.getY() > 4, "at p5", "in p5"));
     }
