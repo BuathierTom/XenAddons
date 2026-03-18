@@ -4,8 +4,11 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
@@ -14,8 +17,10 @@ import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ModeSetting;
 import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.StringSetting;
+import xenus.xenaddons.mixin.client.AccessorChatHud;
 import xenus.xenaddons.utils.DungeonUtils;
 
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +29,15 @@ public class ReminderGateModule extends Module {
     private static final Pattern LEVER_FRACTION_PATTERN = Pattern.compile("\\(\\s*\\d+\\s*/\\s*(\\d+)\\s*\\)", Pattern.CASE_INSENSITIVE);
     private static final Pattern COLOR_PATTERN = Pattern.compile("§[0-9a-fk-or]", Pattern.CASE_INSENSITIVE);
     private static final String GATE_DESTROYED = "the gate has been destroyed!";
+    private static final int CHAT_HISTORY_SYNC_TICKS = 20 * 15;
+    private static final int CHAT_HISTORY_SYNC_MESSAGES = 10;
+    private static final Box[] REGIONS = {
+            new Box(90, 106, 50, 111, 145, 123),
+            new Box(17, 106, 121, 108, 145, 143),
+            new Box(-2, 106, 51, 20, 145, 142),
+            new Box(-1, 26, 29, 191, 145, 58),
+            new Box(3, 5, 0, 128, 48, 140)
+    };
     private static final Identifier[] RANDOM_SOUND_POOL = new Identifier[]{
             Identifier.of("xenaddons", "reminder_gate.fah"),
             Identifier.of("xenaddons", "reminder_gate.nuke_bomb"),
@@ -55,10 +69,12 @@ public class ReminderGateModule extends Module {
 
     private int phaseIndex = 0;
     private int lastDenominator = 0;
-    private boolean waitingGateDestroyed = false;
     private boolean notificationActive = false;
     private boolean soundPlayedForCurrentGate = false;
     private boolean gateBrokenThisPhase = false;
+    private int currentRegion = -1;
+    private int previousRegion = -1;
+    private int lastDungeonSeconds = -1;
     private int debugDisplayTicks = 0;
     private String lastMessage = "";
     private long lastMessageAtMs = 0L;
@@ -94,9 +110,7 @@ public class ReminderGateModule extends Module {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!this.isEnabled()) return;
             if (debugDisplayTicks > 0) debugDisplayTicks--;
-            if (waitingGateDestroyed && !notificationActive && shouldNotifyLocalClass(phaseIndex)) {
-                activateNotification();
-            }
+            updateRuntimeState();
         });
 
         HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
@@ -118,12 +132,13 @@ public class ReminderGateModule extends Module {
 
         String lower = clean.toLowerCase();
         if (lower.contains(GATE_DESTROYED)) {
-            waitingGateDestroyed = false;
             notificationActive = false;
             soundPlayedForCurrentGate = false;
             gateBrokenThisPhase = true;
             return;
         }
+
+        if (currentRegion < 0) return;
 
         String lowerLever = lower.toLowerCase();
         if (!lowerLever.contains("lever")) return;
@@ -140,13 +155,14 @@ public class ReminderGateModule extends Module {
         }
         if (denominator != 7 && denominator != 8) return;
 
+        int previousPhase = phaseIndex;
         int resolvedPhase = resolvePhase(denominator);
+        boolean destroyedBeforeFirstLeverOfPhase = gateBrokenThisPhase && previousPhase == 0;
         if (resolvedPhase != phaseIndex) {
             phaseIndex = resolvedPhase;
-            waitingGateDestroyed = false;
             notificationActive = false;
             soundPlayedForCurrentGate = false;
-            gateBrokenThisPhase = false;
+            gateBrokenThisPhase = destroyedBeforeFirstLeverOfPhase;
         }
         lastDenominator = denominator;
         
@@ -154,12 +170,7 @@ public class ReminderGateModule extends Module {
             return;
         }
 
-        if (!waitingGateDestroyed) {
-            waitingGateDestroyed = true;
-            if (shouldNotifyLocalClass(phaseIndex)) {
-                activateNotification();
-            }
-        }
+        activateNotification();
     }
 
     private void activateNotification() {
@@ -181,25 +192,63 @@ public class ReminderGateModule extends Module {
         return phaseIndex;
     }
 
-    private boolean shouldNotifyLocalClass(int phase) {
-        String clazz = getLocalClass();
-        // If class parsing is late/missing on some setups, do not miss the first lever reminder.
-        if (clazz == null) return true;
-        return switch (phase) {
-            case 1 -> "Mage".equals(clazz) || "Archer".equals(clazz);
-            case 2 -> "Healer".equals(clazz);
-            case 3 -> "Archer".equals(clazz);
-            default -> false;
-        };
+    private void updateRuntimeState() {
+        if (!DungeonUtils.inDungeon() || mc.player == null) {
+            clearDungeonRuntime();
+            return;
+        }
+
+        previousRegion = currentRegion;
+        currentRegion = getRegionIndex(mc.player);
+        if (currentRegion < 0) {
+            notificationActive = false;
+        } else if (previousRegion < 0) {
+            syncGateStateFromChat();
+        }
+        int currentSeconds = DungeonUtils.dungeonSeconds;
+        if (lastDungeonSeconds >= 0 && currentSeconds >= 0 && currentSeconds < lastDungeonSeconds) {
+            clearDungeonRuntime();
+            currentRegion = getRegionIndex(mc.player);
+        }
+        lastDungeonSeconds = currentSeconds;
     }
 
-    private String getLocalClass() {
-        if (mc.player == null) return null;
-        String clazz = DungeonUtils.getPlayerClass(mc.player);
-        if (clazz == null && mc.player.getGameProfile() != null) {
-            clazz = DungeonUtils.getPlayerClass(mc.player.getGameProfile().name());
+    private int getRegionIndex(ClientPlayerEntity player) {
+        double x = player.getX();
+        double y = player.getY();
+        double z = player.getZ();
+        for (int i = 0; i < REGIONS.length; i++) {
+            Box box = REGIONS[i];
+            if (x >= Math.min(box.minX, box.maxX) && x <= Math.max(box.minX, box.maxX)
+                && y >= Math.min(box.minY, box.maxY) && y <= Math.max(box.minY, box.maxY)
+                && z >= Math.min(box.minZ, box.maxZ) && z <= Math.max(box.minZ, box.maxZ)) {
+                return i;
+            }
         }
-        return clazz;
+        return -1;
+    }
+
+    private void syncGateStateFromChat() {
+        if (mc.inGameHud == null || mc.player == null) return;
+        AccessorChatHud accessor = (AccessorChatHud) mc.inGameHud.getChatHud();
+        List<ChatHudLine> messages = accessor.xenaddons$getMessages();
+        if (messages == null || messages.isEmpty()) return;
+
+        int start = Math.max(0, messages.size() - CHAT_HISTORY_SYNC_MESSAGES);
+        int currentTick = mc.player.age;
+        for (int i = messages.size() - 1; i >= start; i--) {
+            ChatHudLine line = messages.get(i);
+            if (line == null || line.content() == null) continue;
+            if ((currentTick - line.creationTick()) > CHAT_HISTORY_SYNC_TICKS) continue;
+            String clean = COLOR_PATTERN.matcher(line.content().getString()).replaceAll("").trim().toLowerCase();
+            if (clean.isEmpty()) continue;
+            if (clean.contains(GATE_DESTROYED)) {
+                notificationActive = false;
+                soundPlayedForCurrentGate = false;
+                gateBrokenThisPhase = true;
+                return;
+            }
+        }
     }
 
     private String getDisplayText() {
@@ -276,10 +325,12 @@ public class ReminderGateModule extends Module {
     private void clearDungeonRuntime() {
         phaseIndex = 0;
         lastDenominator = 0;
-        waitingGateDestroyed = false;
         notificationActive = false;
         soundPlayedForCurrentGate = false;
         gateBrokenThisPhase = false;
+        currentRegion = -1;
+        previousRegion = -1;
+        lastDungeonSeconds = -1;
         lastMessage = "";
         lastMessageAtMs = 0L;
     }
