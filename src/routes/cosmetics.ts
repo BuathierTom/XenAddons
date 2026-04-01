@@ -7,7 +7,7 @@ import { ZodError } from 'zod';
 
 import { buildEtag, ifNoneMatchIncludes } from '../lib/etag.js';
 import type { CosmeticsFileStore } from '../lib/file-store.js';
-import { usernameUpdateBodySchema, uuidSchema } from '../domain/schemas.js';
+import { cosmeticsWritableUpdateBodySchema, uuidSchema } from '../domain/schemas.js';
 
 const CACHE_CONTROL_HEADER = 'public, max-age=60, stale-while-revalidate=300';
 const NO_STORE_HEADER = 'no-store';
@@ -96,7 +96,7 @@ export const cosmeticsRoutes: FastifyPluginAsync<CosmeticsRoutesOptions> = async
     return responseBody;
   });
 
-  app.patch('/:uuid/username', async (request, reply) => {
+  app.patch('/:uuid', async (request, reply) => {
     const paramsResult = uuidSchema.safeParse((request.params as { uuid?: string }).uuid);
 
     if (!paramsResult.success) {
@@ -106,7 +106,7 @@ export const cosmeticsRoutes: FastifyPluginAsync<CosmeticsRoutesOptions> = async
       };
     }
 
-    const bodyResult = usernameUpdateBodySchema.safeParse(request.body);
+    const bodyResult = cosmeticsWritableUpdateBodySchema.safeParse(request.body);
 
     if (!bodyResult.success) {
       reply.code(400);
@@ -117,9 +117,9 @@ export const cosmeticsRoutes: FastifyPluginAsync<CosmeticsRoutesOptions> = async
     }
 
     try {
-      const updatedSnapshot = await options.cosmeticsStore.updateUsername(
+      const updatedSnapshot = await options.cosmeticsStore.updateWritableFields(
         paramsResult.data,
-        bodyResult.data.username
+        bodyResult.data
       );
 
       if (!updatedSnapshot) {
@@ -144,7 +144,7 @@ export const cosmeticsRoutes: FastifyPluginAsync<CosmeticsRoutesOptions> = async
     } catch (error) {
       reply.code(409);
       return {
-        error: error instanceof Error ? error.message : 'Unable to update username'
+        error: error instanceof Error ? error.message : 'Unable to update cosmetics'
       };
     }
   });

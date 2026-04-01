@@ -3,8 +3,8 @@
 API HTTP en TypeScript qui sert les cosmetics des joueurs Minecraft depuis `cosmeticPeople.json`, avec :
 
 - une API admin protégée par `x-api-key`
-- une authentification utilisateur via `better-auth` + `genericOAuth` avec MC-ID
-- une route self-service `PATCH /me/username`
+- une authentification utilisateur via MC-ID par code de vérification ingame
+- une route self-service `PATCH /me/cosmetics`
 
 ## Prérequis
 
@@ -28,15 +28,17 @@ Variables principales :
 - `COSMETICS_FILE`
 - `API_KEY`
 - `FRONTEND_ORIGIN`
-- `BETTER_AUTH_URL`
-- `BETTER_AUTH_SECRET`
-- `BETTER_AUTH_BASE_PATH`
+- `SESSION_SECRET`
 - `SESSION_TTL_SECONDS`
 - `SESSION_COOKIE_SECURE`
 - `SESSION_COOKIE_SAME_SITE`
-- `MCID_CLIENT_ID`
-- `MCID_CLIENT_SECRET`
-- `MCID_DISCOVERY_URL`
+- `MCID_API_KEY`
+- `MCID_CODE_REQUEST_URL`
+- `MCID_CODE_VERIFY_URL`
+
+Compatibilité :
+
+- `BETTER_AUTH_SECRET` reste accepté comme fallback de `SESSION_SECRET` pour éviter de casser un ancien `.env`
 
 ## Lancement
 
@@ -50,68 +52,117 @@ npm test
 ## Endpoints
 
 - `GET /health`
+- `GET /auth/mc-id/config`
+- `POST /auth/mc-id/request-code`
+- `POST /auth/mc-id/verify-code`
+- `POST /auth/logout`
 - `GET /me`
-- `PATCH /me/username`
+- `PATCH /me/cosmetics`
 - `GET /v1/cosmetics`
 - `GET /v1/cosmetics/:uuid`
-- `PATCH /v1/cosmetics/:uuid/username`
-- `GET|POST|PATCH|PUT|DELETE ${BETTER_AUTH_BASE_PATH}/*`
+- `PATCH /v1/cosmetics/:uuid`
 
-## Intégration MC-ID Avec Better Auth
+## Flux MC-ID Par Code De Vérification
 
-Le backend utilise `better-auth` avec `genericOAuth` et le provider `mc-id` :
+Le backend n’utilise plus le flux OAuth redirect. Le flux attendu est :
 
-- discovery URL : `https://mc-id.com/.well-known/openid-configuration`
-- scopes : `openid profile email connections`
-- validation stricte de l’issuer activée
-- session stateless côté serveur via cookie chiffré/signé par Better Auth
-
-Le montage Better Auth est géré côté backend sur `${BETTER_AUTH_BASE_PATH}`. Par défaut :
-
-```text
-/api/auth/*
-```
+1. l’utilisateur saisit son pseudo Minecraft, un alias connu, ou son UUID
+2. le front appelle `POST /auth/mc-id/request-code`
+3. le backend résout ce joueur dans `cosmeticPeople.json`
+4. le backend appelle `POST https://mc-id.com/api/v1/codes/request` avec `uuid`
+5. l’utilisateur rejoint le serveur Minecraft configuré dans MC-ID
+6. le plugin/serveur affiche le code de vérification en jeu
+7. l’utilisateur saisit ce code dans le front
+8. le front appelle `POST /auth/mc-id/verify-code`
+9. le backend appelle `POST https://mc-id.com/api/v1/codes/verify`
+10. si le code est valide, le backend crée une session serveur en cookie signé `HttpOnly`
+11. le front consomme ensuite `/me` et `PATCH /me/cosmetics` avec `credentials: "include"`
 
 ## Frontend
 
-Dans ton front, configure le client Better Auth avec le plugin `genericOAuthClient()` puis lance la connexion MC-ID via le provider `mc-id`.
+Le front peut récupérer la config minimale du flow via `GET /auth/mc-id/config`.
 
-Exemple côté front :
+Réponse :
+
+```json
+{
+  "codeLength": 6,
+  "codeTtlSeconds": 300,
+  "flow": "verification_code",
+  "identifierField": "identifier"
+}
+```
+
+Demander un code :
 
 ```ts
-import { createAuthClient } from "better-auth/client";
-import { genericOAuthClient } from "better-auth/client/plugins";
-
-export const authClient = createAuthClient({
-  baseURL: "http://127.0.0.1:3000",
-  plugins: [genericOAuthClient()]
+await fetch("http://localhost:3000/auth/mc-id/request-code", {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    identifier: "dtXenus"
+  })
 });
 ```
 
+Réponse succès :
+
+```json
+{
+  "expiresAt": "2026-04-01T12:05:00.000Z",
+  "message": "Successfully generated the code.",
+  "player": {
+    "uuid": "24c56ab5-b504-4d38-bd06-e5af6686fcaa",
+    "username": "dtXenus",
+    "aliases": ["dtXenus"],
+    "displayName": "InitialName",
+    "scale": null
+  },
+  "requested": true
+}
+```
+
+Vérifier le code :
+
 ```ts
-await authClient.signIn.oauth2({
-  providerId: "mc-id",
-  callbackURL: "http://localhost:5173/dashboard",
-  errorCallbackURL: "http://localhost:5173/login?error=1"
+await fetch("http://localhost:3000/auth/mc-id/verify-code", {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    uuid: "24c56ab5-b504-4d38-bd06-e5af6686fcaa",
+    code: "123456"
+  })
 });
 ```
 
-Une fois connecté :
+Ensuite :
 
 ```ts
-const meResponse = await fetch("http://127.0.0.1:3000/me", {
+const me = await fetch("http://localhost:3000/me", {
   credentials: "include"
-});
-const me = await meResponse.json();
+}).then((response) => response.json());
+```
 
-await fetch("http://127.0.0.1:3000/me/username", {
+```ts
+await fetch("http://localhost:3000/me/cosmetics", {
   method: "PATCH",
   credentials: "include",
   headers: {
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    username: "NouveauPseudo"
+    displayName: "NouveauDisplayName",
+    scale: {
+      x: 2,
+      y: 0.5,
+      z: 1
+    }
   })
 });
 ```
@@ -120,10 +171,16 @@ await fetch("http://127.0.0.1:3000/me/username", {
 
 - Le front public n’utilise jamais `API_KEY`.
 - `/v1/cosmetics*` reste réservé à l’admin/serveur-à-serveur.
-- `/me` et `/me/username` reposent sur la session Better Auth.
-- `PATCH /me/username` exige une session valide et un `Origin` égal à `FRONTEND_ORIGIN`.
-- Le login MC-ID est refusé si le compte Minecraft authentifié n’existe pas dans `cosmeticPeople.json`.
-- L’UUID MC-ID est normalisé au format UUID canonique avec tirets, même si MC-ID renvoie un UUID compact sans tirets.
+- `/me` et `/me/cosmetics` reposent sur une session backend en cookie signé.
+- `POST /auth/mc-id/request-code` et `POST /auth/mc-id/verify-code` utilisent l’API key MC-ID côté serveur, jamais côté front.
+- Les routes sensibles exigent un `Origin` égal à `FRONTEND_ORIGIN`.
+- Le login MC-ID est refusé si le joueur n’existe pas dans `cosmeticPeople.json`.
+- Les UUID envoyés à MC-ID sont normalisés au format compact 32 caractères.
+- Les UUID renvoyés par l’API de cette app sont exposés au format UUID canonique avec tirets.
+- Les seules écritures autorisées sont `displayName` et `scale`.
+- `username` et `aliases` sont en lecture seule et ne peuvent pas être modifiés via l’API.
+- L’API n’expose plus de champ `badges`.
+- `displayName` est renvoyé tel quel, y compris les suffixes manuels comme `{capy}` ou `{france}`.
 - `GET /health` reste public.
 
 ## Exemples Curl
@@ -131,27 +188,50 @@ await fetch("http://127.0.0.1:3000/me/username", {
 Admin :
 
 ```bash
-curl http://127.0.0.1:3000/v1/cosmetics \
+curl http://localhost:3000/v1/cosmetics \
   -H 'x-api-key: change-me'
+```
+
+Config front :
+
+```bash
+curl http://localhost:3000/auth/mc-id/config
+```
+
+Demande de code :
+
+```bash
+curl -X POST http://localhost:3000/auth/mc-id/request-code \
+  -H 'Origin: http://localhost:5173' \
+  -H 'Content-Type: application/json' \
+  -d '{"identifier":"dtXenus"}'
+```
+
+Vérification du code :
+
+```bash
+curl -X POST http://localhost:3000/auth/mc-id/verify-code \
+  -H 'Origin: http://localhost:5173' \
+  -H 'Content-Type: application/json' \
+  -d '{"uuid":"24c56ab5-b504-4d38-bd06-e5af6686fcaa","code":"123456"}'
 ```
 
 Session utilisateur :
 
 ```bash
-curl http://127.0.0.1:3000/me \
+curl http://localhost:3000/me \
   -H 'Cookie: <session-cookie>'
 ```
 
 ```bash
-curl -X PATCH http://127.0.0.1:3000/me/username \
+curl -X PATCH http://localhost:3000/me/cosmetics \
   -H 'Origin: http://localhost:5173' \
   -H 'Content-Type: application/json' \
   -H 'Cookie: <session-cookie>' \
-  -d '{"username":"RenamedPlayer"}'
+  -d '{"displayName":"UpdatedName","scale":{"x":1.25,"y":0.75,"z":0.5}}'
 ```
 
 ## Notes de Compatibilité
 
-- Les badges sont renvoyés dans `badges` et jamais concaténés dans `displayName`.
-- Si `badges` est absent dans le JSON source, l'API tente d'extraire les suffixes legacy comme `{capy}` ou `{france}` à la fin de `displayName`.
 - Les entrées invalides sont ignorées avec un warning dans les logs, sans arrêter le serveur.
+- Les sessions sont en mémoire : un redémarrage du backend invalide les sessions en cours.

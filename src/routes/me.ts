@@ -3,22 +3,20 @@ import { ZodError } from 'zod';
 
 import {
   getRequestSession,
-  getSessionMinecraftUsername,
-  getSessionMinecraftUuid,
   isTrustedFrontendOrigin
 } from '../auth/session.js';
-import type { AppAuth } from '../auth/types.js';
+import type { SessionStore } from '../auth/types.js';
 import type { AppConfig } from '../config.js';
-import { usernameUpdateBodySchema } from '../domain/schemas.js';
+import { cosmeticsWritableUpdateBodySchema } from '../domain/schemas.js';
 import type { CosmeticsFileStore } from '../lib/file-store.js';
 import { buildEtag } from '../lib/etag.js';
 
 const NO_STORE_HEADER = 'no-store';
 
 interface MeRoutesOptions {
-  auth: AppAuth;
   config: AppConfig;
   cosmeticsStore: CosmeticsFileStore;
+  sessionStore: SessionStore;
 }
 
 function formatZodError(error: ZodError): string {
@@ -32,7 +30,7 @@ function formatZodError(error: ZodError): string {
 
 export const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (app, options) => {
   app.get('/me', async (request, reply) => {
-    const session = await getRequestSession(options.auth, request);
+    const session = getRequestSession(request, options.sessionStore, options.config);
 
     if (!session) {
       reply.code(401);
@@ -42,20 +40,8 @@ export const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (app, options
       };
     }
 
-    const minecraftUuid = getSessionMinecraftUuid(session);
-
-    if (!minecraftUuid) {
-      reply.code(403);
-      reply.header('Cache-Control', NO_STORE_HEADER);
-      return {
-        authenticated: true,
-        authorized: false,
-        error: 'MC-ID account is missing a valid Minecraft UUID'
-      };
-    }
-
     const snapshot = await options.cosmeticsStore.getSnapshot();
-    const player = snapshot.snapshot.players[minecraftUuid];
+    const player = snapshot.snapshot.players[session.user.minecraftUuid];
 
     if (!player) {
       reply.code(403);
@@ -70,16 +56,9 @@ export const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (app, options
     const responseBody = {
       authenticated: true,
       authorized: true,
-      authUser: {
-        email: session.user.email,
-        emailVerified: session.user.emailVerified,
-        id: session.user.id,
-        minecraftUsername: getSessionMinecraftUsername(session),
-        minecraftUuid,
-        name: session.user.name
-      },
+      authUser: session.user,
       player: {
-        uuid: minecraftUuid,
+        uuid: session.user.minecraftUuid,
         ...player
       }
     };
@@ -89,7 +68,7 @@ export const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (app, options
     return responseBody;
   });
 
-  app.patch('/me/username', async (request, reply) => {
+  app.patch('/me/cosmetics', async (request, reply) => {
     if (!isTrustedFrontendOrigin(request, options.config)) {
       reply.code(403);
       return {
@@ -97,7 +76,7 @@ export const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (app, options
       };
     }
 
-    const session = await getRequestSession(options.auth, request);
+    const session = getRequestSession(request, options.sessionStore, options.config);
 
     if (!session) {
       reply.code(401);
@@ -106,25 +85,16 @@ export const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (app, options
       };
     }
 
-    const minecraftUuid = getSessionMinecraftUuid(session);
-
-    if (!minecraftUuid) {
-      reply.code(403);
-      return {
-        error: 'MC-ID account is missing a valid Minecraft UUID'
-      };
-    }
-
     const snapshot = await options.cosmeticsStore.getSnapshot();
 
-    if (!snapshot.snapshot.players[minecraftUuid]) {
+    if (!snapshot.snapshot.players[session.user.minecraftUuid]) {
       reply.code(403);
       return {
         error: 'Player not allowed'
       };
     }
 
-    const bodyResult = usernameUpdateBodySchema.safeParse(request.body);
+    const bodyResult = cosmeticsWritableUpdateBodySchema.safeParse(request.body);
 
     if (!bodyResult.success) {
       reply.code(400);
@@ -135,9 +105,9 @@ export const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (app, options
     }
 
     try {
-      const updatedSnapshot = await options.cosmeticsStore.updateUsername(
-        minecraftUuid,
-        bodyResult.data.username
+      const updatedSnapshot = await options.cosmeticsStore.updateWritableFields(
+        session.user.minecraftUuid,
+        bodyResult.data
       );
 
       if (!updatedSnapshot) {
@@ -151,7 +121,7 @@ export const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (app, options
         version: updatedSnapshot.snapshot.version,
         updatedAt: updatedSnapshot.snapshot.updatedAt,
         player: {
-          uuid: minecraftUuid,
+          uuid: session.user.minecraftUuid,
           ...updatedSnapshot.player
         }
       };
@@ -162,7 +132,7 @@ export const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (app, options
     } catch (error) {
       reply.code(409);
       return {
-        error: error instanceof Error ? error.message : 'Unable to update username'
+        error: error instanceof Error ? error.message : 'Unable to update cosmetics'
       };
     }
   });

@@ -13,8 +13,6 @@ import {
 
 export type { NormalizedPlayer, NormalizedScale, NormalizedSnapshot } from './schemas.js';
 
-const LEGACY_BADGE_PATTERN = /\s*\{([A-Za-z0-9_-]+)\}\s*$/;
-
 function formatZodError(error: ZodError): string {
   return error.issues
     .map((issue) => {
@@ -60,48 +58,11 @@ function normalizeScale(entry: RawCosmeticEntry): NormalizedScale | null {
   };
 }
 
-export function extractLegacyBadges(displayName: string): { displayName: string | null; badges: string[] } {
-  const badges: string[] = [];
-  let normalizedDisplayName = displayName;
-
-  while (true) {
-    const match = normalizedDisplayName.match(LEGACY_BADGE_PATTERN);
-
-    if (!match || match.index === undefined) {
-      break;
-    }
-
-    const badgeId = match[1];
-
-    if (!badgeId) {
-      break;
-    }
-
-    badges.unshift(badgeId);
-    normalizedDisplayName = normalizedDisplayName.slice(0, match.index).trimEnd();
-  }
-
-  return {
-    displayName: normalizedDisplayName.length > 0 ? normalizedDisplayName : null,
-    badges
-  };
-}
-
 export function normalizePlayerEntry(entry: RawCosmeticEntry): NormalizedPlayer {
-  let displayName = entry.displayName ?? null;
-  let badges = entry.badges ? [...entry.badges] : [];
-
-  if (entry.badges === undefined && displayName !== null) {
-    const legacy = extractLegacyBadges(displayName);
-    displayName = legacy.displayName;
-    badges = legacy.badges;
-  }
-
   return {
     username: entry.username ?? null,
     aliases: entry.aliases ? [...entry.aliases] : [],
-    displayName,
-    badges,
+    displayName: entry.displayName ?? null,
     scale: normalizeScale(entry)
   };
 }

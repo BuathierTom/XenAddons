@@ -1,21 +1,74 @@
-import { APIError, betterAuth } from 'better-auth';
-import { genericOAuth } from 'better-auth/plugins';
+import { z } from 'zod';
 
 import type { AppConfig } from '../config.js';
-import type { CosmeticsFileStore } from '../lib/file-store.js';
-import type { AppAuth } from './types.js';
+import type { McidClient, McidRequestedCode, McidVerifiedIdentity } from './types.js';
 
-interface McidAccount {
-  primary?: boolean;
-  username?: string;
-  uuid?: string;
-}
+const requestCodeResponseSchema = z
+  .object({
+    expiresAt: z.string().datetime().optional(),
+    message: z.string().min(1),
+    userId: z.string().regex(/^[0-9a-f]{32}$/i)
+  })
+  .passthrough();
+
+const verifyCodeResponseSchema = z
+  .object({
+    userId: z.string().regex(/^[0-9a-f]{32}$/i),
+    username: z.string().min(1)
+  })
+  .passthrough();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function canonicalizeMinecraftUuid(value: string): string | null {
+function parseJsonSafely(body: string): unknown {
+  if (body.trim().length === 0) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(body) as unknown;
+  } catch {
+    return body;
+  }
+}
+
+async function readResponseBody(response: Response): Promise<unknown> {
+  return parseJsonSafely(await response.text());
+}
+
+function extractErrorMessage(body: unknown, fallback: string): string {
+  if (isRecord(body) && typeof body.error_description === 'string') {
+    return body.error_description;
+  }
+
+  if (isRecord(body) && typeof body.message === 'string') {
+    return body.message;
+  }
+
+  if (isRecord(body) && isRecord(body.data) && typeof body.data.reason === 'string') {
+    return body.data.reason;
+  }
+
+  if (typeof body === 'string' && body.trim().length > 0) {
+    return body;
+  }
+
+  return fallback;
+}
+
+export class McidApiError extends Error {
+  public constructor(
+    message: string,
+    public readonly statusCode: number,
+    public readonly details: unknown
+  ) {
+    super(message);
+  }
+}
+
+export function canonicalizeMinecraftUuid(value: string): string | null {
   const trimmedValue = value.trim().toLowerCase();
 
   if (/^[0-9a-f]{32}$/.test(trimmedValue)) {
@@ -36,139 +89,108 @@ function canonicalizeMinecraftUuid(value: string): string | null {
   return null;
 }
 
-export function extractPrimaryMcidAccount(profile: Record<string, unknown>): {
-  username: string | null;
-  uuid: string | null;
-} {
-  const accounts = Array.isArray(profile.accounts)
-    ? profile.accounts.filter(isRecord) as McidAccount[]
-    : [];
-  const primaryAccount =
-    accounts.find((account) => account.primary === true && typeof account.uuid === 'string') ??
-    accounts.find((account) => typeof account.uuid === 'string') ??
-    null;
-  const rawUuid = typeof primaryAccount?.uuid === 'string' ? primaryAccount.uuid : null;
-  const rawUsername =
-    typeof primaryAccount?.username === 'string'
-      ? primaryAccount.username
-      : typeof profile.preferred_username === 'string'
-        ? profile.preferred_username
-        : typeof profile.name === 'string'
-          ? profile.name
-          : null;
+export function toCompactMinecraftUuid(value: string): string | null {
+  const canonicalUuid = canonicalizeMinecraftUuid(value);
 
-  return {
-    uuid: rawUuid ? canonicalizeMinecraftUuid(rawUuid) : null,
-    username: rawUsername?.trim() ? rawUsername.trim() : null
-  };
+  if (!canonicalUuid) {
+    return null;
+  }
+
+  return canonicalUuid.replaceAll('-', '');
 }
 
-export function createBetterAuth(config: AppConfig, cosmeticsStore: CosmeticsFileStore): AppAuth {
-  return betterAuth({
-    secret: config.BETTER_AUTH_SECRET,
-    baseURL: config.BETTER_AUTH_URL,
-    basePath: config.BETTER_AUTH_BASE_PATH,
-    trustedOrigins: [config.FRONTEND_ORIGIN, config.BETTER_AUTH_URL],
-    advanced: {
-      trustedProxyHeaders: config.TRUST_PROXY,
-      useSecureCookies: config.SESSION_COOKIE_SECURE,
-      defaultCookieAttributes: {
-        sameSite: config.SESSION_COOKIE_SAME_SITE
-      }
-    },
-    session: {
-      expiresIn: config.SESSION_TTL_SECONDS,
-      updateAge: Math.min(60 * 60, config.SESSION_TTL_SECONDS),
-      cookieCache: {
-        enabled: true,
-        maxAge: 5 * 60,
-        refreshCache: true,
-        strategy: 'jwe'
-      }
-    },
-    user: {
-      additionalFields: {
-        minecraftUuid: {
-          type: 'string',
-          required: false,
-          input: false
-        },
-        minecraftUsername: {
-          type: 'string',
-          required: false,
-          input: false
-        }
-      }
-    },
-    account: {
-      accountLinking: {
-        enabled: false
+export function getMcidVerificationConfig() {
+  return {
+    codeLength: 6,
+    codeTtlSeconds: 300,
+    flow: 'verification_code',
+    identifierField: 'identifier'
+  } as const;
+}
+
+export class HttpMcidClient implements McidClient {
+  public constructor(private readonly config: AppConfig) {}
+
+  public async requestCode(input: { uuid: string }): Promise<McidRequestedCode> {
+    const compactUuid = toCompactMinecraftUuid(input.uuid);
+
+    if (!compactUuid) {
+      throw new McidApiError('Invalid Minecraft UUID', 400, { uuid: input.uuid });
+    }
+
+    const response = await fetch(this.config.MCID_CODE_REQUEST_URL, {
+      body: JSON.stringify({
+        uuid: compactUuid
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': this.config.MCID_API_KEY
       },
-      storeAccountCookie: true,
-      storeStateStrategy: 'cookie',
-      updateAccountOnSignIn: true
-    },
-    databaseHooks: {
-      user: {
-        create: {
-          before: async (user) => {
-            const minecraftUuid =
-              typeof user.minecraftUuid === 'string' ? canonicalizeMinecraftUuid(user.minecraftUuid) : null;
+      method: 'POST'
+    });
+    const responseBody = await readResponseBody(response);
 
-            if (!minecraftUuid) {
-              throw APIError.fromStatus(403, {
-                code: 'MCID_ACCOUNT_REQUIRED',
-                message: 'MC-ID account is missing a valid Minecraft UUID'
-              });
-            }
+    if (!response.ok) {
+      throw new McidApiError(
+        extractErrorMessage(responseBody, 'MC-ID code request failed'),
+        response.status,
+        responseBody
+      );
+    }
 
-            const snapshot = await cosmeticsStore.getSnapshot();
+    const parsedBody = requestCodeResponseSchema.safeParse(responseBody);
 
-            if (!snapshot.snapshot.players[minecraftUuid]) {
-              throw APIError.fromStatus(403, {
-                code: 'PLAYER_NOT_ALLOWED',
-                message: 'This Minecraft account is not allowed to use this API'
-              });
-            }
+    if (!parsedBody.success) {
+      throw new McidApiError('MC-ID request-code response is invalid', 502, parsedBody.error.format());
+    }
 
-            return {
-              data: {
-                minecraftUuid
-              }
-            };
-          }
-        }
-      }
-    },
-    plugins: [
-      genericOAuth({
-        config: [
-          {
-            providerId: 'mc-id',
-            clientId: config.MCID_CLIENT_ID,
-            clientSecret: config.MCID_CLIENT_SECRET,
-            discoveryUrl: config.MCID_DISCOVERY_URL,
-            scopes: ['openid', 'profile', 'email', 'connections'],
-            pkce: true,
-            requireIssuerValidation: true,
-            mapProfileToUser: async (profile) => {
-              const mcidProfile = isRecord(profile) ? profile : {};
-              const primaryAccount = extractPrimaryMcidAccount(mcidProfile);
+    return {
+      expiresAt: parsedBody.data.expiresAt ?? null,
+      message: parsedBody.data.message,
+      userId: parsedBody.data.userId.toLowerCase()
+    };
+  }
 
-              return {
-                email:
-                  typeof mcidProfile.email === 'string'
-                    ? mcidProfile.email
-                    : `${mcidProfile.sub ?? 'mcid-user'}@mc-id.local`,
-                emailVerified: mcidProfile.email_verified === true,
-                name: primaryAccount.username ?? (typeof mcidProfile.name === 'string' ? mcidProfile.name : 'Minecraft User'),
-                minecraftUuid: primaryAccount.uuid,
-                minecraftUsername: primaryAccount.username
-              };
-            }
-          }
-        ]
-      })
-    ]
-  }) as AppAuth;
+  public async verifyCode(input: {
+    code: string;
+    uuid: string;
+  }): Promise<McidVerifiedIdentity> {
+    const compactUuid = toCompactMinecraftUuid(input.uuid);
+
+    if (!compactUuid) {
+      throw new McidApiError('Invalid Minecraft UUID', 400, { uuid: input.uuid });
+    }
+
+    const response = await fetch(this.config.MCID_CODE_VERIFY_URL, {
+      body: JSON.stringify({
+        code: input.code,
+        uuid: compactUuid
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': this.config.MCID_API_KEY
+      },
+      method: 'POST'
+    });
+    const responseBody = await readResponseBody(response);
+
+    if (!response.ok) {
+      throw new McidApiError(
+        extractErrorMessage(responseBody, 'MC-ID code verification failed'),
+        response.status,
+        responseBody
+      );
+    }
+
+    const parsedBody = verifyCodeResponseSchema.safeParse(responseBody);
+
+    if (!parsedBody.success) {
+      throw new McidApiError('MC-ID verify-code response is invalid', 502, parsedBody.error.format());
+    }
+
+    return {
+      userId: parsedBody.data.userId.toLowerCase(),
+      username: parsedBody.data.username
+    };
+  }
 }

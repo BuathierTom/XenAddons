@@ -10,7 +10,12 @@ import {
   type NormalizedPlayer,
   type NormalizedSnapshot
 } from '../domain/cosmetics.js';
-import { rawCosmeticEntrySchema, rawCosmeticsDocumentSchema } from '../domain/schemas.js';
+import {
+  rawCosmeticEntrySchema,
+  rawCosmeticsDocumentSchema,
+  type CosmeticsWritableUpdateBody,
+  type NormalizedScale
+} from '../domain/schemas.js';
 import { buildEtag } from './etag.js';
 
 export interface CachedCosmeticsSnapshot {
@@ -34,6 +39,68 @@ function formatZodError(error: ZodError): string {
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function detectScaleStorageFormat(entry: Record<string, unknown>): 'legacy' | 'compact' | 'none' | 'mixed' {
+  const usesLegacyScale = 'sizeX' in entry || 'sizeY' in entry || 'sizeZ' in entry;
+  const usesCompactScale = 'x' in entry || 'y' in entry || 'z' in entry;
+
+  if (usesLegacyScale && usesCompactScale) {
+    return 'mixed';
+  }
+
+  if (usesLegacyScale) {
+    return 'legacy';
+  }
+
+  if (usesCompactScale) {
+    return 'compact';
+  }
+
+  return 'none';
+}
+
+function applyDisplayNameUpdate(entry: Record<string, unknown>, displayName: string | null): void {
+  if (displayName === null) {
+    delete entry.displayName;
+    return;
+  }
+
+  entry.displayName = displayName;
+}
+
+function clearScaleFields(entry: Record<string, unknown>): void {
+  delete entry.sizeX;
+  delete entry.sizeY;
+  delete entry.sizeZ;
+  delete entry.x;
+  delete entry.y;
+  delete entry.z;
+}
+
+function applyScaleUpdate(entry: Record<string, unknown>, scale: NormalizedScale | null): void {
+  const storageFormat = detectScaleStorageFormat(entry);
+
+  if (storageFormat === 'mixed') {
+    throw new Error('Player entry contains mixed scale fields and cannot be updated safely');
+  }
+
+  clearScaleFields(entry);
+
+  if (scale === null) {
+    return;
+  }
+
+  if (storageFormat === 'compact') {
+    entry.x = scale.x;
+    entry.y = scale.y;
+    entry.z = scale.z;
+    return;
+  }
+
+  entry.sizeX = scale.x;
+  entry.sizeY = scale.y;
+  entry.sizeZ = scale.z;
 }
 
 export class CosmeticsFileStore {
@@ -82,8 +149,11 @@ export class CosmeticsFileStore {
     }
   }
 
-  public async updateUsername(uuid: string, username: string): Promise<UpdatedPlayerSnapshot | null> {
-    const operation = this.mutationQueue.then(() => this.performUpdateUsername(uuid, username));
+  public async updateWritableFields(
+    uuid: string,
+    update: CosmeticsWritableUpdateBody
+  ): Promise<UpdatedPlayerSnapshot | null> {
+    const operation = this.mutationQueue.then(() => this.performUpdateWritableFields(uuid, update));
     this.mutationQueue = operation.then(
       () => undefined,
       () => undefined
@@ -121,7 +191,10 @@ export class CosmeticsFileStore {
     return this.cache;
   }
 
-  private async performUpdateUsername(uuid: string, username: string): Promise<UpdatedPlayerSnapshot | null> {
+  private async performUpdateWritableFields(
+    uuid: string,
+    update: CosmeticsWritableUpdateBody
+  ): Promise<UpdatedPlayerSnapshot | null> {
     const rawDocument = await this.readRawDocument();
     const existingEntry = rawDocument[uuid];
 
@@ -134,9 +207,17 @@ export class CosmeticsFileStore {
     }
 
     const nextEntry: Record<string, unknown> = {
-      ...existingEntry,
-      username
+      ...existingEntry
     };
+
+    if (update.displayName !== undefined) {
+      applyDisplayNameUpdate(nextEntry, update.displayName);
+    }
+
+    if (update.scale !== undefined) {
+      applyScaleUpdate(nextEntry, update.scale);
+    }
+
     const parsedEntry = rawCosmeticEntrySchema.safeParse(nextEntry);
 
     if (!parsedEntry.success) {

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { normalizeCosmeticsDocument } from '../src/domain/cosmetics.js';
 
 describe('normalizeCosmeticsDocument', () => {
-  it('normalizes explicit badges and legacy sizeX/sizeY/sizeZ scale', () => {
+  it('ignores legacy badges architecture and normalizes legacy sizeX/sizeY/sizeZ scale', () => {
     const logger = {
       warn: vi.fn()
     };
@@ -32,7 +32,6 @@ describe('normalizeCosmeticsDocument', () => {
           username: 'dtXenus',
           aliases: ['dtXenus'],
           displayName: 'FancyName',
-          badges: ['france', 'staff'],
           scale: {
             x: 2,
             y: 0.5,
@@ -44,7 +43,7 @@ describe('normalizeCosmeticsDocument', () => {
     expect(logger.warn).not.toHaveBeenCalled();
   });
 
-  it('extracts legacy badge suffixes and ignores invalid entries', () => {
+  it('keeps legacy suffixes inside displayName and ignores invalid entries', () => {
     const logger = {
       warn: vi.fn()
     };
@@ -70,8 +69,7 @@ describe('normalizeCosmeticsDocument', () => {
     expect(snapshot.players['370b896c-257d-4707-b40a-996be37769a6']).toEqual({
       username: 'Antorak',
       aliases: ['Antorak'],
-      displayName: 'Antorak',
-      badges: ['capy'],
+      displayName: 'Antorak {capy}',
       scale: {
         x: 1,
         y: 1,
