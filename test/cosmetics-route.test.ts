@@ -5,8 +5,40 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../src/app.js';
+import type { AppAuth } from '../src/auth/types.js';
+import type { AppConfig } from '../src/config.js';
 
 const createdDirectories: string[] = [];
+
+function createTestConfig(cosmeticsFile: string): AppConfig {
+  return {
+    NODE_ENV: 'test',
+    PORT: 3000,
+    HOST: '127.0.0.1',
+    TRUST_PROXY: false,
+    COSMETICS_FILE: cosmeticsFile,
+    API_KEY: 'super-secret-key',
+    FRONTEND_ORIGIN: 'http://localhost:5173',
+    BETTER_AUTH_URL: 'http://127.0.0.1:3000',
+    BETTER_AUTH_SECRET: 'test-secret-which-is-long-enough-for-better-auth',
+    BETTER_AUTH_BASE_PATH: '/api/auth',
+    SESSION_TTL_SECONDS: 3600,
+    SESSION_COOKIE_SECURE: false,
+    SESSION_COOKIE_SAME_SITE: 'lax',
+    MCID_CLIENT_ID: 'mcid-client-id',
+    MCID_CLIENT_SECRET: 'mcid-client-secret',
+    MCID_DISCOVERY_URL: 'https://mc-id.com/.well-known/openid-configuration'
+  };
+}
+
+function createFakeAuth(): AppAuth {
+  return {
+    handler: async () => new Response(null, { status: 204 }),
+    api: {
+      getSession: async () => null
+    }
+  };
+}
 
 async function createTempCosmeticsFile(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), 'xenaddons-cosmetics-'));
@@ -47,12 +79,8 @@ describe('PATCH /v1/cosmetics/:uuid/username', () => {
   it('rejects requests without a valid API key', async () => {
     const cosmeticsFile = await createTempCosmeticsFile();
     const app = await createApp({
-      config: {
-        PORT: 3000,
-        HOST: '127.0.0.1',
-        COSMETICS_FILE: cosmeticsFile,
-        API_KEY: 'super-secret-key'
-      },
+      auth: createFakeAuth(),
+      config: createTestConfig(cosmeticsFile),
       logger: false
     });
 
@@ -74,12 +102,8 @@ describe('PATCH /v1/cosmetics/:uuid/username', () => {
   it('updates the username in the source file and response snapshot', async () => {
     const cosmeticsFile = await createTempCosmeticsFile();
     const app = await createApp({
-      config: {
-        PORT: 3000,
-        HOST: '127.0.0.1',
-        COSMETICS_FILE: cosmeticsFile,
-        API_KEY: 'super-secret-key'
-      },
+      auth: createFakeAuth(),
+      config: createTestConfig(cosmeticsFile),
       logger: false
     });
 
