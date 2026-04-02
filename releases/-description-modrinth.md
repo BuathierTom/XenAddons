@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.2.17-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2.19-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -205,8 +205,14 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
   - GUI theme color settings.
 
 - `Custom Size`
-  - Applies per-player custom scale from JSON data.
+  - Applies per-player custom scale from cosmetics data.
   - Toggleable in `Dev`.
+
+## Visual Words / Custom Data
+
+- Primary source: Xenus API
+- Fallback source: `assets/xenaddons/visual/cosmeticPeople.json`
+- Cosmetics portal login: `https://addons.xenus.fr/login`
 
 - `Edit HUD`
   - Move/scale/reset supported HUD elements.
