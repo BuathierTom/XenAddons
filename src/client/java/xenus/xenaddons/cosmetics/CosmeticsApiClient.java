@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 public final class CosmeticsApiClient {
-    public static final String DEFAULT_PUBLIC_COSMETICS_URL = "http://127.0.0.1:3000/public/cosmetics";
+    public static final String DEFAULT_PUBLIC_COSMETICS_URL = "https://api.xenus.fr/public/cosmetics";
     public static final String API_URL_PROPERTY = "xenaddons.cosmetics.api.url";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
 
