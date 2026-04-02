@@ -13,10 +13,10 @@ import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import xenus.xenaddons.cosmetics.CosmeticsRepository;
+import xenus.xenaddons.cosmetics.CosmeticsSnapshot.PlayerCosmetic;
+import xenus.xenaddons.cosmetics.CosmeticsSnapshot.PlayerScale;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -41,7 +41,6 @@ public class GoatedPlayersManager {
     private static final Pattern HEX_AMP_PATTERN = Pattern.compile("(?i)&\\#([0-9a-f]{6})");
     private static final Pattern LEGACY_SECTION_PATTERN = Pattern.compile("(?i)§[0-9A-FK-OR]");
 
-    private static final String COSMETIC_PEOPLE_RESOURCE = "/assets/xenaddons/visual/cosmeticPeople.json";
     private static final String MOJANG_PROFILE_BY_UUID = "https://sessionserver.mojang.com/session/minecraft/profile/";
 
     private static final String CAPY_MARKER = "{capy}";
@@ -607,34 +606,26 @@ public class GoatedPlayersManager {
     }
 
     private static boolean loadUuidCosmetics() {
-        InputStream stream = GoatedPlayersManager.class.getResourceAsStream(COSMETIC_PEOPLE_RESOURCE);
-        if (stream == null) return false;
+        CosmeticsRepository.init();
 
-        try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-            JsonElement element = JsonParser.parseReader(reader);
-            if (!element.isJsonObject()) return false;
-            return loadFromUuidJsonObject(element.getAsJsonObject());
-        } catch (Exception ignored) {
-            return false;
-        }
-    }
+        for (Map.Entry<UUID, PlayerCosmetic> entry : CosmeticsRepository.getPlayers().entrySet()) {
+            UUID uuid = entry.getKey();
+            PlayerCosmetic player = entry.getValue();
 
-    private static boolean loadFromUuidJsonObject(JsonObject root) {
-        for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
-            UUID uuid;
-            try {
-                uuid = UUID.fromString(entry.getKey());
-            } catch (Exception ignored) {
-                continue;
-            }
-
-            CosmeticEntry cosmetic = parseUuidCosmeticEntry(entry.getValue());
+            CosmeticEntry cosmetic = parseUuidCosmeticEntry(player);
             if (cosmetic == null) continue;
 
             UUID_COSMETICS.put(uuid, cosmetic);
-            addStaticAliases(entry.getValue(), cosmetic);
-            requestNameLookupIfNeeded(uuid, cosmetic);
+            addStaticAliases(player, cosmetic);
+
+            String username = player.username();
+            if (username != null && !username.isBlank()) {
+                UUID_NAME_CACHE.put(uuid, username);
+            } else {
+                requestNameLookupIfNeeded(uuid, cosmetic);
+            }
         }
+
         return !UUID_COSMETICS.isEmpty();
     }
 
@@ -672,72 +663,35 @@ public class GoatedPlayersManager {
         });
     }
 
-    private static void addStaticAliases(JsonElement value, CosmeticEntry cosmetic) {
-        if (!value.isJsonObject() || cosmetic == null || !cosmetic.hasDisplayName()) return;
-        JsonObject obj = value.getAsJsonObject();
+    private static void addStaticAliases(PlayerCosmetic player, CosmeticEntry cosmetic) {
+        if (player == null || cosmetic == null || !cosmetic.hasDisplayName()) return;
 
-        addStaticAlias(obj, "username", cosmetic);
-        addStaticAlias(obj, "pseudo", cosmetic);
+        addStaticAlias(player.username(), cosmetic);
 
-        if (obj.has("aliases") && obj.get("aliases").isJsonArray()) {
-            for (JsonElement aliasEl : obj.getAsJsonArray("aliases")) {
-                if (!aliasEl.isJsonPrimitive()) continue;
-                String alias = aliasEl.getAsString();
-                if (alias == null || alias.isBlank()) continue;
-                STATIC_NAME_COSMETICS.put(alias.toLowerCase(), cosmetic);
-            }
+        for (String alias : player.aliases()) {
+            if (alias == null || alias.isBlank()) continue;
+            STATIC_NAME_COSMETICS.put(alias.toLowerCase(), cosmetic);
         }
     }
 
-    private static void addStaticAlias(JsonObject obj, String key, CosmeticEntry cosmetic) {
-        if (!obj.has(key) || !obj.get(key).isJsonPrimitive()) return;
-        String alias = obj.get(key).getAsString();
+    private static void addStaticAlias(String alias, CosmeticEntry cosmetic) {
         if (alias == null || alias.isBlank()) return;
         STATIC_NAME_COSMETICS.put(alias.toLowerCase(), cosmetic);
     }
 
-    private static CosmeticEntry parseUuidCosmeticEntry(JsonElement value) {
-        if (!value.isJsonObject()) return null;
-        JsonObject obj = value.getAsJsonObject();
+    private static CosmeticEntry parseUuidCosmeticEntry(PlayerCosmetic player) {
+        if (player == null) return null;
 
-        String display = null;
-        if (obj.has("displayName") && obj.get("displayName").isJsonPrimitive()) {
-            display = sanitizeDisplayName(obj.get("displayName").getAsString());
-        } else if (obj.has("name") && obj.get("name").isJsonPrimitive()) {
-            display = sanitizeDisplayName(decodeNoammJsonName(obj.get("name").getAsString()));
+        String display = player.displayName();
+        if (display != null && !display.isBlank()) {
+            display = sanitizeDisplayName(decodeNoammJsonName(display));
         }
 
-        CosmeticScale scale = readScale(obj);
+        PlayerScale scaleValue = player.scale();
+        CosmeticScale scale = scaleValue == null ? null : new CosmeticScale(scaleValue.x(), scaleValue.y(), scaleValue.z());
         if ((display == null || display.isBlank()) && scale == null) return null;
 
         return new CosmeticEntry(display == null ? "" : display, new int[] {255, 255, 255, 127}, scale);
-    }
-
-    private static CosmeticScale readScale(JsonObject obj) {
-        Float x = getOptionalFloat(obj, "sizeX");
-        Float y = getOptionalFloat(obj, "sizeY");
-        Float z = getOptionalFloat(obj, "sizeZ");
-
-        if (x == null) x = getOptionalFloat(obj, "x");
-        if (y == null) y = getOptionalFloat(obj, "y");
-        if (z == null) z = getOptionalFloat(obj, "z");
-
-        if (x == null && y == null && z == null) return null;
-
-        return new CosmeticScale(
-            x != null ? x : 1.0F,
-            y != null ? y : 1.0F,
-            z != null ? z : 1.0F
-        );
-    }
-
-    private static Float getOptionalFloat(JsonObject obj, String key) {
-        if (!obj.has(key)) return null;
-        try {
-            return obj.get(key).getAsFloat();
-        } catch (Exception ignored) {
-            return null;
-        }
     }
 
     private static String decodeNoammJsonName(String input) {
