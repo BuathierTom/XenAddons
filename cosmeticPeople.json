@@ -1,23 +1,29 @@
 {
   "24c56ab5-b504-4d38-bd06-e5af6686fcaa": {
     "username": "dtXenus",
-    "aliases": ["dtXenus"],
-    "displayName": "&#F45454&ld&#EE4671&lt&#E9388D&lX&#E32AAA&le&#DD1CC6&ln&#D80EE3&lu&#D200FF&ls&r",
-    "sizeX": 2.0,
+    "aliases": [
+      "dtXenus"
+    ],
+    "sizeX": 2,
     "sizeY": 0.5,
-    "sizeZ": 1.0
+    "sizeZ": 1,
+    "displayName": "&#F45454&ld&#EE4671&lt&#E9388D&lX&#E32AAA&le&#DD1CC6&ln&#D80EE3&lu&#D200FF&ls&r"
   },
   "c7b5e04d-eaea-46a8-8440-5930b5c53b85": {
     "username": "DungeonsRat",
-    "aliases": ["DungeonsRat"],
+    "aliases": [
+      "DungeonsRat"
+    ],
     "displayName": "nigga",
-    "sizeX": 1.0,
+    "sizeX": 1,
     "sizeY": 0.1,
-    "sizeZ": 1.0
+    "sizeZ": 1
   },
   "9cabcea5-d888-4835-b2d4-7b8442fe68d0": {
     "username": "dtNyro",
-    "aliases": ["dtNyro"],
+    "aliases": [
+      "dtNyro"
+    ],
     "displayName": "&#2D4343&ld&#537979&lt&#79AEAE&lN&#9FE4E4&ly&#C8FFFF&lr&#FFFFFF&lo&r",
     "sizeX": 1,
     "sizeY": 0.9,
@@ -25,38 +31,50 @@
   },
   "cb8733b5-f63b-4c5a-97ad-67ced72b6e7c": {
     "username": "Ziimou",
-    "aliases": ["Ziimou"],
+    "aliases": [
+      "Ziimou"
+    ],
     "displayName": "ZiziToutDur"
   },
   "77f4a9c2-e32b-4486-85de-d940fdeed7aa": {
     "username": "E0le_",
-    "aliases": ["E0le_"],
+    "aliases": [
+      "E0le_"
+    ],
     "displayName": "uwuE0le"
   },
   "370b896c-257d-4707-b40a-996be37769a6": {
     "username": "Antorak",
-    "aliases": ["Antorak"],
+    "aliases": [
+      "Antorak"
+    ],
     "displayName": "Antorak {capy}"
   },
   "2b3e2f5c-3a22-4deb-8e10-5ed44ecee463": {
     "username": "3h58",
-    "aliases": ["3h58"],
+    "aliases": [
+      "3h58"
+    ],
     "displayName": "&9&o&lBar&f&o&ldel&c&o&lla&r {france}",
     "sizeX": 1.3,
-    "sizeY": 0.2,
+    "sizeY": -0.2,
     "sizeZ": 0.7
   },
-    "800590cf-767e-4168-8630-4a0b3ba3233a": {
+  "800590cf-767e-4168-8630-4a0b3ba3233a": {
     "username": "GetWipedTwice",
-    "aliases": ["GetWipedTwice"],
+    "aliases": [
+      "GetWipedTwice"
+    ],
     "displayName": "&#CB51B2&oG&#B041C2&oe&#9532D2&ot&#7922E1&oW&#5E12F1&oi&#6F2DED&op&#7F48E8&oe&#9062E4&od&#A07DDF&oT&#7B90CB&ow&#57A3B8&oi&#32B6A4&oc&#0DC990&oe&r",
     "sizeX": 0.1,
     "sizeY": 0.1,
     "sizeZ": 0.1
   },
-    "a84316c8-6677-4e18-bc22-71c8d9662b49": {
+  "a84316c8-6677-4e18-bc22-71c8d9662b49": {
     "username": "LeFiong",
-    "aliases": ["LeFiong"],
+    "aliases": [
+      "LeFiong"
+    ],
     "displayName": "&#CEE191&lL&#B5E098&le&#9CDEA0&lF&#83DDA7&li&#6BDCAE&lo&#52DAB5&ln&#39D9BD&lg &#07D6CB&l卍&r",
     "sizeX": 2,
     "sizeY": 0.3,
