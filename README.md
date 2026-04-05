@@ -170,6 +170,12 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
   - Cleans reforges and decorative symbols from item name before search.
   - Keybind setting supports `ESC -> Not Bound`.
 
+- `Peek Chat`
+  - Hold a keybind to temporarily display the expanded chat without opening chat.
+  - Default keybind is `Not Bound`.
+  - Mouse wheel scroll works while the key is held.
+  - Releasing the key returns chat to the bottom.
+
 - `Spotify Overlay`
   - HUD showing current playing track in colored format:
     - `Spotify > Author - Song`
