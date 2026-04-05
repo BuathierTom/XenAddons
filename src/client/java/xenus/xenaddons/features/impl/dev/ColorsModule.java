@@ -17,24 +17,25 @@ public class ColorsModule extends Module {
         return t;
     });
     private final AtomicInteger colorChangeToken = new AtomicInteger(0);
+    private volatile int lastAppliedColor;
 
     public ColorsModule() {
         super("Colors", "Change the GUI theme color", Category.DEV);
         menuColor.expanded = true;
         menuColor.setListener(this::applyMenuColorWithDelay);
         this.registerSetting(menuColor);
-        KotlinGuiBridge.applyMenuPrimary(menuColor.getValue());
+        lastAppliedColor = menuColor.getValue();
+        KotlinGuiBridge.applyMenuPrimary(lastAppliedColor);
     }
 
     private void applyMenuColorWithDelay(Integer newColor) {
+        if (newColor == null || newColor == lastAppliedColor) return;
         final int token = colorChangeToken.incrementAndGet();
         COLOR_APPLY_EXECUTOR.schedule(() -> {
             if (token != colorChangeToken.get()) return;
-            mc.execute(() -> KotlinGuiBridge.applyMenuPrimary(newColor));
             mc.execute(() -> {
-                if (KotlinGuiBridge.isClickGuiInstance(mc.currentScreen)) {
-                    KotlinGuiBridge.openConfigScreen();
-                }
+                KotlinGuiBridge.applyMenuPrimary(newColor);
+                lastAppliedColor = newColor;
             });
         }, 2, TimeUnit.SECONDS);
     }

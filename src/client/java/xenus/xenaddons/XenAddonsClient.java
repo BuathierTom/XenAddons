@@ -1,6 +1,7 @@
 package xenus.xenaddons;
 
 import xenus.xenaddons.gui.GuiInvButtonMenu;
+import xenus.xenaddons.gui.odin.ui.rendering.NVGSpecialGuiElementRenderer;
 import xenus.xenaddons.utils.HypixelItemManager;
 import xenus.xenaddons.utils.KotlinGuiBridge;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -8,6 +9,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.SpecialGuiElementRegistry;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 public class XenAddonsClient implements ClientModInitializer {
@@ -25,6 +27,8 @@ public class XenAddonsClient implements ClientModInitializer {
 
 		// Initialize Modules
 		xenus.xenaddons.features.ModuleManager.init();
+
+		SpecialGuiElementRegistry.register(context -> new NVGSpecialGuiElementRenderer(context.vertexConsumers()));
 
         // Initialize Utilities
         xenus.xenaddons.utils.DungeonUtils.init();

@@ -3,20 +3,20 @@ package xenus.xenaddons.gui.ui
 import java.awt.Color
 
 enum class Theme(private val baseColor: Int) {
-    BgDark(0xFF0A0F18.toInt()),
-    Bg(0xFF111A26.toInt()),
-    BgLight(0xFF1A2533.toInt()),
-    Text(0xFFE6EAF0.toInt()),
-    TextMuted(0xFF9AA6B8.toInt()),
-    Highlight(0xFF2F5D9F.toInt()),
-    Border(0xFF1F2F46.toInt()),
-    BorderMuted(0xFF162335.toInt()),
-    Primary(0xFF3A6EA5.toInt()),
-    Secondary(0xFF274B7A.toInt()),
-    Danger(0xFFD25C5C.toInt()),
-    Warning(0xFFE6B65C.toInt()),
-    Success(0xFF4FAF83.toInt()),
-    Info(0xFF4D8CC9.toInt());
+    BgDark(0xFF101010.toInt()),
+    Bg(0xFF1A1A1A.toInt()),
+    BgLight(0xFF262626.toInt()),
+    Text(0xFFF7F8FA.toInt()),
+    TextMuted(0xFFB5BDC8.toInt()),
+    Highlight(0xFF4C8FD8.toInt()),
+    Border(0xFF3B3B3B.toInt()),
+    BorderMuted(0xFF232323.toInt()),
+    Primary(0xFF3296DC.toInt()),
+    Secondary(0xFF2A6FA0.toInt()),
+    Danger(0xFFD66F6F.toInt()),
+    Warning(0xFFE2B45B.toInt()),
+    Success(0xFF4FAA82.toInt()),
+    Info(0xFF4C8FD8.toInt());
 
     val color: Int
         get() = when (this) {
@@ -38,6 +38,8 @@ enum class Theme(private val baseColor: Int) {
         fun setMenuPrimary(color: Int?) {
             menuPrimary = color
         }
+
+        fun shift(color: Int, factor: Float): Int = derive(color, factor)
 
         private fun derive(color: Int, factor: Float): Int {
             val c = Color(color, true)
