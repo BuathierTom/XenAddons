@@ -42,10 +42,12 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
     private const val PANEL_HEADER_HEIGHT = 32f
     private const val FEATURE_ROW_HEIGHT = 32f
     private const val FEATURE_GAP = 0f
-    private const val FEATURE_PADDING = 10f
+    private const val FEATURE_PADDING = 8f
     private const val SECTION_HEADER_HEIGHT = 20f
-    private const val SECTION_GAP = 8f
-    private const val WIDGET_SPACING = 10f
+    private const val SECTION_GAP = 6f
+    private const val WIDGET_SPACING = 4f
+    private const val STACKED_FIELD_OFFSET_Y = 24f
+    private const val STACKED_FIELD_BASE_HEIGHT = 50f
     private const val SEARCH_WIDTH = 350f
     private const val SEARCH_HEIGHT = 40f
     private const val TOP_MARGIN = 28f
@@ -866,7 +868,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
         override fun getHeight(): Float {
             val type = option.configElement.type as ElementType.Dropdown
-            return 40f + if (expanded) type.options.size * 26f + 6f else 0f
+            return STACKED_FIELD_BASE_HEIGHT + if (expanded) type.options.size * 26f else 0f
         }
 
         override fun render(x: Float, y: Float, width: Float, mouseX: Float, mouseY: Float): Float {
@@ -877,7 +879,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             this.boundsHeight = getHeight()
 
             val selectedIndex = resolveDropdownIndex(type)
-            val boxY = y + 20f
+            val boxY = y + STACKED_FIELD_OFFSET_Y
             NVGRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
             NVGRenderer.rect(x + 2f, boxY, width - 4f, 22f, Theme.BgLight.color, 5f)
             NVGRenderer.hollowRect(x + 2f, boxY, width - 4f, 22f, 1.5f, Theme.Primary.color, 5f)
@@ -911,7 +913,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         override fun mouseClicked(mouseX: Float, mouseY: Float, button: Int): Boolean {
             if (button != 0) return false
             val type = option.configElement.type as ElementType.Dropdown
-            val boxY = y + 20f
+            val boxY = y + STACKED_FIELD_OFFSET_Y
             if (mouseX in (x + 2f)..(x + width - 2f) && mouseY in boxY..(boxY + 22f)) {
                 expanded = !expanded
                 return true
@@ -947,7 +949,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             maxLength = type.maxLength
         )
 
-        override fun getHeight(): Float = 44f
+        override fun getHeight(): Float = STACKED_FIELD_BASE_HEIGHT
 
         override fun render(x: Float, y: Float, width: Float, mouseX: Float, mouseY: Float): Float {
             this.x = x
@@ -956,16 +958,16 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             this.boundsHeight = getHeight()
 
             NVGRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
-            NVGRenderer.rect(x + 2f, y + 20f, width - 4f, 22f, Theme.BgLight.color, 5f)
-            NVGRenderer.hollowRect(x + 2f, y + 20f, width - 4f, 22f, 1.5f, Theme.Primary.color, 5f)
+            NVGRenderer.rect(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, Theme.BgLight.color, 5f)
+            NVGRenderer.hollowRect(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, 1.5f, Theme.Primary.color, 5f)
             input.x = x + 6f
-            input.y = y + 21f
+            input.y = y + STACKED_FIELD_OFFSET_Y + 1f
             input.width = width - 12f
             input.height = 20f
             input.draw(mouseX, mouseY, Theme.Primary.withAlpha(0.28f), Theme.Text.color, Theme.Text.color)
 
             if (((currentValue() as? String) ?: "").isEmpty()) {
-                NVGRenderer.text(type.placeholder, x + 8f, y + 24f, 14f, Theme.TextMuted.color)
+                NVGRenderer.text(type.placeholder, x + 8f, y + STACKED_FIELD_OFFSET_Y + 4f, 14f, Theme.TextMuted.color)
             }
 
             return boundsHeight
@@ -1290,7 +1292,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
         override fun getHeight(): Float {
             val type = option.configElement.type as ElementType.MultiCheckbox
-            return 40f + if (expanded) type.options.size * 24f + 4f else 0f
+            return STACKED_FIELD_BASE_HEIGHT + if (expanded) type.options.size * 24f else 0f
         }
 
         override fun render(x: Float, y: Float, width: Float, mouseX: Float, mouseY: Float): Float {
@@ -1302,12 +1304,12 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
             val selected = (currentValue() as? Set<*>)?.mapNotNull { (it as? Number)?.toInt() }?.toSet() ?: type.default
             NVGRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
-            NVGRenderer.rect(x + 2f, y + 20f, width - 4f, 22f, Theme.BgLight.color, 5f)
-            NVGRenderer.hollowRect(x + 2f, y + 20f, width - 4f, 22f, 1.5f, Theme.Primary.color, 5f)
-            NVGRenderer.text("${selected.size} selected", x + 10f, y + 24f, 15f, Theme.Text.color)
+            NVGRenderer.rect(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, Theme.BgLight.color, 5f)
+            NVGRenderer.hollowRect(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, 1.5f, Theme.Primary.color, 5f)
+            NVGRenderer.text("${selected.size} selected", x + 10f, y + STACKED_FIELD_OFFSET_Y + 4f, 15f, Theme.Text.color)
 
             if (expanded) {
-                var optionY = y + 46f
+                var optionY = y + STACKED_FIELD_BASE_HEIGHT
                 for ((index, value) in type.options.withIndex()) {
                     val selectedOption = index in selected
                     NVGRenderer.rect(x + 2f, optionY, width - 4f, 20f, Theme.BgLight.color, 4f)
@@ -1329,14 +1331,14 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         override fun mouseClicked(mouseX: Float, mouseY: Float, button: Int): Boolean {
             if (button != 0) return false
             val type = option.configElement.type as ElementType.MultiCheckbox
-            if (mouseX in (x + 2f)..(x + width - 2f) && mouseY in (y + 20f)..(y + 42f)) {
+            if (mouseX in (x + 2f)..(x + width - 2f) && mouseY in (y + STACKED_FIELD_OFFSET_Y)..(y + STACKED_FIELD_OFFSET_Y + 22f)) {
                 expanded = !expanded
                 return true
             }
             if (!expanded) return false
 
             val current = (currentValue() as? Set<*>)?.mapNotNull { (it as? Number)?.toInt() }?.toMutableSet() ?: type.default.toMutableSet()
-            var optionY = y + 46f
+            var optionY = y + STACKED_FIELD_BASE_HEIGHT
             for (index in type.options.indices) {
                 if (mouseX in (x + 2f)..(x + width - 2f) && mouseY in optionY..(optionY + 20f)) {
                     if (!current.add(index)) current.remove(index)
