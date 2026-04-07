@@ -38,6 +38,7 @@ public class PlayersLeapedModule extends Module {
     private int currentSpot = 0;
     private boolean inBounds = false;
     private boolean mageSeenAtCoreThisRun = false;
+    private boolean p5HiddenAfterFullCount = false;
 
     public PlayersLeapedModule() {
         super("Players Leaped", "Shows how many players leaped in F7/M7 terms", Category.DUNGEON);
@@ -67,6 +68,7 @@ public class PlayersLeapedModule extends Module {
         if (!DungeonUtils.inDungeon()) {
             inBounds = false;
             mageSeenAtCoreThisRun = false;
+            p5HiddenAfterFullCount = false;
             return;
         }
 
@@ -96,6 +98,9 @@ public class PlayersLeapedModule extends Module {
             currentCount++;
         }
         leapedCount = currentCount;
+        if (currentSpot == 6 && leapedCount >= 4) {
+            p5HiddenAfterFullCount = true;
+        }
     }
 
     private int getSpot(ClientPlayerEntity player) {
@@ -135,6 +140,9 @@ public class PlayersLeapedModule extends Module {
     }
 
     private boolean shouldDisplay() {
+        if (currentSpot == 6 && p5HiddenAfterFullCount) {
+            return false;
+        }
         return inBounds && DungeonUtils.inDungeon();
     }
 
@@ -175,6 +183,7 @@ public class PlayersLeapedModule extends Module {
         currentSpot = 0;
         inBounds = false;
         mageSeenAtCoreThisRun = false;
+        p5HiddenAfterFullCount = false;
     }
 
     public int getHudOffsetX() {

@@ -31,6 +31,7 @@ public class ReminderGateModule extends Module {
     private static final String GATE_DESTROYED = "the gate has been destroyed!";
     private static final int CHAT_HISTORY_SYNC_TICKS = 20 * 15;
     private static final int CHAT_HISTORY_SYNC_MESSAGES = 10;
+    private static final int NOTIFICATION_DURATION_TICKS = 20 * 5;
     private static final Box[] REGIONS = {
             new Box(90, 106, 50, 111, 145, 123),
             new Box(17, 106, 121, 108, 145, 143),
@@ -76,6 +77,7 @@ public class ReminderGateModule extends Module {
     private int previousRegion = -1;
     private int lastDungeonSeconds = -1;
     private int debugDisplayTicks = 0;
+    private int notificationTicks = 0;
     private String lastMessage = "";
     private long lastMessageAtMs = 0L;
 
@@ -133,6 +135,7 @@ public class ReminderGateModule extends Module {
         String lower = clean.toLowerCase();
         if (lower.contains(GATE_DESTROYED)) {
             notificationActive = false;
+            notificationTicks = 0;
             soundPlayedForCurrentGate = false;
             gateBrokenThisPhase = true;
             return;
@@ -161,6 +164,7 @@ public class ReminderGateModule extends Module {
         if (resolvedPhase != phaseIndex) {
             phaseIndex = resolvedPhase;
             notificationActive = false;
+            notificationTicks = 0;
             soundPlayedForCurrentGate = false;
             gateBrokenThisPhase = destroyedBeforeFirstLeverOfPhase;
         }
@@ -174,7 +178,11 @@ public class ReminderGateModule extends Module {
     }
 
     private void activateNotification() {
+        if (notificationActive) {
+            return;
+        }
         notificationActive = true;
+        notificationTicks = NOTIFICATION_DURATION_TICKS;
         if (!soundPlayedForCurrentGate) {
             playSelectedSound();
             soundPlayedForCurrentGate = true;
@@ -198,10 +206,19 @@ public class ReminderGateModule extends Module {
             return;
         }
 
+        if (notificationActive && notificationTicks > 0) {
+            notificationTicks--;
+            if (notificationTicks <= 0) {
+                notificationActive = false;
+                gateBrokenThisPhase = true;
+            }
+        }
+
         previousRegion = currentRegion;
         currentRegion = getRegionIndex(mc.player);
         if (currentRegion < 0) {
             notificationActive = false;
+            notificationTicks = 0;
         } else if (previousRegion < 0) {
             syncGateStateFromChat();
         }
@@ -244,6 +261,7 @@ public class ReminderGateModule extends Module {
             if (clean.isEmpty()) continue;
             if (clean.contains(GATE_DESTROYED)) {
                 notificationActive = false;
+                notificationTicks = 0;
                 soundPlayedForCurrentGate = false;
                 gateBrokenThisPhase = true;
                 return;
@@ -326,6 +344,7 @@ public class ReminderGateModule extends Module {
         phaseIndex = 0;
         lastDenominator = 0;
         notificationActive = false;
+        notificationTicks = 0;
         soundPlayedForCurrentGate = false;
         gateBrokenThisPhase = false;
         currentRegion = -1;
