@@ -27,7 +27,7 @@ public class InvisibilityTimerModule extends Module {
 
     private static final int SPIRIT_INVINC_TICKS = 60;
     private static final int BONZO_INVINC_TICKS = 60;
-    private static final int PHOENIX_INVINC_TICKS = 80;
+    private static final int PHOENIX_INVINC_TICKS = 60;
     private static final long PROC_MESSAGE_DEBOUNCE_MS = 10_000L;
 
     private final BooleanSetting maskProcsAlert = new BooleanSetting("Mask procs alert", true);
