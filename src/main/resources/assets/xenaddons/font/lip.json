@@ -1,0 +1,13 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "xenaddons:visual/img/lip_16.png",
+      "ascent": 8,
+      "height": 8,
+      "chars": [
+        "\ue102"
+      ]
+    }
+  ]
+}

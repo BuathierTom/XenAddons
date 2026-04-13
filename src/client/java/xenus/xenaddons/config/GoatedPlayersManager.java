@@ -45,10 +45,13 @@ public class GoatedPlayersManager {
 
     private static final String CAPY_MARKER = "{capy}";
     private static final String FRANCE_MARKER = "{france}";
+    private static final String LIP_MARKER = "{lip}";
     private static final String CAPY_GLYPH = "\uE100";
     private static final String FRANCE_GLYPH = "\uE101";
+    private static final String LIP_GLYPH = "\uE102";
     private static final Identifier CAPY_FONT = Identifier.of("xenaddons", "capybara");
     private static final Identifier FRANCE_FONT = Identifier.of("xenaddons", "france");
+    private static final Identifier LIP_FONT = Identifier.of("xenaddons", "lip");
 
     private static final String[] CONCAT_STATUS_SUFFIXES = new String[] {"offline", "online"};
     private static final Map<String, String> NAMED_COLOR_TO_LEGACY = buildNamedColorMap();
@@ -122,7 +125,10 @@ public class GoatedPlayersManager {
 
         rebuildRuntimeNameMap();
         if (SORTED_RUNTIME_ENTRIES.isEmpty()) {
-            String plain = keepMarkers ? text : text.replace(CAPY_MARKER, "").replace(FRANCE_MARKER, "");
+            String plain = keepMarkers ? text : text
+                .replace(CAPY_MARKER, "")
+                .replace(FRANCE_MARKER, "")
+                .replace(LIP_MARKER, "");
             VISUAL_STRING_CACHE.put(cacheKey, plain);
             return plain;
         }
@@ -148,6 +154,7 @@ public class GoatedPlayersManager {
         if (!keepMarkers) {
             result = result.replace(CAPY_MARKER, "");
             result = result.replace(FRANCE_MARKER, "");
+            result = result.replace(LIP_MARKER, "");
         }
 
         result = trimDanglingSectionSigns(result);
@@ -549,18 +556,25 @@ public class GoatedPlayersManager {
         while (idx < plain.length()) {
             int capyIdx = plain.indexOf(CAPY_MARKER, idx);
             int franceIdx = plain.indexOf(FRANCE_MARKER, idx);
+            int lipIdx = plain.indexOf(LIP_MARKER, idx);
 
-            int marker;
-            boolean isCaby;
-            if (capyIdx < 0 && franceIdx < 0) {
-                marker = -1;
-                isCaby = false;
-            } else if (capyIdx >= 0 && (franceIdx < 0 || capyIdx < franceIdx)) {
-                marker = capyIdx;
-                isCaby = true;
-            } else {
+            int marker = capyIdx;
+            String markerToken = CAPY_MARKER;
+            String glyph = CAPY_GLYPH;
+            Identifier font = CAPY_FONT;
+
+            if (marker < 0 || (franceIdx >= 0 && franceIdx < marker)) {
                 marker = franceIdx;
-                isCaby = false;
+                markerToken = FRANCE_MARKER;
+                glyph = FRANCE_GLYPH;
+                font = FRANCE_FONT;
+            }
+
+            if (marker < 0 || (lipIdx >= 0 && lipIdx < marker)) {
+                marker = lipIdx;
+                markerToken = LIP_MARKER;
+                glyph = LIP_GLYPH;
+                font = LIP_FONT;
             }
 
             if (marker < 0) {
@@ -572,15 +586,9 @@ public class GoatedPlayersManager {
                 out.append(Text.literal(plain.substring(idx, marker)).setStyle(style));
             }
 
-            if (isCaby) {
-                Style iconStyle = style.withColor(Formatting.WHITE).withFont(new StyleSpriteSource.Font(CAPY_FONT));
-                out.append(Text.literal(CAPY_GLYPH).setStyle(iconStyle));
-                idx = marker + CAPY_MARKER.length();
-            } else {
-                Style iconStyle = style.withColor(Formatting.WHITE).withFont(new StyleSpriteSource.Font(FRANCE_FONT));
-                out.append(Text.literal(FRANCE_GLYPH).setStyle(iconStyle));
-                idx = marker + FRANCE_MARKER.length();
-            }
+            Style iconStyle = style.withColor(Formatting.WHITE).withFont(new StyleSpriteSource.Font(font));
+            out.append(Text.literal(glyph).setStyle(iconStyle));
+            idx = marker + markerToken.length();
         }
     }
 
