@@ -60,8 +60,8 @@ public class MilestoneDisplayModule extends Module {
 
     private int milestoneCount = -1;
     private int runTicks = 0;
-    private int lastSyncedDungeonSeconds = -1;
     private int nextReminderAtSeconds = REMINDER_INTERVAL_SECONDS;
+    private boolean timerArmed = false;
     private int alertTicks = 0;
     private String alertText = null;
     private int debugAlertTicks = 0;
@@ -116,19 +116,17 @@ public class MilestoneDisplayModule extends Module {
             return;
         }
 
+        int previousMilestone = milestoneCount;
         milestoneCount = DungeonUtils.getMilestone();
 
-        int dungeonSeconds = DungeonUtils.dungeonSeconds;
-        if (dungeonSeconds >= 0) {
-            if (lastSyncedDungeonSeconds >= 0 && dungeonSeconds < lastSyncedDungeonSeconds) {
-                resetRuntime();
-                milestoneCount = DungeonUtils.getMilestone();
+        if (!timerArmed) {
+            if (previousMilestone < 0 && milestoneCount == 0) {
+                timerArmed = true;
+                runTicks = 0;
+                nextReminderAtSeconds = REMINDER_INTERVAL_SECONDS;
+            } else {
+                return;
             }
-            int syncedTicks = dungeonSeconds * 20;
-            if (syncedTicks > runTicks) {
-                runTicks = syncedTicks;
-            }
-            lastSyncedDungeonSeconds = dungeonSeconds;
         }
 
         runTicks++;
@@ -273,8 +271,8 @@ public class MilestoneDisplayModule extends Module {
     private void resetRuntime() {
         milestoneCount = -1;
         runTicks = 0;
-        lastSyncedDungeonSeconds = -1;
         nextReminderAtSeconds = REMINDER_INTERVAL_SECONDS;
+        timerArmed = false;
         alertTicks = 0;
         alertText = null;
     }
