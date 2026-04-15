@@ -27,6 +27,7 @@ public class DungeonUtils {
     public static int currentPhase = 0;
     public static int currentStage = 0;
     public static int crypts = 0;
+    public static int milestone = -1;
     public static int dungeonSeconds = 0;
     public static boolean inCatacombs = false;
     public static boolean inBoss = false;
@@ -47,6 +48,7 @@ public class DungeonUtils {
         currentPhase = 0;
         currentStage = 0;
         crypts = 0;
+        milestone = -1;
         dungeonSeconds = 0;
         inCatacombs = false;
         inBoss = false;
@@ -127,6 +129,7 @@ public class DungeonUtils {
         
         boolean foundDungeon = false;
         int foundCrypts = crypts;
+        int foundMilestone = milestone;
 
         // Process List Entries
         for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
@@ -136,6 +139,9 @@ public class DungeonUtils {
             
             int c = parseCrypts(nameString);
             if (c != -1) foundCrypts = c;
+
+            int m = parseMilestone(nameString);
+            if (m != -1) foundMilestone = m;
         }
         
         // Process Header and Footer (Accessor required)
@@ -149,12 +155,16 @@ public class DungeonUtils {
                 if (checkTabLine(h)) foundDungeon = true;
                 int c = parseCrypts(h);
                 if (c != -1) foundCrypts = c;
+                int m = parseMilestone(h);
+                if (m != -1) foundMilestone = m;
             }
             if (footer != null) {
                 String f = footer.getString();
                 if (checkTabLine(f)) foundDungeon = true;
                 int c = parseCrypts(f);
                 if (c != -1) foundCrypts = c;
+                int m = parseMilestone(f);
+                if (m != -1) foundMilestone = m;
             }
         } catch (Exception ignored) {}
 
@@ -163,6 +173,7 @@ public class DungeonUtils {
         }
         inCatacombs = foundDungeon;
         crypts = foundCrypts;
+        milestone = foundDungeon ? foundMilestone : -1;
     }
 
     private static void clearDungeonRuntimeState() {
@@ -170,6 +181,7 @@ public class DungeonUtils {
         currentPhase = 0;
         currentStage = 0;
         dungeonSeconds = 0;
+        milestone = -1;
         inBoss = false;
         isUniqueClass = false;
         healerSeenAtMidThisRun = false;
@@ -200,6 +212,36 @@ public class DungeonUtils {
             try {
                 return Integer.parseInt(matcher.group(1));
             } catch (Exception ignored) {}
+        }
+        return -1;
+    }
+
+    private static final Pattern MILESTONE_PATTERN = Pattern.compile("(?i)your milestone:\\s*(.+)$");
+    private static final String MILESTONE_SYMBOLS = "⓿❶❷❸❹❺❻❼❽❾";
+
+    private static int parseMilestone(String text) {
+        if (text == null) return -1;
+        String clean = text.replaceAll("§[0-9a-fk-or]", "").trim();
+        Matcher matcher = MILESTONE_PATTERN.matcher(clean);
+        if (!matcher.find()) return -1;
+
+        String value = matcher.group(1);
+        if (value == null) return -1;
+        value = value.trim();
+        if (value.isEmpty()) return -1;
+
+        String numeric = value.replaceAll("[^0-9]", "");
+        if (!numeric.isEmpty()) {
+            try {
+                return Integer.parseInt(numeric);
+            } catch (Exception ignored) {}
+        }
+
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            int idx = MILESTONE_SYMBOLS.indexOf(ch);
+            if (idx >= 0) return idx;
+            if (Character.isDigit(ch)) return Character.digit(ch, 10);
         }
         return -1;
     }
@@ -318,6 +360,10 @@ public class DungeonUtils {
     }
     
     public static boolean inDungeon() { return inCatacombs; }
+
+    public static int getMilestone() {
+        return milestone;
+    }
 
     public static boolean inBoss() {
         return inDungeon() && (inBoss || currentPhase > 0);

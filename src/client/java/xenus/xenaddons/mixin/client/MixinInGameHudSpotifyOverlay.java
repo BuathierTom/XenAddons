@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xenus.xenaddons.features.ModuleManager;
+import xenus.xenaddons.features.impl.dungeons.MilestoneDisplayModule;
 import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule;
 
 @Mixin(InGameHud.class)
@@ -18,6 +19,11 @@ public class MixinInGameHudSpotifyOverlay {
         SpotifyOverlayModule module = ModuleManager.getModule(SpotifyOverlayModule.class);
         if (module != null) {
             module.renderInGameHud(context);
+        }
+
+        MilestoneDisplayModule milestoneDisplay = ModuleManager.getModule(MilestoneDisplayModule.class);
+        if (milestoneDisplay != null) {
+            milestoneDisplay.renderInGameHud(context);
         }
     }
 }

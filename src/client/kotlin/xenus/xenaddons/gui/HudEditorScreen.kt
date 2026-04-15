@@ -11,6 +11,7 @@ import xenus.xenaddons.config.ConfigManager
 import xenus.xenaddons.features.ModuleManager
 import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule
 import xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule
+import xenus.xenaddons.features.impl.dungeons.MilestoneDisplayModule
 import xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule
 import xenus.xenaddons.features.impl.dungeons.PosTitlesModule
 import xenus.xenaddons.features.impl.dungeons.ReminderGateModule
@@ -24,6 +25,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     private var autoPetModule: AutoPetRuleTitleModule? = null
     private var playersLeapedModule: PlayersLeapedModule? = null
     private var invisibilityTimerModule: InvisibilityTimerModule? = null
+    private var milestoneDisplayModule: MilestoneDisplayModule? = null
     private var reminderGateModule: ReminderGateModule? = null
     private var spotifyOverlayModule: SpotifyOverlayModule? = null
 
@@ -42,6 +44,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         autoPetModule = ModuleManager.getModule(AutoPetRuleTitleModule::class.java)
         playersLeapedModule = ModuleManager.getModule(PlayersLeapedModule::class.java)
         invisibilityTimerModule = ModuleManager.getModule(InvisibilityTimerModule::class.java)
+        milestoneDisplayModule = ModuleManager.getModule(MilestoneDisplayModule::class.java)
         reminderGateModule = ModuleManager.getModule(ReminderGateModule::class.java)
         spotifyOverlayModule = ModuleManager.getModule(SpotifyOverlayModule::class.java)
     }
@@ -62,6 +65,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         renderComponent(context, mouseX, mouseY, ComponentType.AUTOPET_TITLE, getAutoPetBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.PLAYERS_LEAPED, getPlayersLeapedBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.INVISIBILITY_TIMER, getInvisibilityTimerBounds())
+        renderComponent(context, mouseX, mouseY, ComponentType.MILESTONE_DISPLAY, getMilestoneDisplayBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.MASK_PROC_ALERT, getMaskProcAlertBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.REMINDER_GATE, getReminderGateBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.SPOTIFY_OVERLAY, getSpotifyBounds())
@@ -180,6 +184,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.AUTOPET_TITLE -> renderAutoPetPreview(context, bounds)
             ComponentType.PLAYERS_LEAPED -> renderPlayersLeapedPreview(context, bounds)
             ComponentType.INVISIBILITY_TIMER -> renderInvisibilityTimerPreview(context, bounds)
+            ComponentType.MILESTONE_DISPLAY -> renderMilestoneDisplayPreview(context, bounds)
             ComponentType.MASK_PROC_ALERT -> renderMaskProcAlertPreview(context, bounds)
             ComponentType.REMINDER_GATE -> renderReminderGatePreview(context, bounds)
             ComponentType.SPOTIFY_OVERLAY -> renderSpotifyPreview(context, bounds)
@@ -241,6 +246,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
                 invisibilityTimerModule?.setHudY(100)
                 invisibilityTimerModule?.setHudScale(1.0)
             }
+            ComponentType.MILESTONE_DISPLAY -> {
+                milestoneDisplayModule?.setHudOffsetX(0)
+                milestoneDisplayModule?.setHudY(30)
+                milestoneDisplayModule?.setHudScale(1.0)
+            }
             ComponentType.MASK_PROC_ALERT -> {
                 invisibilityTimerModule?.setAlertHudOffsetX(0)
                 invisibilityTimerModule?.setAlertHudY(120)
@@ -269,6 +279,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.AUTOPET_TITLE -> autoPetModule?.hudScale ?: 2.5
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.hudScale ?: 1.0
             ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.hudScale ?: 1.0
+            ComponentType.MILESTONE_DISPLAY -> milestoneDisplayModule?.hudScale ?: 1.0
             ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.alertHudScale ?: 4.0
             ComponentType.REMINDER_GATE -> reminderGateModule?.hudScale ?: 5.0
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.hudScale ?: 1.0
@@ -282,6 +293,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.AUTOPET_TITLE -> autoPetModule?.setHudScale(clamped)
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.setHudScale(clamped)
             ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.setHudScale(clamped)
+            ComponentType.MILESTONE_DISPLAY -> milestoneDisplayModule?.setHudScale(clamped)
             ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.setAlertHudScale(clamped)
             ComponentType.REMINDER_GATE -> reminderGateModule?.setHudScale(clamped)
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.setHudScale(clamped)
@@ -293,6 +305,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.SPOTIFY_OVERLAY,
             ComponentType.MASK_PROC_ALERT,
             ComponentType.INVISIBILITY_TIMER,
+            ComponentType.MILESTONE_DISPLAY,
             ComponentType.REMINDER_GATE,
             ComponentType.PLAYERS_LEAPED,
             ComponentType.AUTOPET_TITLE,
@@ -307,6 +320,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
             ComponentType.AUTOPET_TITLE -> getAutoPetBounds()
             ComponentType.PLAYERS_LEAPED -> getPlayersLeapedBounds()
             ComponentType.INVISIBILITY_TIMER -> getInvisibilityTimerBounds()
+            ComponentType.MILESTONE_DISPLAY -> getMilestoneDisplayBounds()
             ComponentType.MASK_PROC_ALERT -> getMaskProcAlertBounds()
             ComponentType.REMINDER_GATE -> getReminderGateBounds()
             ComponentType.SPOTIFY_OVERLAY -> getSpotifyBounds()
@@ -341,6 +355,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
                 val centerX = x + (referenceBounds.w / 2)
                 invisibilityTimerModule?.setHudOffsetX(centerX - (width / 2))
                 invisibilityTimerModule?.setHudY(y)
+            }
+            ComponentType.MILESTONE_DISPLAY -> {
+                val centerX = x + (referenceBounds.w / 2)
+                milestoneDisplayModule?.setHudOffsetX(centerX - (width / 2))
+                milestoneDisplayModule?.setHudY(y)
             }
             ComponentType.MASK_PROC_ALERT -> {
                 val centerX = x + (referenceBounds.w / 2)
@@ -528,6 +547,20 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
     }
 
+    private fun getMilestoneDisplayBounds(): Bounds {
+        val preview = milestoneDisplayModule?.let { "§bMilestone§f: §c2" } ?: "§bMilestone§f: §c2"
+        val textWidth = textRenderer.getWidth(preview)
+        val scale = (milestoneDisplayModule?.hudScale ?: 1.0).toFloat()
+        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
+        var x = (width - scaledWidth) / 2
+        var y = 30
+        milestoneDisplayModule?.let {
+            x += it.hudOffsetX
+            y = it.hudY
+        }
+        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
+    }
+
     private fun getMaskProcAlertBounds(): Bounds {
         val preview = "BONZO"
         val textWidth = textRenderer.getWidth(preview)
@@ -618,6 +651,16 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
+    private fun renderMilestoneDisplayPreview(context: DrawContext, bounds: Bounds) {
+        val preview = "§bMilestone§f: §c2"
+        val scale = (milestoneDisplayModule?.hudScale ?: 1.0).toFloat()
+        val inv = 1.0f / scale
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.drawTextWithShadow(textRenderer, preview, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFF5555.toInt())
+        context.matrices.popMatrix()
+    }
+
     private fun renderMaskProcAlertPreview(context: DrawContext, bounds: Bounds) {
         val scale = (invisibilityTimerModule?.alertHudScale ?: 4.0).toFloat()
         val inv = 1.0f / scale
@@ -660,6 +703,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         AUTOPET_TITLE("AutoPet Title"),
         PLAYERS_LEAPED("Players Leaped"),
         INVISIBILITY_TIMER("Invisibility timer"),
+        MILESTONE_DISPLAY("Milestone Reminder"),
         MASK_PROC_ALERT("Mask proc alert"),
         REMINDER_GATE("Reminder Gate"),
         SPOTIFY_OVERLAY("Spotify Overlay")

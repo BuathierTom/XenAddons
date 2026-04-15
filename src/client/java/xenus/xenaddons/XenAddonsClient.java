@@ -247,6 +247,19 @@ public class XenAddonsClient implements ClientModInitializer {
                         xenus.xenaddons.utils.ChatUtils.info("Reminder Gate test triggered.");
                         return 1;
                     }))
+                    .then(literal("milestone").executes(context -> {
+                        xenus.xenaddons.features.impl.dev.DebugModule debug =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
+                        if (debug == null || !debug.isEnabled() || !debug.enableMilestoneTest.getValue()) {
+                            return 0;
+                        }
+                        xenus.xenaddons.features.impl.dungeons.MilestoneDisplayModule module =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.MilestoneDisplayModule.class);
+                        if (module == null) return 0;
+                        module.debugTriggerReminder();
+                        xenus.xenaddons.utils.ChatUtils.info("Milestone Reminder test triggered.");
+                        return 1;
+                    }))
                     .then(literal("mask")
                         .executes(context -> {
                             xenus.xenaddons.features.impl.dev.DebugModule debug =
