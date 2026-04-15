@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.3.0-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.3.1-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -34,6 +34,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `/xa secretroom`
 - `/xa procs <spirit|bonzo|phoenix>`
 - `/xa gate`
+- `/xa milestone`
 - `/xa mask`
 - `/xa mask has`
 - `/xa mask nomask`
@@ -80,6 +81,14 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
   - Region-based reminder using leap regions.
   - Triggers on Goldor start / lever / terminal / device messages.
   - Detects `Spirit Mask` / `Bonzo's Mask` equipped and reminds once per run.
+
+- `Milestone Reminder`
+  - Displays your current dungeon milestone as HUD text.
+  - Starts its reminder timer when the milestone first becomes available.
+  - Sends reminders every 30 seconds while the milestone stays below 3.
+  - Reminder text is customizable.
+  - Supports custom/random sounds or the default invisibility timer sound.
+  - HUD and alert positions/scales are editable through `Edit HUD`.
 
 - `Invisibility timer`
   - Shows active invincibility duration after:
