@@ -150,6 +150,7 @@ public class MilestoneDisplayModule extends Module {
     }
 
     public void renderInGameHud(DrawContext drawContext) {
+        if (!this.isEnabled()) return;
         if (!showHud.getValue()) return;
         if (mc.world == null || mc.player == null || !DungeonUtils.inDungeon()) return;
         renderLine(drawContext, getDisplayText(), getDisplayColor());

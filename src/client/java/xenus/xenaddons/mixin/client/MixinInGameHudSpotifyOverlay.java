@@ -22,7 +22,7 @@ public class MixinInGameHudSpotifyOverlay {
         }
 
         MilestoneDisplayModule milestoneDisplay = ModuleManager.getModule(MilestoneDisplayModule.class);
-        if (milestoneDisplay != null) {
+        if (milestoneDisplay != null && milestoneDisplay.isEnabled()) {
             milestoneDisplay.renderInGameHud(context);
         }
     }
