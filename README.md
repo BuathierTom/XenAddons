@@ -5,7 +5,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.3.1-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.3.2-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
 **A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
@@ -80,6 +80,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
   - Reminder text is customizable.
   - Supports custom/random sounds or the default invisibility timer sound.
   - HUD and alert positions/scales are editable through `Edit HUD`.
+  - The HUD stays hidden while the module is disabled.
 
 - `Invisibility timer`
   - Shows active invincibility duration after:
@@ -199,6 +200,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 - `ZguegAddons`
   - Chat tools:
     - Chat Hider
+    - `Implosion` hit text hider for Spirit Sceptre / Implosion damage lines.
     - Radio message filter
     - Discord warning filter
   - Dungeon tools:
@@ -217,6 +219,7 @@ Debug subcommands (when `Debug` is enabled + corresponding toggle is enabled):
 
 - `Config GUI`
   - GUI theme color settings.
+  - Click GUI scroll direction now matches the mouse wheel.
 
 - `Custom Size`
   - Applies per-player custom scale from JSON data.
