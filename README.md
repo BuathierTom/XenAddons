@@ -262,3 +262,14 @@ Runtime module state/settings are saved in:
 Built jar output:
 
 - `build/libs/`
+
+## DevAuth (Uniquement dev)
+
+```
+vim ~/.devauth/config.toml
+-> modif: 
+[accounts.<pseudo>]
+type = "microsoft"
+
+export XENADDONS_DEVAUTH_ACCOUNT=<pseudo>
+```

@@ -14,6 +14,7 @@ base {
 repositories {
 	mavenCentral()
 	maven { url 'https://repo.hypixel.net/repository/Hypixel/' }
+	maven { url 'https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1' }
 	maven { url 'https://api.modrinth.com/maven' }
 	maven { url 'https://maven.teamresourceful.com/repository/maven-public/' }
 }
@@ -25,6 +26,13 @@ loom {
 		"xenaddons" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
+		}
+	}
+
+	runs {
+		client {
+			// Enable DevAuth automatically in the dev client.
+			property("devauth.enabled", "1")
 		}
 	}
 
@@ -45,6 +53,7 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_language_kotlin_version}"
+	modRuntimeOnly "me.djtheredstoner:DevAuth-fabric:1.1.2"
 
 	def lwjglVersion = project.minecraft_lwjgl_version
 	modImplementation "org.lwjgl:lwjgl-nanovg:${lwjglVersion}"

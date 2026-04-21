@@ -19,6 +19,9 @@
 		"main": [
 			"xenus.xenaddons.XenAddons"
 		],
+		"preLaunch": [
+			"xenus.xenaddons.XenAddonsPreLaunch"
+		],
 		"client": [
 			"xenus.xenaddons.XenAddonsClient"
 		]
