@@ -157,7 +157,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
         updateResponsiveMetrics()
-        val actualAmount = (-verticalAmount.sign * 16.0).toFloat()
+        val actualAmount = (verticalAmount.sign * 16.0).toFloat()
         val scaledMouseX = toLayoutCoordinate(mouseX.toFloat())
         val scaledMouseY = toLayoutCoordinate(mouseY.toFloat())
         if (searchBar.mouseScrolled(scaledMouseX, scaledMouseY, actualAmount)) {
