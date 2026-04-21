@@ -8,6 +8,8 @@ import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.utils.DungeonUtils;
 
+import java.util.regex.Pattern;
+
 public class ZguegAddonsModule extends Module {
     
     public final BooleanSetting hideRadioMessages = new BooleanSetting("Radio Msg", true); // Renamed
@@ -15,6 +17,7 @@ public class ZguegAddonsModule extends Module {
     
     public final BooleanSetting cryptsNotify = new BooleanSetting("Crypts Notify", false);
     public final BooleanSetting classNotify = new BooleanSetting("Class Notify", false);
+    public final BooleanSetting implosionText = new BooleanSetting("Implosion", true);
     
     // Command Settings
     public final BooleanSetting cmdBoom = new BooleanSetting("!boom", true);
@@ -32,12 +35,16 @@ public class ZguegAddonsModule extends Module {
     };
     
     private final String DISCORD_WARNING = "Please be mindful of Discord links in chat as they may pose a security risk";
+    private static final Pattern HIT_TEXT_PATTERN = Pattern.compile(
+        "^Your (Spirit Sceptre|Implosion) hit [0-9.,]+ enemies? for [0-9.,]+ damage\\.$"
+    );
     private int lastCryptsCount = 0;
 
     public ZguegAddonsModule() {
         super("ZguegAddons", "Collection of ZguegAddons features", Category.MISC);
         this.registerSetting(cryptsNotify);
         this.registerSetting(classNotify);
+        this.registerSetting(implosionText);
 
         this.registerSetting(hideRadioMessages);
         this.registerSetting(hideDiscordWarning);
@@ -120,6 +127,10 @@ public class ZguegAddonsModule extends Module {
                 } else modified = true;
             }
             if (modified) return false;
+        }
+
+        if (implosionText.getValue() && HIT_TEXT_PATTERN.matcher(msg).matches()) {
+            return false;
         }
 
         return true;
