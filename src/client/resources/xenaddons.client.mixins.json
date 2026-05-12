@@ -28,6 +28,7 @@
 		"MixinInGameHudPeekChat",
 		"MixinInGameHudCooldownItems",
 		"MixinInGameHudSpotifyOverlay",
+		"MixinMouseSpotifyOverlay",
 		"MixinMousePeekChat",
 		"MixinSoundManagerCustomHyperionSound",
 		"MixinClientPlayerInteractionManagerCooldownItems",

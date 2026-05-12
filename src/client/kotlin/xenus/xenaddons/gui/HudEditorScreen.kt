@@ -178,6 +178,12 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     }
 
     private fun renderComponent(context: DrawContext, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
+        if (type == ComponentType.SPOTIFY_OVERLAY && spotifyOverlayModule?.isBetterDisplayEnabled == true) {
+            renderSpotifyPreview(context, bounds)
+            renderComponentBox(context, mouseX, mouseY, type, bounds)
+            return
+        }
+
         renderComponentBox(context, mouseX, mouseY, type, bounds)
         when (type) {
             ComponentType.POS_TITLES -> renderPosTitlesPreview(context, bounds)
@@ -521,16 +527,17 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     }
 
     private fun getSpotifyBounds(): Bounds {
-        val textWidth = textRenderer.getWidth(SPOTIFY_PREVIEW)
         val scale = (spotifyOverlayModule?.hudScale ?: 1.0).toFloat()
-        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
+        val unscaledWidth = spotifyOverlayModule?.getPreviewWidth() ?: textRenderer.getWidth(SPOTIFY_PREVIEW)
+        val unscaledHeight = spotifyOverlayModule?.getPreviewHeight() ?: textRenderer.fontHeight
+        val scaledWidth = kotlin.math.ceil(unscaledWidth * scale).toInt()
         var x = width / 2
         var y = 84
         spotifyOverlayModule?.let {
             x += it.hudOffsetX
             y = it.hudY
         }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
+        return Bounds(x, y, scaledWidth, kotlin.math.ceil(unscaledHeight * scale).toInt())
     }
 
     private fun getInvisibilityTimerBounds(): Bounds {
@@ -633,12 +640,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     }
 
     private fun renderSpotifyPreview(context: DrawContext, bounds: Bounds) {
-        val scale = (spotifyOverlayModule?.hudScale ?: 1.0).toFloat()
-        val inv = 1.0f / scale
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, "§6Spotify §7> §aAuthor §7- §bSong Title", (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFFFFF.toInt())
-        context.matrices.popMatrix()
+        spotifyOverlayModule?.renderPreviewAt(context, bounds.x, bounds.y)
     }
 
     private fun renderInvisibilityTimerPreview(context: DrawContext, bounds: Bounds) {

@@ -20,20 +20,30 @@ public final class SpotifyNowPlaying {
     private static volatile String artist = "";
     private static volatile String title = "";
     private static volatile String state = "Not open";
+    private static volatile String artworkUrl = "";
+    private static volatile String trackUrl = "";
+    private static volatile int progressSeconds = -1;
+    private static volatile int durationSeconds = -1;
     private static volatile int spotifyProcessId = -1;
+    private static volatile boolean lastFetchIncludedProgress = false;
 
     private SpotifyNowPlaying() {}
 
     public static void requestRefreshIfNeeded() {
+        requestRefreshIfNeeded(false);
+    }
+
+    public static void requestRefreshIfNeeded(boolean includeProgress) {
         long now = System.currentTimeMillis();
-        if ((now - lastFetchAt) < REFRESH_MS) return;
+        if ((now - lastFetchAt) < REFRESH_MS && (!includeProgress || lastFetchIncludedProgress)) return;
         if (!FETCHING.compareAndSet(false, true)) return;
 
         Thread.startVirtualThread(() -> {
             try {
-                refreshNowPlaying();
+                refreshNowPlaying(includeProgress);
             } finally {
                 lastFetchAt = System.currentTimeMillis();
+                lastFetchIncludedProgress = includeProgress;
                 FETCHING.set(false);
             }
         });
@@ -54,19 +64,41 @@ public final class SpotifyNowPlaying {
         return "§6Spotify §7> §cNot open";
     }
 
-    private static void refreshNowPlaying() {
+    public static Snapshot getSnapshot() {
+        return new Snapshot(artist, title, state, artworkUrl, trackUrl, progressSeconds, durationSeconds);
+    }
+
+    public record Snapshot(String artist, String title, String state, String artworkUrl, String trackUrl, int progressSeconds, int durationSeconds) {
+        public boolean isPlaying() {
+            return "Playing".equals(state) && !artist.isBlank() && !title.isBlank();
+        }
+
+        public boolean isPaused() {
+            return "Paused".equals(state);
+        }
+
+        public boolean hasProgress() {
+            return progressSeconds >= 0 && durationSeconds > 0;
+        }
+    }
+
+    private static void refreshNowPlaying(boolean includeProgress) {
         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         if (os.contains("win")) {
             refreshWindowsLikeSoopy();
             return;
         }
         if (os.contains("mac")) {
-            refreshMac();
+            refreshMac(includeProgress);
             return;
         }
         artist = "";
         title = "";
         state = "Not open";
+        artworkUrl = "";
+        trackUrl = "";
+        progressSeconds = -1;
+        durationSeconds = -1;
     }
 
     private static void refreshWindowsLikeSoopy() {
@@ -87,6 +119,10 @@ public final class SpotifyNowPlaying {
             artist = "";
             title = "";
             state = "Not open";
+            artworkUrl = "";
+            trackUrl = "";
+            progressSeconds = -1;
+            durationSeconds = -1;
             return;
         }
 
@@ -94,6 +130,10 @@ public final class SpotifyNowPlaying {
             artist = "";
             title = "";
             state = "Paused";
+            artworkUrl = "";
+            trackUrl = "";
+            progressSeconds = -1;
+            durationSeconds = -1;
             return;
         }
 
@@ -109,9 +149,13 @@ public final class SpotifyNowPlaying {
             title = sanitize(currentSong);
         }
         state = "Playing";
+        artworkUrl = "";
+        trackUrl = "";
+        progressSeconds = -1;
+        durationSeconds = -1;
     }
 
-    private static void refreshMac() {
+    private static void refreshMac(boolean includeProgress) {
         try {
             Process check = new ProcessBuilder("pgrep", "-x", "Spotify").start();
             boolean done = check.waitFor(800, TimeUnit.MILLISECONDS);
@@ -120,6 +164,10 @@ public final class SpotifyNowPlaying {
                 artist = "";
                 title = "";
                 state = "Not open";
+                artworkUrl = "";
+                trackUrl = "";
+                progressSeconds = -1;
+                durationSeconds = -1;
                 return;
             }
 
@@ -128,35 +176,103 @@ public final class SpotifyNowPlaying {
                 artist = "";
                 title = "";
                 state = "Not open";
+                artworkUrl = "";
+                trackUrl = "";
+                progressSeconds = -1;
+                durationSeconds = -1;
                 return;
             }
 
             String normalizedState = playerState.trim().toLowerCase(Locale.ROOT);
-            if (!normalizedState.contains("playing")) {
-                artist = "";
-                title = "";
-                state = "Paused";
-                return;
-            }
-
             String artistRaw = runAppleScript("tell application \"Spotify\" to artist of current track as text");
             String titleRaw = runAppleScript("tell application \"Spotify\" to name of current track as text");
             if (artistRaw == null || titleRaw == null || artistRaw.isBlank() || titleRaw.isBlank()) {
                 artist = "";
                 title = "";
-                state = "Paused";
+                state = normalizedState.contains("playing") ? "Playing" : "Paused";
+                artworkUrl = "";
+                trackUrl = "";
+                progressSeconds = -1;
+                durationSeconds = -1;
                 return;
             }
 
             artist = sanitize(artistRaw);
             title = sanitize(titleRaw);
-            state = "Playing";
+            state = normalizedState.contains("playing") ? "Playing" : "Paused";
+            artworkUrl = includeProgress ? sanitizeUrl(runAppleScript("tell application \"Spotify\" to artwork url of current track as text")) : "";
+            trackUrl = includeProgress ? sanitizeTrackUrl(runAppleScript("tell application \"Spotify\" to spotify url of current track as text")) : "";
+            if (includeProgress) {
+                progressSeconds = parseIntOrDefault(runAppleScript("tell application \"Spotify\" to player position as integer"), -1);
+                int durationMs = parseIntOrDefault(runAppleScript("tell application \"Spotify\" to duration of current track as integer"), -1);
+                durationSeconds = durationMs > 0 ? durationMs / 1000 : -1;
+            } else {
+                progressSeconds = -1;
+                durationSeconds = -1;
+            }
         } catch (Exception e) {
             artist = "";
             title = "";
             state = "Not open";
+            artworkUrl = "";
+            trackUrl = "";
+            progressSeconds = -1;
+            durationSeconds = -1;
             XenAddons.LOGGER.debug("Spotify overlay refresh failed", e);
         }
+    }
+
+    public static void control(ControlAction action) {
+        Thread.startVirtualThread(() -> {
+            try {
+                controlNow(action);
+            } catch (Exception e) {
+                XenAddons.LOGGER.debug("Spotify overlay control failed", e);
+            }
+        });
+    }
+
+    private static void controlNow(ControlAction action) throws Exception {
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        if (os.contains("mac")) {
+            String command = switch (action) {
+                case PREVIOUS -> "previous track";
+                case PLAY_PAUSE -> "playpause";
+                case NEXT -> "next track";
+            };
+            runAppleScript("tell application \"Spotify\" to " + command);
+            lastFetchAt = 0L;
+            return;
+        }
+
+        if (os.contains("win")) {
+            String key = switch (action) {
+                case PREVIOUS -> "0xB1";
+                case PLAY_PAUSE -> "0xB3";
+                case NEXT -> "0xB0";
+            };
+            String script = "$sig='[DllImport(\"user32.dll\")]public static extern void keybd_event(byte bVk, byte bScan, int dwFlags, int dwExtraInfo);';"
+                + "Add-Type -MemberDefinition $sig -Name MediaKeys -Namespace XenAddons;"
+                + "[XenAddons.MediaKeys]::keybd_event(" + key + ",0,0,0);"
+                + "[XenAddons.MediaKeys]::keybd_event(" + key + ",0,2,0);";
+            runCommand(1500, "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script);
+            lastFetchAt = 0L;
+            return;
+        }
+
+        String command = switch (action) {
+            case PREVIOUS -> "previous";
+            case PLAY_PAUSE -> "play-pause";
+            case NEXT -> "next";
+        };
+        runCommand(1500, "playerctl", command);
+        lastFetchAt = 0L;
+    }
+
+    public enum ControlAction {
+        PREVIOUS,
+        PLAY_PAUSE,
+        NEXT
     }
 
     private static List<Integer> getSpotifyPids() {
@@ -247,10 +363,51 @@ public final class SpotifyNowPlaying {
         }
     }
 
+    private static void runCommand(long timeoutMs, String... command) {
+        Process process = null;
+        try {
+            process = new ProcessBuilder(command).start();
+            boolean done = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
+            if (!done) process.destroyForcibly();
+        } catch (Exception ignored) {
+        } finally {
+            if (process != null && process.isAlive()) process.destroyForcibly();
+        }
+    }
+
     private static String sanitize(String input) {
         if (input == null) return "";
         String noCodes = input.replaceAll("(?i)[§&][0-9A-FK-OR]", "");
         return noCodes.trim();
+    }
+
+    private static String sanitizeUrl(String input) {
+        if (input == null) return "";
+        String trimmed = input.trim();
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+        return "";
+    }
+
+    private static String sanitizeTrackUrl(String input) {
+        if (input == null) return "";
+        String trimmed = input.trim();
+        if (trimmed.startsWith("https://open.spotify.com/track/")) return trimmed;
+        if (trimmed.startsWith("spotify:track:")) {
+            String id = trimmed.substring("spotify:track:".length()).trim();
+            if (id.matches("[A-Za-z0-9]+")) {
+                return "https://open.spotify.com/track/" + id;
+            }
+        }
+        return "";
+    }
+
+    private static int parseIntOrDefault(String value, int fallback) {
+        if (value == null || value.isBlank()) return fallback;
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException ignored) {
+            return fallback;
+        }
     }
 
     private static String clampWithEllipsis(String value, int maxLength) {
