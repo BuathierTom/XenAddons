@@ -8,6 +8,7 @@ import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
+import xenus.xenaddons.features.impl.misc.CustomSizeModule;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ColorSetting;
 import xenus.xenaddons.settings.KeybindSetting;
@@ -80,8 +81,8 @@ public class ConfigManager {
             JsonObject modulesObj = root.getAsJsonObject("Modules");
 
             for (Module module : ModuleManager.modules) {
-                if (modulesObj.has(module.name)) {
-                    JsonElement moduleElement = modulesObj.get(module.name);
+                JsonElement moduleElement = getModuleElement(modulesObj, module);
+                if (moduleElement != null) {
                     if (moduleElement.isJsonObject()) {
                         JsonObject moduleJson = moduleElement.getAsJsonObject();
                         
@@ -120,5 +121,17 @@ public class ConfigManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static JsonElement getModuleElement(JsonObject modulesObj, Module module) {
+        if (modulesObj.has(module.name)) {
+            return modulesObj.get(module.name);
+        }
+
+        if (module instanceof CustomSizeModule && modulesObj.has("Custom Size")) {
+            return modulesObj.get("Custom Size");
+        }
+
+        return null;
     }
 }

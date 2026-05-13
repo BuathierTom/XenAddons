@@ -16,6 +16,8 @@ import net.minecraft.util.Identifier;
 import xenus.xenaddons.cosmetics.CosmeticsRepository;
 import xenus.xenaddons.cosmetics.CosmeticsSnapshot.PlayerCosmetic;
 import xenus.xenaddons.cosmetics.CosmeticsSnapshot.PlayerScale;
+import xenus.xenaddons.features.ModuleManager;
+import xenus.xenaddons.features.impl.misc.CustomSizeModule;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -90,9 +92,10 @@ public class GoatedPlayersManager {
     }
 
     private static CosmeticEntry getEntryForName(String name) {
+        if (!shouldApplyCustomNames()) return null;
         if (name == null || name.isBlank()) return null;
         rebuildRuntimeNameMap();
-        return RUNTIME_NAME_COSMETICS.get(name.toLowerCase());
+        return RUNTIME_NAME_COSMETICS.get(name.toLowerCase(Locale.ROOT));
     }
 
     public static String applyVisualWords(String text) {
@@ -107,6 +110,7 @@ public class GoatedPlayersManager {
     }
 
     public static Map<String, String> getRuntimeReplaceMap() {
+        if (!shouldApplyCustomNames()) return Map.of();
         rebuildRuntimeNameMap();
         LinkedHashMap<String, String> out = new LinkedHashMap<>();
         for (Map.Entry<String, CosmeticEntry> entry : RUNTIME_NAME_COSMETICS.entrySet()) {
@@ -119,16 +123,17 @@ public class GoatedPlayersManager {
 
     private static String applyVisualWordsInternal(String text, boolean keepMarkers) {
         if (text == null || text.isEmpty()) return text;
+        if (!shouldApplyCustomNames()) {
+            return keepMarkers ? text : removeCosmeticMarkers(text);
+        }
+
         String cacheKey = (keepMarkers ? "1|" : "0|") + text;
         String cached = VISUAL_STRING_CACHE.get(cacheKey);
         if (cached != null) return cached;
 
         rebuildRuntimeNameMap();
         if (SORTED_RUNTIME_ENTRIES.isEmpty()) {
-            String plain = keepMarkers ? text : text
-                .replace(CAPY_MARKER, "")
-                .replace(FRANCE_MARKER, "")
-                .replace(LIP_MARKER, "");
+            String plain = keepMarkers ? text : removeCosmeticMarkers(text);
             VISUAL_STRING_CACHE.put(cacheKey, plain);
             return plain;
         }
@@ -163,6 +168,19 @@ public class GoatedPlayersManager {
         return result;
     }
 
+    private static boolean shouldApplyCustomNames() {
+        CustomSizeModule module = ModuleManager.getModule(CustomSizeModule.class);
+        return module == null || module.shouldApplyCustomNames();
+    }
+
+    private static String removeCosmeticMarkers(String text) {
+        if (text == null || text.isEmpty()) return text;
+        return text
+            .replace(CAPY_MARKER, "")
+            .replace(FRANCE_MARKER, "")
+            .replace(LIP_MARKER, "");
+    }
+
     private static String replaceIgnoreCase(String input, String target, String replacement) {
         if (input == null || input.isEmpty() || target == null || target.isEmpty()) return input;
 
@@ -187,8 +205,8 @@ public class GoatedPlayersManager {
     private static boolean isInsideExistingReplacement(String input, int targetStart, String target, String replacement) {
         if (replacement == null || replacement.isEmpty()) return false;
         int targetLen = target.length();
-        String loweredReplacement = replacement.toLowerCase();
-        String loweredTarget = target.toLowerCase();
+        String loweredReplacement = replacement.toLowerCase(Locale.ROOT);
+        String loweredTarget = target.toLowerCase(Locale.ROOT);
 
         int pos = loweredReplacement.indexOf(loweredTarget);
         while (pos >= 0) {
@@ -302,7 +320,7 @@ public class GoatedPlayersManager {
                     if (profileName == null || profileName.isBlank()) continue;
 
                     UUID_NAME_CACHE.put(uuid, profileName);
-                    merged.put(profileName.toLowerCase(), cosmetic);
+                    merged.put(profileName.toLowerCase(Locale.ROOT), cosmetic);
                 }
             }
 
@@ -319,7 +337,7 @@ public class GoatedPlayersManager {
                     if (name == null || name.isBlank()) continue;
 
                     UUID_NAME_CACHE.put(uuid, name);
-                    merged.put(name.toLowerCase(), cosmetic);
+                    merged.put(name.toLowerCase(Locale.ROOT), cosmetic);
                 }
             }
         }
@@ -329,7 +347,7 @@ public class GoatedPlayersManager {
             if (cosmetic == null || !cosmetic.hasDisplayName()) continue;
             String name = cached.getValue();
             if (name == null || name.isBlank()) continue;
-            merged.put(name.toLowerCase(), cosmetic);
+            merged.put(name.toLowerCase(Locale.ROOT), cosmetic);
         }
 
         RUNTIME_NAME_COSMETICS.clear();
@@ -372,7 +390,7 @@ public class GoatedPlayersManager {
         Matcher matcher = LEGACY_AMP_PATTERN.matcher(hexOut.toString());
         StringBuffer out = new StringBuffer();
         while (matcher.find()) {
-            String code = matcher.group(1).toLowerCase();
+            String code = matcher.group(1).toLowerCase(Locale.ROOT);
             matcher.appendReplacement(out, Matcher.quoteReplacement("§" + code));
         }
         matcher.appendTail(out);
@@ -678,13 +696,13 @@ public class GoatedPlayersManager {
 
         for (String alias : player.aliases()) {
             if (alias == null || alias.isBlank()) continue;
-            STATIC_NAME_COSMETICS.put(alias.toLowerCase(), cosmetic);
+            STATIC_NAME_COSMETICS.put(alias.toLowerCase(Locale.ROOT), cosmetic);
         }
     }
 
     private static void addStaticAlias(String alias, CosmeticEntry cosmetic) {
         if (alias == null || alias.isBlank()) return;
-        STATIC_NAME_COSMETICS.put(alias.toLowerCase(), cosmetic);
+        STATIC_NAME_COSMETICS.put(alias.toLowerCase(Locale.ROOT), cosmetic);
     }
 
     private static CosmeticEntry parseUuidCosmeticEntry(PlayerCosmetic player) {
@@ -765,7 +783,7 @@ public class GoatedPlayersManager {
             if (color.startsWith("#") && color.length() == 7) {
                 sb.append('&').append(color);
             } else {
-                String legacy = NAMED_COLOR_TO_LEGACY.get(color.toLowerCase());
+                String legacy = NAMED_COLOR_TO_LEGACY.get(color.toLowerCase(Locale.ROOT));
                 if (legacy != null) sb.append('&').append(legacy);
             }
         }

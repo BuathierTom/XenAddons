@@ -20,7 +20,7 @@ public class MixinPlayerEntityRendererCustomSize {
     @Inject(method = "scale(Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;)V", at = @At("TAIL"))
     private void xenaddons$applyCustomSize(PlayerEntityRenderState state, MatrixStack matrices, CallbackInfo ci) {
         CustomSizeModule module = ModuleManager.getModule(CustomSizeModule.class);
-        if (module == null || !module.isEnabled()) return;
+        if (module == null || !module.shouldApplyCustomSize()) return;
 
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.world == null) return;
