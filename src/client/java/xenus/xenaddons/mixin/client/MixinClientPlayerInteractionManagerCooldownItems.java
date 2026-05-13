@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import xenus.xenaddons.features.impl.misc.CooldownItemsTracker;
-import xenus.xenaddons.features.impl.misc.CustomHyperionSoundHandler;
+import xenus.xenaddons.compat.XenInteractionCompat;
 
 @Mixin(ClientPlayerInteractionManager.class)
 public class MixinClientPlayerInteractionManagerCooldownItems {
@@ -23,20 +22,19 @@ public class MixinClientPlayerInteractionManagerCooldownItems {
     private void xenaddons$trackItemClick(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         if (player == null || hand == null) return;
         ItemStack stack = player.getStackInHand(hand);
-        CooldownItemsTracker.onItemRightClick(stack);
-        CustomHyperionSoundHandler.onItemUse(stack);
+        XenInteractionCompat.onItemRightClick(stack);
     }
 
     @Inject(method = "attackEntity", at = @At("HEAD"))
     private void xenaddons$trackLeftClickEntity(PlayerEntity player, Entity target, CallbackInfo ci) {
         if (player == null) return;
-        CooldownItemsTracker.onItemLeftClick(player.getMainHandStack());
+        XenInteractionCompat.onItemLeftClick(player.getMainHandStack());
     }
 
     @Inject(method = "attackBlock", at = @At("HEAD"))
     private void xenaddons$trackLeftClickBlock(BlockPos pos, Direction direction, CallbackInfoReturnable<Boolean> cir) {
         PlayerEntity player = net.minecraft.client.MinecraftClient.getInstance().player;
         if (player == null) return;
-        CooldownItemsTracker.onItemLeftClick(player.getMainHandStack());
+        XenInteractionCompat.onItemLeftClick(player.getMainHandStack());
     }
 }

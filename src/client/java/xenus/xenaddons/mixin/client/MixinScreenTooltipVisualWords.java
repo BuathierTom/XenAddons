@@ -9,13 +9,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import xenus.xenaddons.config.GoatedPlayersManager;
+import xenus.xenaddons.compat.XenTextCompat;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.dungeons.ItemQualityTooltip;
 import xenus.xenaddons.features.impl.misc.ItemPriceModule;
 import xenus.xenaddons.utils.ItemPriceManager;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(Screen.class)
@@ -27,10 +26,7 @@ public class MixinScreenTooltipVisualWords {
         if (original == null || original.isEmpty()) return;
         if (isPartyFinderScreen(client)) return;
 
-        List<Text> replaced = new ArrayList<>(original.size());
-        for (Text line : original) {
-            replaced.add(GoatedPlayersManager.applyVisualWordsForTooltip(line));
-        }
+        List<Text> replaced = XenTextCompat.replaceTooltipList(original);
 
         ItemPriceModule itemPrice = ModuleManager.getModule(ItemPriceModule.class);
         if (itemPrice != null && itemPrice.isEnabled()) {

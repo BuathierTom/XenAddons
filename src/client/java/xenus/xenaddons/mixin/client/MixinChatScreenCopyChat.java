@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.lwjgl.glfw.GLFW;
+import xenus.xenaddons.compat.XenChatHudCompat;
 import xenus.xenaddons.config.VisualWordsChatStore;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.misc.CopyChatModule;
@@ -57,19 +58,18 @@ public class MixinChatScreenCopyChat {
         if (mc.inGameHud == null) return;
 
         ChatHud chatHud = mc.inGameHud.getChatHud();
-        AccessorChatHud accessor = (AccessorChatHud) chatHud;
 
-        double chatX = accessor.xenaddons$toChatLineX(click.x());
-        double chatY = accessor.xenaddons$toChatLineY(click.y());
-        int lineIndex = accessor.xenaddons$getMessageLineIndex(chatX, chatY);
+        double chatX = XenChatHudCompat.toChatLineX(chatHud, click.x());
+        double chatY = XenChatHudCompat.toChatLineY(chatHud, click.y());
+        int lineIndex = XenChatHudCompat.getMessageLineIndex(chatHud, chatX, chatY);
         if (lineIndex < 0) return;
 
-        List<Visible> visibleLines = accessor.xenaddons$getVisibleMessages();
+        List<Visible> visibleLines = XenChatHudCompat.getVisibleMessages(chatHud);
         if (lineIndex >= visibleLines.size()) return;
         Visible visibleLine = visibleLines.get(lineIndex);
         if (visibleLine == null) return;
 
-        ChatHudLine line = resolveClickedMessage(accessor.xenaddons$getMessages(), visibleLine);
+        ChatHudLine line = resolveClickedMessage(XenChatHudCompat.getMessages(chatHud), visibleLine);
         if (line == null || line.content() == null) return;
 
         CopyChatModule module = ModuleManager.getModule(CopyChatModule.class);
@@ -89,10 +89,10 @@ public class MixinChatScreenCopyChat {
                     : LEGACY_COLOR_CODE.matcher(source.getString()).replaceAll("");
             if (copied.isBlank()) return;
 
-            int previousScrolledLines = accessor.xenaddons$getScrolledLines();
+            int previousScrolledLines = XenChatHudCompat.getScrolledLines(chatHud);
             mc.keyboard.setClipboard(copied);
             ChatUtils.success(formattedCopy ? "Copied formatted message to clipboard" : "Copied message to clipboard");
-            accessor.xenaddons$setScrolledLines(previousScrolledLines);
+            XenChatHudCompat.setScrolledLines(chatHud, previousScrolledLines);
             cir.setReturnValue(true);
             return;
         }

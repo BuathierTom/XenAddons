@@ -7,7 +7,7 @@ import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import xenus.xenaddons.config.GoatedPlayersManager;
+import xenus.xenaddons.compat.XenTextCompat;
 
 @Mixin(PlayerListHud.class)
 public class MixinPlayerListHudVisualWords {
@@ -21,6 +21,6 @@ public class MixinPlayerListHudVisualWords {
         require = 0
     )
     private Text xenaddons$replaceTabPlayerNameRenderOnly(Text original) {
-        return GoatedPlayersManager.applyVisualWords(original);
+        return XenTextCompat.replaceText(original);
     }
 }

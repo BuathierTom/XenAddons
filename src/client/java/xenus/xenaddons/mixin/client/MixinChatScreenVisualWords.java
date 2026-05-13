@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xenus.xenaddons.config.GoatedPlayersManager;
+import xenus.xenaddons.compat.XenTextCompat;
 import xenus.xenaddons.config.VisualWordsRenderState;
 
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public abstract class MixinChatScreenVisualWords {
         if (chatField == null) return;
 
         chatField.addFormatter((text, firstCharacterIndex) -> {
-            String replaced = GoatedPlayersManager.normalizeLegacyCodes(GoatedPlayersManager.applyVisualWords(text));
+            String replaced = XenTextCompat.normalizeLegacyCodes(XenTextCompat.replaceVisualWords(text));
             return toOrderedTextWithLegacyCodes(replaced);
         });
     }

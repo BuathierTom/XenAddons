@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xenus.xenaddons.config.GoatedPlayersManager;
+import xenus.xenaddons.compat.XenTextCompat;
 import xenus.xenaddons.config.VisualWordsChatStore;
 import xenus.xenaddons.config.VisualWordsRenderState;
 import xenus.xenaddons.features.impl.misc.CompactPotionMessageProcessor;
@@ -29,7 +29,7 @@ public class MixinChatHud {
     )
     private Text xenaddons$replaceChatTextSimple(Text text) {
         Text compacted = CompactPotionMessageProcessor.compact(text);
-        Text replaced = GoatedPlayersManager.applyVisualWords(compacted);
+        Text replaced = XenTextCompat.replaceText(compacted);
         XENADDONS_ORIGINAL_MESSAGE.set(text);
         XENADDONS_REPLACED_MESSAGE.set(replaced);
         VisualWordsChatStore.put(replaced, text);
@@ -51,7 +51,7 @@ public class MixinChatHud {
         }
 
         Text compacted = CompactPotionMessageProcessor.compact(text);
-        Text replaced = GoatedPlayersManager.applyVisualWords(compacted);
+        Text replaced = XenTextCompat.replaceText(compacted);
         XENADDONS_ORIGINAL_MESSAGE.set(text);
         XENADDONS_REPLACED_MESSAGE.set(replaced);
         VisualWordsChatStore.put(replaced, text);

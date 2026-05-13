@@ -6,7 +6,6 @@ import xenus.xenaddons.XenAddons;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import xenus.xenaddons.utils.HypixelItemManager;
 import xenus.xenaddons.utils.RenderUtils;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.input.CharInput;
@@ -23,6 +22,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
+import xenus.xenaddons.compat.XenDrawContextCompat;
 
 import java.awt.Point;
 import java.nio.charset.StandardCharsets;
@@ -135,7 +135,7 @@ public class GuiInvButtonEditor extends Screen {
     private record TextureResult(String name, Identifier textureId) implements IconResult {
         @Override
         public void render(DrawContext context, int x, int y) {
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, textureId, x, y, 0, 0, 16, 16, 16, 16);
+            XenDrawContextCompat.drawTexture(context, textureId, x, y, 0, 0, 16, 16, 16, 16);
         }
         @Override
         public String getDisplayName() { return name; }
@@ -275,7 +275,7 @@ public class GuiInvButtonEditor extends Screen {
         guiLeft = (this.width - xSize) / 2;
         guiTop = (this.height - ySize) / 2;
 
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, INVENTORY_TEXTURE, guiLeft, guiTop, 0.0f, 0.0f, xSize, ySize, 256, 256);
+        XenDrawContextCompat.drawTexture(context, INVENTORY_TEXTURE, guiLeft, guiTop, 0.0f, 0.0f, xSize, ySize, 256, 256);
 
         for (XenAddons.CustomButtonData button : XenAddons.instance.buttons) {
             int x = guiLeft + button.x;
@@ -287,7 +287,7 @@ public class GuiInvButtonEditor extends Screen {
                 context.fill(x, y, x + 18, y + 18, 0x8000FF00);
                 RenderUtils.drawBorder(context, x, y, 18, 18, 0xFFFFFFFF);
             } else {
-                context.drawTexture(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, x, y,
+                XenDrawContextCompat.drawTexture(context, BUTTONS_TEXTURE, x, y,
                         (float)(button.backgroundIndex * 18), 18.0F, 18, 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
             }
 
@@ -301,7 +301,7 @@ public class GuiInvButtonEditor extends Screen {
                 }
 
                 if (customTex != null) {
-                    context.drawTexture(RenderPipelines.GUI_TEXTURED, customTex, x + 1, y + 1, 0, 0, 16, 16, 16, 16);
+                    XenDrawContextCompat.drawTexture(context, customTex, x + 1, y + 1, 0, 0, 16, 16, 16, 16);
                 } else {
                     ItemStack stack = button.getItemStack();
                     if (!stack.isEmpty()) {
@@ -465,7 +465,7 @@ public class GuiInvButtonEditor extends Screen {
             int bx = editorLeft + 7 + (i * 20);
             int by = editorTop + 52;
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, bx, by,
+            XenDrawContextCompat.drawTexture(context, BUTTONS_TEXTURE, bx, by,
                     (float)(i * 18), 0.0F,
                     18, 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
@@ -516,7 +516,7 @@ public class GuiInvButtonEditor extends Screen {
             int infoIconX = titleX + textRenderer.getWidth(infoText) + 5;
             int infoIconY = titleY - 1;
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, INFO_ICON_TEXTURE, infoIconX, infoIconY, 0.0f, 0.0f, iconSize, iconSize, iconSize, iconSize);
+            XenDrawContextCompat.drawTexture(context, INFO_ICON_TEXTURE, infoIconX, infoIconY, 0.0f, 0.0f, iconSize, iconSize, iconSize, iconSize);
 
             // Highlight on hover
             if (mouseX >= infoIconX && mouseX < infoIconX + iconSize && mouseY >= infoIconY && mouseY < infoIconY + iconSize) {

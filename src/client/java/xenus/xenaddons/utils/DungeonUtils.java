@@ -11,7 +11,7 @@ import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardEntry;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.text.Text;
-import xenus.xenaddons.mixin.client.AccessorPlayerListHud;
+import xenus.xenaddons.compat.XenPlayerListCompat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -146,9 +146,8 @@ public class DungeonUtils {
         
         // Process Header and Footer (Accessor required)
         try {
-            AccessorPlayerListHud accessor = (AccessorPlayerListHud) mc.inGameHud.getPlayerListHud();
-            Text header = accessor.getHeader();
-            Text footer = accessor.getFooter();
+            Text header = XenPlayerListCompat.getHeader(mc);
+            Text footer = XenPlayerListCompat.getFooter(mc);
             
             if (header != null) {
                 String h = header.getString();

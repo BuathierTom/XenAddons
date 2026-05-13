@@ -1,9 +1,9 @@
 package xenus.xenaddons.features.impl.misc;
 
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
+import xenus.xenaddons.compat.XenDrawContextCompat;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.BooleanSetting;
@@ -185,8 +185,8 @@ public class SpotifyOverlayModule extends Module {
         drawContext.fill(x, y, x + size, y + size, 0xFF151A1F);
         Identifier cover = SpotifyCoverCache.getOrLoad(snapshot);
         if (cover != null) {
-            drawContext.drawTexture(
-                RenderPipelines.GUI_TEXTURED,
+            XenDrawContextCompat.drawTexture(
+                drawContext,
                 cover,
                 x,
                 y,
@@ -284,8 +284,8 @@ public class SpotifyOverlayModule extends Module {
         if (iconTexture != null) {
             int iconX = x + ((CONTROL_SIZE - CONTROL_ICON_SIZE) / 2);
             int iconY = y + ((CONTROL_SIZE - CONTROL_ICON_SIZE) / 2);
-            drawContext.drawTexture(
-                RenderPipelines.GUI_TEXTURED,
+            XenDrawContextCompat.drawTexture(
+                drawContext,
                 iconTexture,
                 iconX,
                 iconY,

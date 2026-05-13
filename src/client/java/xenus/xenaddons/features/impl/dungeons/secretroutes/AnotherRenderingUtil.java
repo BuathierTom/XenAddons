@@ -1,22 +1,17 @@
 package xenus.xenaddons.features.impl.dungeons.secretroutes;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import xenus.xenaddons.compat.XenWorldRenderCompat;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -24,38 +19,8 @@ import java.util.List;
 
 public class AnotherRenderingUtil {
     private static final float THICKNESS_MULTIPLIER = 0.01f;
-    private static final RenderPipeline SEE_THROUGH_PIPELINE = RenderPipelines.register(
-            RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET)
-                    .withLocation(Identifier.of("xenaddons", "see_through_overlay"))
-                    .withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.QUADS)
-                    .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-                    .withCull(false)
-                    .build()
-    );
-    private static final RenderLayer SEE_THROUGH_LAYER = RenderLayer.of(
-            "secretroutes_see_through",
-            1536,
-            SEE_THROUGH_PIPELINE,
-            RenderLayer.MultiPhaseParameters.builder()
-                    .target(RenderLayer.MAIN_TARGET)
-                    .build(false)
-    );
-    private static final RenderPipeline SEE_THROUGH_LINE_PIPELINE = RenderPipelines.register(
-            RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET)
-                    .withLocation(Identifier.of("xenaddons", "see_through_lines"))
-                    .withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.LINES)
-                    .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-                    .withCull(false)
-                    .build()
-    );
-    private static final RenderLayer SEE_THROUGH_LINE_LAYER = RenderLayer.of(
-            "secretroutes_see_through_lines",
-            1536,
-            SEE_THROUGH_LINE_PIPELINE,
-            RenderLayer.MultiPhaseParameters.builder()
-                    .target(RenderLayer.MAIN_TARGET)
-                    .build(false)
-    );
+    private static final RenderLayer SEE_THROUGH_LAYER = XenWorldRenderCompat.seeThroughFilledLayer();
+    private static final RenderLayer SEE_THROUGH_LINE_LAYER = XenWorldRenderCompat.seeThroughLineLayer();
     public static List<RenderTypes.WorldText> worldTexts = new ArrayList<>();
     public static List<RenderTypes.OutlinedBox> outlinedBoxes = new ArrayList<>();
     public static List<RenderTypes.FilledBox> filledBoxes = new ArrayList<>();
@@ -89,7 +54,7 @@ public class AnotherRenderingUtil {
 
             consumers.draw();
 
-            RenderLayer normalLayer = RenderLayer.getDebugFilledBox();
+            RenderLayer normalLayer = XenWorldRenderCompat.normalFilledBoxLayer();
 
             renderFilledBoxes(consumers, matrices, cameraPos, false, normalLayer);
             renderOutlinedBoxesAsQuads(consumers, matrices, cameraPos, false, normalLayer);
@@ -154,7 +119,7 @@ public class AnotherRenderingUtil {
     }
 
     private static void renderLines(VertexConsumerProvider consumers, MatrixStack matrices, Vec3d camPos, boolean throughWalls) {
-        RenderLayer layer = throughWalls ? SEE_THROUGH_LINE_LAYER : RenderLayer.getLines();
+        RenderLayer layer = throughWalls ? SEE_THROUGH_LINE_LAYER : XenWorldRenderCompat.normalLineLayer();
         VertexConsumer buffer = consumers.getBuffer(layer);
 
         for (RenderTypes.Line line : lines) {
@@ -166,13 +131,13 @@ public class AnotherRenderingUtil {
 
             Vec3d start = line.start.subtract(camPos);
             Vec3d end = line.end.subtract(camPos);
-            RenderSystem.lineWidth(Math.max(1.0f, line.lineWidth));
+            XenWorldRenderCompat.setLineWidth(Math.max(1.0f, line.lineWidth));
             drawSimpleLine(buffer, matrices, start, end, r, g, b, 1.0f);
         }
     }
 
     private static void renderLinesFromCursor(VertexConsumerProvider consumers, MatrixStack matrices, Vec3d camPos, boolean throughWalls) {
-        RenderLayer layer = throughWalls ? SEE_THROUGH_LINE_LAYER : RenderLayer.getLines();
+        RenderLayer layer = throughWalls ? SEE_THROUGH_LINE_LAYER : XenWorldRenderCompat.normalLineLayer();
         VertexConsumer buffer = consumers.getBuffer(layer);
 
         for (RenderTypes.LineFromCursor line : linesFromCursor) {
@@ -183,7 +148,7 @@ public class AnotherRenderingUtil {
             float b = line.color.getBlue() / 255f;
 
             Vec3d target = line.point.subtract(camPos);
-            RenderSystem.lineWidth(Math.max(1.0f, line.lineWidth));
+            XenWorldRenderCompat.setLineWidth(Math.max(1.0f, line.lineWidth));
             drawSimpleLine(buffer, matrices, Vec3d.ZERO, target, r, g, b, 1.0f);
         }
     }

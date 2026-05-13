@@ -1,6 +1,5 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.item.ItemStack;
@@ -9,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xenus.xenaddons.features.impl.misc.CooldownItemsTracker;
+import xenus.xenaddons.compat.XenCooldownCompat;
 
 @Mixin(DrawContext.class)
 public class MixinDrawContextCooldownItems {
@@ -20,8 +19,7 @@ public class MixinDrawContextCooldownItems {
         require = 0
     )
     private void xenaddons$cooldownBackgroundOnDrawItem(ItemStack stack, int x, int y, CallbackInfo ci) {
-        boolean guiOpen = MinecraftClient.getInstance().currentScreen != null;
-        CooldownItemsTracker.renderBackground((DrawContext) (Object) this, stack, x, y, guiOpen);
+        XenCooldownCompat.renderDrawItemBackground((DrawContext) (Object) this, stack, x, y);
     }
 
     @Inject(
@@ -30,10 +28,7 @@ public class MixinDrawContextCooldownItems {
         require = 0
     )
     private void xenaddons$cooldownTextOnDrawItem(ItemStack stack, int x, int y, CallbackInfo ci) {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        TextRenderer tr = mc.textRenderer;
-        boolean guiOpen = mc.currentScreen != null;
-        CooldownItemsTracker.renderText((DrawContext) (Object) this, tr, stack, x, y, guiOpen);
+        XenCooldownCompat.renderDrawItemText((DrawContext) (Object) this, stack, x, y);
     }
 
     @Inject(
@@ -42,8 +37,7 @@ public class MixinDrawContextCooldownItems {
         require = 0
     )
     private void xenaddons$cooldownBackground(TextRenderer textRenderer, ItemStack stack, int x, int y, String countOverride, CallbackInfo ci) {
-        boolean guiOpen = MinecraftClient.getInstance().currentScreen != null;
-        CooldownItemsTracker.renderBackground((DrawContext) (Object) this, stack, x, y, guiOpen);
+        XenCooldownCompat.renderStackOverlayBackground((DrawContext) (Object) this, stack, x, y);
     }
 
     @Inject(
@@ -52,8 +46,7 @@ public class MixinDrawContextCooldownItems {
         require = 0
     )
     private void xenaddons$cooldownText(TextRenderer textRenderer, ItemStack stack, int x, int y, String countOverride, CallbackInfo ci) {
-        boolean guiOpen = MinecraftClient.getInstance().currentScreen != null;
-        CooldownItemsTracker.renderText((DrawContext) (Object) this, textRenderer, stack, x, y, guiOpen);
+        XenCooldownCompat.renderStackOverlayText((DrawContext) (Object) this, textRenderer, stack, x, y);
     }
 
     @ModifyVariable(

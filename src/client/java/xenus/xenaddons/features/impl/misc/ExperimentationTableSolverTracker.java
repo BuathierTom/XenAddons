@@ -10,7 +10,7 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
-import xenus.xenaddons.mixin.client.HandledScreenAccessor;
+import xenus.xenaddons.compat.XenHandledScreenCompat;
 import xenus.xenaddons.utils.ChatUtils;
 
 import java.util.*;
@@ -126,8 +126,7 @@ public final class ExperimentationTableSolverTracker {
         if (button != 0 && button != 1) return false;
         if (screen == null) return false;
 
-        HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
-        Slot slot = accessor.getFocusedSlot();
+        Slot slot = XenHandledScreenCompat.getFocusedSlot(screen);
         if (slot == null || !slot.hasStack()) return false;
 
         if (currentTask == TaskType.SUPERPAIRS && module.keepItemsVisible.getValue()) {

@@ -12,8 +12,8 @@ import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.client.gl.RenderPipelines;
 import org.lwjgl.glfw.GLFW;
+import xenus.xenaddons.compat.XenDrawContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -263,7 +263,7 @@ public class GuiInvButtonConfig extends Screen {
             context.fill(delBtn.x, drawY, delBtn.x + delBtn.w, drawY + delBtn.h, isDelHovered ? 0xFFFF5555 : 0x80000000);
 
             // Draw Trashcan Icon
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, TRASH_ICON, delBtn.x + 1, drawY + 1, 0.0f, 0.0f, 16, 16, 16, 16);
+            XenDrawContextCompat.drawTexture(context, TRASH_ICON, delBtn.x + 1, drawY + 1, 0.0f, 0.0f, 16, 16, 16, 16);
 
             currentY += btn.h + 2;
         }

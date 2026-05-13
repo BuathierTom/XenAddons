@@ -7,9 +7,9 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import org.lwjgl.glfw.GLFW;
+import xenus.xenaddons.compat.XenHandledScreenCompat;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
-import xenus.xenaddons.mixin.client.HandledScreenAccessor;
 import xenus.xenaddons.settings.KeybindSetting;
 import xenus.xenaddons.utils.ItemPriceManager;
 
@@ -61,9 +61,7 @@ public class BazaarAHQuickSearchModule extends Module {
     }
 
     private void runSearchForHoveredItem(HandledScreen<?> handled) {
-        HandledScreenAccessor accessor = (HandledScreenAccessor) handled;
-        if (accessor == null) return;
-        var slot = accessor.getFocusedSlot();
+        var slot = XenHandledScreenCompat.getFocusedSlot(handled);
         if (slot == null || !slot.hasStack()) return;
 
         ItemStack stack = slot.getStack();

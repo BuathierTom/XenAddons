@@ -17,7 +17,7 @@ import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ModeSetting;
 import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.StringSetting;
-import xenus.xenaddons.mixin.client.AccessorChatHud;
+import xenus.xenaddons.compat.XenChatHudCompat;
 import xenus.xenaddons.utils.DungeonUtils;
 
 import java.util.List;
@@ -247,8 +247,7 @@ public class ReminderGateModule extends Module {
 
     private void syncGateStateFromChat() {
         if (mc.inGameHud == null || mc.player == null) return;
-        AccessorChatHud accessor = (AccessorChatHud) mc.inGameHud.getChatHud();
-        List<ChatHudLine> messages = accessor.xenaddons$getMessages();
+        List<ChatHudLine> messages = XenChatHudCompat.getMessages(mc.inGameHud.getChatHud());
         if (messages == null || messages.isEmpty()) return;
 
         int start = Math.max(0, messages.size() - CHAT_HISTORY_SYNC_MESSAGES);
