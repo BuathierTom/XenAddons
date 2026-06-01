@@ -22,15 +22,18 @@ import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.utils.ChatUtils;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,6 +50,7 @@ public class DungeonsStatsPFModule extends Module {
             "^Party Finder\\s*>\\s*(.+?)\\s+set their class to\\s+(\\w+) Level (\\d+)!$"
     );
     private static final Pattern MINECRAFT_NAME_PATTERN = Pattern.compile("[A-Za-z0-9_]{2,16}");
+    private static final Pattern COMPACT_UUID_PATTERN = Pattern.compile("^[0-9a-fA-F]{32}$");
     private static final String ODIN_HYPIXEL_API = "https://api.odtheking.com/hypixel/get/";
 
     private static final HttpClient HTTP = HttpClient.newBuilder()
@@ -54,6 +58,7 @@ public class DungeonsStatsPFModule extends Module {
             .build();
 
     private static final String MINECRAFT_SERVICES_UUID_API = "https://api.minecraftservices.com/minecraft/profile/lookup/name/";
+    private static final String MOJANG_UUID_API = "https://api.mojang.com/users/profiles/minecraft/";
     private static final Set<String> ALLOWED_PF_PETS = Set.of("EDRAG", "GDRAG", "JELLYFISH", "PHOENIX", "SPIRIT");
 
     private static final Map<String, String> UUID_CACHE = new ConcurrentHashMap<>();
@@ -255,10 +260,10 @@ public class DungeonsStatsPFModule extends Module {
         JsonObject cached = DUNGEON_CACHE.get(key);
         if (cached != null) return cached;
 
-        String uuid = getUuid(playerName);
+        String uuid = normalizeUuid(getUuid(playerName));
         if (uuid == null || uuid.isBlank()) return null;
 
-        String body = readUrl(ODIN_HYPIXEL_API + uuid);
+        String body = readUrl(ODIN_HYPIXEL_API + dashedUuid(uuid));
         JsonObject raw = JsonParser.parseString(body).getAsJsonObject();
         JsonObject data = normalizeFromOdin(raw, uuid);
         if (data == null) return null;
@@ -267,28 +272,39 @@ public class DungeonsStatsPFModule extends Module {
     }
 
     private static String getUuid(String playerName) throws Exception {
-        String key = playerName.toUpperCase();
+        String inputUuid = normalizeUuid(playerName);
+        if (inputUuid != null) return inputUuid;
+
+        String key = playerName.toLowerCase(Locale.ROOT);
         if (UUID_CACHE.containsKey(key)) {
             String cached = UUID_CACHE.get(key);
             return (cached == null || cached.isBlank()) ? null : cached;
         }
 
-        UUID_CACHE.put(key, "");
-        try {
-            String body = readUrl(MINECRAFT_SERVICES_UUID_API + playerName);
-            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
-            String uuid = getString(json, "id");
-            if (uuid != null && !uuid.isBlank()) {
-                UUID_CACHE.put(key, uuid);
-                return uuid;
+        String encodedName = URLEncoder.encode(playerName, StandardCharsets.UTF_8).replace("+", "%20");
+        String[] endpoints = {
+                MINECRAFT_SERVICES_UUID_API + encodedName,
+                MOJANG_UUID_API + encodedName
+        };
+
+        for (String endpoint : endpoints) {
+            try {
+                String body = readUrl(endpoint);
+                JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+                String uuid = normalizeUuid(getString(json, "id"));
+                if (uuid != null) {
+                    UUID_CACHE.put(key, uuid);
+                    return uuid;
+                }
+            } catch (Exception ignored) {
             }
-        } catch (Exception ignored) {
         }
         return null;
     }
 
     private static JsonObject normalizeFromOdin(JsonObject raw, String uuid) {
-        if (raw == null || uuid == null || uuid.isBlank()) return null;
+        String compactUuid = normalizeUuid(uuid);
+        if (raw == null || compactUuid == null) return null;
         JsonArray profiles = raw.getAsJsonArray("profiles");
         if (profiles == null || profiles.isEmpty()) return null;
 
@@ -307,8 +323,8 @@ public class DungeonsStatsPFModule extends Module {
         if (selectedProfile == null) return null;
 
         JsonObject members = getObj(selectedProfile, "members");
-        if (members == null || !members.has(uuid) || !members.get(uuid).isJsonObject()) return null;
-        JsonObject member = members.getAsJsonObject(uuid);
+        JsonObject member = getMember(members, compactUuid);
+        if (member == null) return null;
 
         JsonObject out = new JsonObject();
         JsonObject dungeons = getObj(member, "dungeons");
@@ -405,6 +421,47 @@ public class DungeonsStatsPFModule extends Module {
         out.add("pets", pets == null ? new JsonArray() : pets.deepCopy());
 
         return out;
+    }
+
+    private static JsonObject getMember(JsonObject members, String uuid) {
+        String compactUuid = normalizeUuid(uuid);
+        if (members == null || compactUuid == null) return null;
+
+        JsonObject direct = getObj(members, compactUuid);
+        if (direct != null) return direct;
+
+        String dashed = dashedUuid(compactUuid);
+        direct = getObj(members, dashed);
+        if (direct != null) return direct;
+
+        for (Map.Entry<String, JsonElement> entry : members.entrySet()) {
+            if (!entry.getValue().isJsonObject()) continue;
+            if (compactUuid.equals(normalizeUuid(entry.getKey()))) {
+                return entry.getValue().getAsJsonObject();
+            }
+
+            JsonObject member = entry.getValue().getAsJsonObject();
+            if (compactUuid.equals(normalizeUuid(getString(member, "player_id")))) {
+                return member;
+            }
+        }
+        return null;
+    }
+
+    private static String normalizeUuid(String uuid) {
+        if (uuid == null || uuid.isBlank()) return null;
+        String compact = uuid.trim().replace("-", "").toLowerCase(Locale.ROOT);
+        return COMPACT_UUID_PATTERN.matcher(compact).matches() ? compact : null;
+    }
+
+    private static String dashedUuid(String uuid) {
+        String compact = normalizeUuid(uuid);
+        if (compact == null) return uuid;
+        return compact.substring(0, 8) + "-"
+                + compact.substring(8, 12) + "-"
+                + compact.substring(12, 16) + "-"
+                + compact.substring(16, 20) + "-"
+                + compact.substring(20);
     }
 
     private static JsonObject copyObjOrEmpty(JsonObject obj) {
