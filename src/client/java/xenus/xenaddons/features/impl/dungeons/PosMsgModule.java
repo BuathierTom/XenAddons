@@ -12,6 +12,7 @@ import net.minecraft.util.math.Vec3d;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.BooleanSetting;
+import xenus.xenaddons.compat.XenCameraCompat;
 import xenus.xenaddons.utils.DungeonUtils;
 import xenus.xenaddons.utils.RenderUtils;
 
@@ -85,7 +86,7 @@ public class PosMsgModule extends Module {
 
         Camera camera = mc.gameRenderer.getCamera();
         if (camera == null) return;
-        Vec3d cameraPos = camera.getPos();
+        Vec3d cameraPos = XenCameraCompat.getPos(camera);
 
         try (BufferAllocator allocator = new BufferAllocator(131072)) {
             VertexConsumerProvider.Immediate consumers = VertexConsumerProvider.immediate(allocator);

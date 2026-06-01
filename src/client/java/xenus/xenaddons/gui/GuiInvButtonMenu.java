@@ -3,11 +3,10 @@ package xenus.xenaddons.gui;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.client.gui.Click;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
+import xenus.xenaddons.compat.XenSoundCompat;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -104,7 +103,7 @@ public class GuiInvButtonMenu extends Screen {
 
                     // play click sound
                     if (this.client != null) {
-                        this.client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                        XenSoundCompat.playButtonClick(this.client);
                     }
                     // Run action
                     btn.action.run();

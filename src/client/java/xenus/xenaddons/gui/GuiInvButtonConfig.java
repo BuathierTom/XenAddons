@@ -8,12 +8,11 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import xenus.xenaddons.utils.RenderUtils;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import xenus.xenaddons.compat.XenDrawContextCompat;
+import xenus.xenaddons.compat.XenSoundCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -292,12 +291,12 @@ public class GuiInvButtonConfig extends Screen {
                 if (mouseX >= boxX && mouseX < boxX + tabW) {
                     currentTab = Tab.GENERAL;
                     if(profileNameField != null) profileNameField.setFocused(false);
-                    if(this.client != null) this.client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                    if(this.client != null) XenSoundCompat.playButtonClick(this.client);
                     return true;
                 }
                 if (mouseX >= boxX + tabW && mouseX < boxX + boxW) {
                     currentTab = Tab.PROFILES;
-                    if(this.client != null) this.client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                    if(this.client != null) XenSoundCompat.playButtonClick(this.client);
                     return true;
                 }
             }
@@ -306,7 +305,7 @@ public class GuiInvButtonConfig extends Screen {
                 for (ConfigToggle btn : generalButtons) {
                     if (mouseX >= btn.btnX && mouseX < btn.btnX + btn.btnW && mouseY >= btn.y && mouseY < btn.y + btn.btnH) {
                         btn.setter.accept(!btn.getter.get());
-                        if(this.client != null) this.client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                        if(this.client != null) XenSoundCompat.playButtonClick(this.client);
                         return true;
                     }
                 }
@@ -317,7 +316,7 @@ public class GuiInvButtonConfig extends Screen {
 
                 if (mouseX >= profileSaveBtn.x && mouseX < profileSaveBtn.x + profileSaveBtn.w && mouseY >= profileSaveBtn.y && mouseY < profileSaveBtn.y + profileSaveBtn.h) {
                     profileSaveBtn.action.run();
-                    if(this.client != null) this.client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                    if(this.client != null) XenSoundCompat.playButtonClick(this.client);
                     return true;
                 }
 
@@ -331,13 +330,13 @@ public class GuiInvButtonConfig extends Screen {
 
                         if (mouseX >= btn.x && mouseX < btn.x + btn.w && mouseY >= currentY && mouseY < currentY + btn.h) {
                             btn.action.run();
-                            if(this.client != null) this.client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                            if(this.client != null) XenSoundCompat.playButtonClick(this.client);
                             return true;
                         }
 
                         if (mouseX >= delBtn.x && mouseX < delBtn.x + delBtn.w && mouseY >= currentY && mouseY < currentY + delBtn.h) {
                             delBtn.action.run();
-                            if(this.client != null) this.client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                            if(this.client != null) XenSoundCompat.playButtonClick(this.client);
                             return true;
                         }
 

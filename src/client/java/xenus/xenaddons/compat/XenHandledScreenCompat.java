@@ -7,10 +7,8 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import xenus.xenaddons.XenAddons;
@@ -144,6 +142,6 @@ public final class XenHandledScreenCompat {
         String cleanCommand = command;
         if (cleanCommand.startsWith("/")) cleanCommand = cleanCommand.substring(1);
         client.player.networkHandler.sendChatCommand(cleanCommand);
-        client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        XenSoundCompat.playButtonClick(client);
     }
 }

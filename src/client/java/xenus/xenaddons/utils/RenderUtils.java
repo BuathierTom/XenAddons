@@ -7,6 +7,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
+import xenus.xenaddons.compat.XenWorldRenderCompat;
 
 import java.awt.Color;
 
@@ -46,7 +47,7 @@ public class RenderUtils {
         float b = (color & 0xFF) / 255.0f;
         if (a == 0) a = 1.0f;
 
-        VertexConsumer buffer = consumers.getBuffer(RenderLayer.getLines());
+        VertexConsumer buffer = consumers.getBuffer(XenWorldRenderCompat.normalLineLayer());
         
         matrices.push();
         matrices.translate(start.x - cameraPos.x, start.y - cameraPos.y, start.z - cameraPos.z);
@@ -65,7 +66,7 @@ public class RenderUtils {
         float b = (color & 0xFF) / 255.0f;
         if (a == 0) a = 0.5f;
 
-        VertexConsumer buffer = consumers.getBuffer(filled ? RenderLayer.getDebugQuads() : RenderLayer.getLines());
+        VertexConsumer buffer = consumers.getBuffer(filled ? XenWorldRenderCompat.normalQuadLayer() : XenWorldRenderCompat.normalLineLayer());
         
         matrices.push();
         matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);

@@ -2,6 +2,8 @@ package xenus.xenaddons.features.impl.dungeons.secretroutes;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import xenus.xenaddons.compat.XenCameraCompat;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.multistorage.Triple;
 
 public class BlockUtils {
@@ -52,9 +54,10 @@ public class BlockUtils {
 
     public static Triple<Integer, Integer, Integer> playerToWorld(int worldX, int worldY, int worldZ) {
         MinecraftClient mc = MinecraftClient.getInstance();
-        int playerX = (int) mc.gameRenderer.getCamera().getPos().x;
-        int playerY = (int) mc.gameRenderer.getCamera().getPos().y;
-        int playerZ = (int) mc.gameRenderer.getCamera().getPos().z;
+        Vec3d cameraPos = XenCameraCompat.getPos(mc.gameRenderer.getCamera());
+        int playerX = (int) cameraPos.x;
+        int playerY = (int) cameraPos.y;
+        int playerZ = (int) cameraPos.z;
 
         return new Triple<>(worldX - playerX, worldY - playerY, worldZ - playerZ);
     }

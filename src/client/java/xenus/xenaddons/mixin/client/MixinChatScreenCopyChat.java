@@ -98,7 +98,7 @@ public class MixinChatScreenCopyChat {
         }
 
         if (click.button() == 0 && mc.player != null && mc.player.networkHandler != null) {
-            Style clickedStyle = chatHud.getTextStyleAt(chatX, chatY);
+            Style clickedStyle = XenChatHudCompat.getTextStyleAt(mc, visibleLine, chatX);
             ClickEvent clickEvent = clickedStyle == null ? null : clickedStyle.getClickEvent();
             if (clickEvent instanceof ClickEvent.RunCommand runCommand) {
                 String cmd = runCommand.command();

@@ -56,6 +56,10 @@ public final class XenWorldRenderCompat {
         return RenderLayer.getDebugFilledBox();
     }
 
+    public static RenderLayer normalQuadLayer() {
+        return RenderLayer.getDebugQuads();
+    }
+
     public static RenderLayer normalLineLayer() {
         return RenderLayer.getLines();
     }

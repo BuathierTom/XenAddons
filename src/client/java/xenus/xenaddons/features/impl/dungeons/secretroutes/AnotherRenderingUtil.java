@@ -11,6 +11,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import xenus.xenaddons.compat.XenCameraCompat;
 import xenus.xenaddons.compat.XenWorldRenderCompat;
 
 import java.awt.Color;
@@ -42,7 +43,7 @@ public class AnotherRenderingUtil {
 
         MatrixStack matrices = context.matrices();
         Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
-        Vec3d cameraPos = camera.getPos();
+        Vec3d cameraPos = XenCameraCompat.getPos(camera);
 
         try (BufferAllocator allocator = new BufferAllocator(196608)) {
             VertexConsumerProvider.Immediate consumers = VertexConsumerProvider.immediate(allocator);
