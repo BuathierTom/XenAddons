@@ -28,7 +28,7 @@ public class MixinHandledScreenCooldownItems {
         at = @At("TAIL"),
         require = 0
     )
-    private void xenaddons$renderCooldownInInventory(DrawContext context, Slot slot, CallbackInfo ci) {
+    private void xenaddons$renderCooldownInInventory(DrawContext context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
         XenCooldownCompat.renderInventorySlot(context, slot);
     }
 }

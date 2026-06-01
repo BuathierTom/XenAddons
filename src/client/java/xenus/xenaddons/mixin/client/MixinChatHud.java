@@ -1,6 +1,7 @@
 package xenus.xenaddons.mixin.client;
 
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -59,12 +60,12 @@ public class MixinChatHud {
     }
 
     @Inject(method = "render", at = @At("HEAD"))
-    private void xenaddons$beginChatRender(DrawContext context, int currentTick, int mouseX, int mouseY, boolean focused, CallbackInfo ci) {
+    private void xenaddons$beginChatRender(DrawContext context, TextRenderer textRenderer, int currentTick, int mouseX, int mouseY, boolean focused, boolean refreshIndicator, CallbackInfo ci) {
         VisualWordsRenderState.pushChatRender();
     }
 
     @Inject(method = "render", at = @At("TAIL"))
-    private void xenaddons$endChatRender(DrawContext context, int currentTick, int mouseX, int mouseY, boolean focused, CallbackInfo ci) {
+    private void xenaddons$endChatRender(DrawContext context, TextRenderer textRenderer, int currentTick, int mouseX, int mouseY, boolean focused, boolean refreshIndicator, CallbackInfo ci) {
         XENADDONS_ORIGINAL_MESSAGE.remove();
         XENADDONS_REPLACED_MESSAGE.remove();
         VisualWordsRenderState.popChatRender();

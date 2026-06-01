@@ -15,6 +15,6 @@ public final class XenSoundCompat {
 
     public static void playButtonClick(MinecraftClient client) {
         if (client == null) return;
-        client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 }

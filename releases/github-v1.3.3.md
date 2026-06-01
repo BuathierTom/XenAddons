@@ -1,6 +1,6 @@
 # XenAddons v1.3.3
 
-Minecraft `1.21.10` • Fabric
+Minecraft `1.21.11` • Fabric
 
 ## Added
 

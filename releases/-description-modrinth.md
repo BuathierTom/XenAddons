@@ -2,21 +2,21 @@
 
 <div align="center">
 
-![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)
+![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-green.svg)
 ![Fabric](https://img.shields.io/badge/Fabric-Mod-orange.svg)
 ![Java](https://img.shields.io/badge/Java-21+-blue.svg)
 ![Version](https://img.shields.io/badge/Version-1.3.3-purple.svg)
 ![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)
 
-**A Fabric mod for Minecraft 1.21.10 focused on Hypixel SkyBlock QoL**
+**A Fabric mod for Minecraft 1.21.11 focused on Hypixel SkyBlock QoL**
 
 </div>
 
-XenAddons is a Fabric mod for Minecraft **1.21.10** focused on Hypixel SkyBlock quality-of-life features.
+XenAddons is a Fabric mod for Minecraft **1.21.11** focused on Hypixel SkyBlock quality-of-life features.
 
 ## Compatibility
 
-- Minecraft: `1.21.10`
+- Minecraft: `1.21.11`
 - Mod loader: `Fabric`
 - Java: `21+`
 

@@ -132,8 +132,9 @@ public class AnotherRenderingUtil {
 
             Vec3d start = line.start.subtract(camPos);
             Vec3d end = line.end.subtract(camPos);
-            XenWorldRenderCompat.setLineWidth(Math.max(1.0f, line.lineWidth));
-            drawSimpleLine(buffer, matrices, start, end, r, g, b, 1.0f);
+            float lineWidth = Math.max(1.0f, line.lineWidth);
+            XenWorldRenderCompat.setLineWidth(lineWidth);
+            drawSimpleLine(buffer, matrices, start, end, r, g, b, 1.0f, lineWidth);
         }
     }
 
@@ -149,8 +150,9 @@ public class AnotherRenderingUtil {
             float b = line.color.getBlue() / 255f;
 
             Vec3d target = line.point.subtract(camPos);
-            XenWorldRenderCompat.setLineWidth(Math.max(1.0f, line.lineWidth));
-            drawSimpleLine(buffer, matrices, Vec3d.ZERO, target, r, g, b, 1.0f);
+            float lineWidth = Math.max(1.0f, line.lineWidth);
+            XenWorldRenderCompat.setLineWidth(lineWidth);
+            drawSimpleLine(buffer, matrices, Vec3d.ZERO, target, r, g, b, 1.0f, lineWidth);
         }
     }
 
@@ -198,12 +200,12 @@ public class AnotherRenderingUtil {
         return (float) Math.max(0.002f, pixelWidth * worldPerPixel);
     }
 
-    private static void drawSimpleLine(VertexConsumer buffer, MatrixStack matrices, Vec3d start, Vec3d end, float r, float g, float b, float a) {
+    private static void drawSimpleLine(VertexConsumer buffer, MatrixStack matrices, Vec3d start, Vec3d end, float r, float g, float b, float a, float lineWidth) {
         matrices.push();
         matrices.translate(start.x, start.y, start.z);
         Matrix4f matrix = matrices.peek().getPositionMatrix();
-        buffer.vertex(matrix, 0, 0, 0).color(r, g, b, a).normal(0, 1, 0);
-        buffer.vertex(matrix, (float) (end.x - start.x), (float) (end.y - start.y), (float) (end.z - start.z)).color(r, g, b, a).normal(0, 1, 0);
+        buffer.vertex(matrix, 0, 0, 0).color(r, g, b, a).normal(0, 1, 0).lineWidth(lineWidth);
+        buffer.vertex(matrix, (float) (end.x - start.x), (float) (end.y - start.y), (float) (end.z - start.z)).color(r, g, b, a).normal(0, 1, 0).lineWidth(lineWidth);
         matrices.pop();
     }
 

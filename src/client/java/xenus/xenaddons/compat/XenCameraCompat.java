@@ -7,6 +7,6 @@ public final class XenCameraCompat {
     private XenCameraCompat() {}
 
     public static Vec3d getPos(Camera camera) {
-        return camera.getPos();
+        return camera.getCameraPos();
     }
 }

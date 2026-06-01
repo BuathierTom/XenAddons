@@ -53,8 +53,9 @@ public class RenderUtils {
         matrices.translate(start.x - cameraPos.x, start.y - cameraPos.y, start.z - cameraPos.z);
         Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-        buffer.vertex(matrix, 0, 0, 0).color(r, g, b, a).normal(0, 1, 0);
-        buffer.vertex(matrix, (float)(end.x - start.x), (float)(end.y - start.y), (float)(end.z - start.z)).color(r, g, b, a).normal(0, 1, 0);
+        float lineWidth = Math.max(1.0f, width);
+        buffer.vertex(matrix, 0, 0, 0).color(r, g, b, a).normal(0, 1, 0).lineWidth(lineWidth);
+        buffer.vertex(matrix, (float)(end.x - start.x), (float)(end.y - start.y), (float)(end.z - start.z)).color(r, g, b, a).normal(0, 1, 0).lineWidth(lineWidth);
 
         matrices.pop();
     }
@@ -135,33 +136,37 @@ public class RenderUtils {
         float maxZ = (float)box.maxZ;
 
         // Bottom
-        buffer.vertex(matrix, minX, minY, minZ).color(r, g, b, a).normal(0, -1, 0);
-        buffer.vertex(matrix, maxX, minY, minZ).color(r, g, b, a).normal(0, -1, 0);
-        buffer.vertex(matrix, maxX, minY, minZ).color(r, g, b, a).normal(0, -1, 0);
-        buffer.vertex(matrix, maxX, minY, maxZ).color(r, g, b, a).normal(0, -1, 0);
-        buffer.vertex(matrix, maxX, minY, maxZ).color(r, g, b, a).normal(0, -1, 0);
-        buffer.vertex(matrix, minX, minY, maxZ).color(r, g, b, a).normal(0, -1, 0);
-        buffer.vertex(matrix, minX, minY, maxZ).color(r, g, b, a).normal(0, -1, 0);
-        buffer.vertex(matrix, minX, minY, minZ).color(r, g, b, a).normal(0, -1, 0);
+        lineVertex(matrix, buffer, minX, minY, minZ, r, g, b, a, 0, -1, 0);
+        lineVertex(matrix, buffer, maxX, minY, minZ, r, g, b, a, 0, -1, 0);
+        lineVertex(matrix, buffer, maxX, minY, minZ, r, g, b, a, 0, -1, 0);
+        lineVertex(matrix, buffer, maxX, minY, maxZ, r, g, b, a, 0, -1, 0);
+        lineVertex(matrix, buffer, maxX, minY, maxZ, r, g, b, a, 0, -1, 0);
+        lineVertex(matrix, buffer, minX, minY, maxZ, r, g, b, a, 0, -1, 0);
+        lineVertex(matrix, buffer, minX, minY, maxZ, r, g, b, a, 0, -1, 0);
+        lineVertex(matrix, buffer, minX, minY, minZ, r, g, b, a, 0, -1, 0);
         
         // Top
-        buffer.vertex(matrix, minX, maxY, minZ).color(r, g, b, a).normal(0, 1, 0);
-        buffer.vertex(matrix, maxX, maxY, minZ).color(r, g, b, a).normal(0, 1, 0);
-        buffer.vertex(matrix, maxX, maxY, minZ).color(r, g, b, a).normal(0, 1, 0);
-        buffer.vertex(matrix, maxX, maxY, maxZ).color(r, g, b, a).normal(0, 1, 0);
-        buffer.vertex(matrix, maxX, maxY, maxZ).color(r, g, b, a).normal(0, 1, 0);
-        buffer.vertex(matrix, minX, maxY, maxZ).color(r, g, b, a).normal(0, 1, 0);
-        buffer.vertex(matrix, minX, maxY, maxZ).color(r, g, b, a).normal(0, 1, 0);
-        buffer.vertex(matrix, minX, maxY, minZ).color(r, g, b, a).normal(0, 1, 0);
+        lineVertex(matrix, buffer, minX, maxY, minZ, r, g, b, a, 0, 1, 0);
+        lineVertex(matrix, buffer, maxX, maxY, minZ, r, g, b, a, 0, 1, 0);
+        lineVertex(matrix, buffer, maxX, maxY, minZ, r, g, b, a, 0, 1, 0);
+        lineVertex(matrix, buffer, maxX, maxY, maxZ, r, g, b, a, 0, 1, 0);
+        lineVertex(matrix, buffer, maxX, maxY, maxZ, r, g, b, a, 0, 1, 0);
+        lineVertex(matrix, buffer, minX, maxY, maxZ, r, g, b, a, 0, 1, 0);
+        lineVertex(matrix, buffer, minX, maxY, maxZ, r, g, b, a, 0, 1, 0);
+        lineVertex(matrix, buffer, minX, maxY, minZ, r, g, b, a, 0, 1, 0);
         
         // Verticals
-        buffer.vertex(matrix, minX, minY, minZ).color(r, g, b, a).normal(-1, 0, -1);
-        buffer.vertex(matrix, minX, maxY, minZ).color(r, g, b, a).normal(-1, 0, -1);
-        buffer.vertex(matrix, maxX, minY, minZ).color(r, g, b, a).normal(1, 0, -1);
-        buffer.vertex(matrix, maxX, maxY, minZ).color(r, g, b, a).normal(1, 0, -1);
-        buffer.vertex(matrix, maxX, minY, maxZ).color(r, g, b, a).normal(1, 0, 1);
-        buffer.vertex(matrix, maxX, maxY, maxZ).color(r, g, b, a).normal(1, 0, 1);
-        buffer.vertex(matrix, minX, minY, maxZ).color(r, g, b, a).normal(-1, 0, 1);
-        buffer.vertex(matrix, minX, maxY, maxZ).color(r, g, b, a).normal(-1, 0, 1);
+        lineVertex(matrix, buffer, minX, minY, minZ, r, g, b, a, -1, 0, -1);
+        lineVertex(matrix, buffer, minX, maxY, minZ, r, g, b, a, -1, 0, -1);
+        lineVertex(matrix, buffer, maxX, minY, minZ, r, g, b, a, 1, 0, -1);
+        lineVertex(matrix, buffer, maxX, maxY, minZ, r, g, b, a, 1, 0, -1);
+        lineVertex(matrix, buffer, maxX, minY, maxZ, r, g, b, a, 1, 0, 1);
+        lineVertex(matrix, buffer, maxX, maxY, maxZ, r, g, b, a, 1, 0, 1);
+        lineVertex(matrix, buffer, minX, minY, maxZ, r, g, b, a, -1, 0, 1);
+        lineVertex(matrix, buffer, minX, maxY, maxZ, r, g, b, a, -1, 0, 1);
+    }
+
+    private static void lineVertex(Matrix4f matrix, VertexConsumer buffer, float x, float y, float z, float r, float g, float b, float a, float nx, float ny, float nz) {
+        buffer.vertex(matrix, x, y, z).color(r, g, b, a).normal(nx, ny, nz).lineWidth(1.0f);
     }
 }

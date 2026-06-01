@@ -31,7 +31,7 @@ public class MixinTextRendererVisualWords {
         return XenTextCompat.replacePlainString(text);
     }
 
-    @ModifyVariable(method = "prepare(Lnet/minecraft/text/OrderedText;FFIZI)Lnet/minecraft/client/font/TextRenderer$GlyphDrawable;", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
+    @ModifyVariable(method = "prepare(Lnet/minecraft/text/OrderedText;FFIZZI)Lnet/minecraft/client/font/TextRenderer$GlyphDrawable;", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
     private OrderedText xenaddons$replaceOrderedPrepare(OrderedText text) {
         return XenTextCompat.replaceOrderedText(text);
     }

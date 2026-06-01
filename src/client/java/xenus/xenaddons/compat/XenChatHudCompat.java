@@ -29,7 +29,7 @@ public final class XenChatHudCompat {
         int mouseY = MathHelper.floor(client.mouse.getScaledY(window));
 
         context.createNewRootLayer();
-        chatHud.render(context, ticks, mouseX, mouseY, true);
+        chatHud.render(context, client.textRenderer, ticks, mouseX, mouseY, true, false);
         return true;
     }
 
@@ -53,18 +53,19 @@ public final class XenChatHudCompat {
     }
 
     public static double toChatLineX(ChatHud chatHud, double x) {
-        return x / chatHud.getChatScale() - 4.0;
+        return x / getChatScale(MinecraftClient.getInstance()) - 4.0;
     }
 
     public static double toChatLineY(ChatHud chatHud, double y) {
         MinecraftClient client = MinecraftClient.getInstance();
         double bottomOffset = client.getWindow().getScaledHeight() - y - 40.0;
-        return bottomOffset / (chatHud.getChatScale() * getLineHeight(client));
+        return bottomOffset / (getChatScale(client) * getLineHeight(client));
     }
 
     public static int getMessageLineIndex(ChatHud chatHud, double x, double y) {
         if (!chatHud.isChatFocused() || isChatHidden()) return -1;
-        if (x < -4.0 || x > MathHelper.floor(chatHud.getWidth() / chatHud.getChatScale())) return -1;
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (x < -4.0 || x > MathHelper.floor(getWidth(client) / getChatScale(client))) return -1;
 
         List<Visible> visibleMessages = getVisibleMessages(chatHud);
         int visibleLineCount = Math.min(chatHud.getVisibleLineCount(), visibleMessages.size());
@@ -93,6 +94,14 @@ public final class XenChatHudCompat {
 
     private static boolean isChatHidden() {
         return MinecraftClient.getInstance().options.getChatVisibility().getValue() == ChatVisibility.HIDDEN;
+    }
+
+    private static int getWidth(MinecraftClient client) {
+        return ChatHud.getWidth(client.options.getChatWidth().getValue());
+    }
+
+    private static double getChatScale(MinecraftClient client) {
+        return client.options.getChatScale().getValue();
     }
 
     private static int getLineHeight(MinecraftClient client) {
