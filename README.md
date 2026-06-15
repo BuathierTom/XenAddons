@@ -2,15 +2,22 @@
 
 <div align="center">
 
-<img src="https://img.shields.io/badge/Minecraft-1.21.11-5E7C16?style=for-the-badge" />
-<img src="https://img.shields.io/badge/Fabric-Mod-DB6E0D?style=for-the-badge" />
-<img src="https://img.shields.io/badge/Java-21+-007396?style=for-the-badge" />
-<img src="https://img.shields.io/badge/Version-1.3.4-7A3FE0?style=for-the-badge" />
-<img src="https://img.shields.io/badge/License-ARR-555555?style=for-the-badge" />
+[![Downloads](https://img.shields.io/modrinth/dt/xenaddons?style=for-the-badge&logo=modrinth&logoColor=007F43&label=Downloads&color=00AF5C)](https://modrinth.com/mod/xenaddons)
+[![Discord](https://img.shields.io/discord/1473269453213925492?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=1E3A8A)](https://discord.gg/yRbJJwGTPG)
+[![GitHub Version](https://img.shields.io/badge/GitHub-v1.3.4-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
+[![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-Portal-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
 ### A Fabric mod for Minecraft 1.21.11 focused on Hypixel SkyBlock QoL
 
 </div>
+
+---
+
+## Compatibility
+
+- Minecraft: `1.21.11`
+- Mod loader: `Fabric`
+- Java: `21+`
 
 ---
 
@@ -20,7 +27,10 @@
 - `/xa hud` → Open HUD editor
 - `/pcc` → Shortcut for `/chat party`
 
-Debug commands (`Debug` enabled):
+### Debug Commands
+
+Available when `Debug` is enabled:
+
 - `/xa title`
 - `/xa petrule`
 - `/xa ticlass`
@@ -29,76 +39,97 @@ Debug commands (`Debug` enabled):
 - `/xa gate`
 - `/xa milestone`
 - `/xa mask`
+- `/xa mask has`
+- `/xa mask nomask`
 - `/xa pf <pseudo>`
 
 ---
 
 ## Features
 
-### Category: DUNGEON
+### Category: MISC
 
-- **AutoPet Title**: Replaces AutoPet equip messages with HUD notifications.
-- **Pos Message**: Sends party callouts at configured dungeon spots.
-- **Pos Titles**: Displays teammate callouts as HUD text.
-- **SecretRoutes**: Dungeon routes, secret rendering, waypoints, and room tracking.
-- **Players Leaped**: Shows leap progress (`x/4`) in F7 terms zones.
-- **Milestone Reminder**: HUD reminders for missing dungeon milestones.
-- **Invisibility Timer**: Tracks Bonzo, Spirit, and Phoenix invulnerability timers.
-- **Dungeon Not Full Alert**: Warns if the party is not full.
-- **Bat Death Alert**: Alerts when dungeon bats die.
-- **Better Party Finder**: Enhanced PF messages with quick actions.
-- **Item Quality**: Displays dungeon item quality bonuses.
+- **Bazaar/AH Quick Search** → Search hovered items instantly.
+- **Command Aliases** → Useful SkyBlock shortcuts.
+- **Compact Potion Message** → Cleaner potion effect messages.
+- **Cooldown Items** → Item ability cooldown overlay.
+- **Copy Chat** → Right-click messages to copy chat text.
+- **Cursor 1.8.9** → Legacy-style inventory cursor behavior.
+- **Custom Hyperion Sound** → Replace Wither Blade sounds.
+- **Experimentation Table Solver** → Chronomatron, Ultrasequencer & Superpairs solver.
+- **InvButtons** → Configurable inventory buttons.
+- **Item Price** → Bazaar & Lowest BIN tooltip prices.
+- **Lava Replacement** → Replaces lava visuals with water visuals.
+- **Peek Chat** → Temporarily expand chat without opening it.
+- **Spotify Overlay** → Displays currently playing Spotify song.
+- **ZguegAddons** → Chat, dungeon, and party QoL tools.
 
-### Category: GENERAL
+### Category: DUNGEONS
 
-- **Command Aliases**: Multiple SkyBlock shortcut commands.
-- **Cursor 1.8.9**: Legacy cursor behavior.
-- **Copy Chat**: Right-click to copy chat messages.
-- **Lava Replacement**: Renders lava as water visuals.
-- **Compact Potion Message**: Cleaner potion effect messages.
-- **Cooldown Items**: Item cooldown overlay.
-- **Custom Hyperion Sound**: Replace hype sounds.
-- **Experimentation Table Solver**: Chronomatron, Ultrasequencer, Superpairs.
-- **Item Price**: Bazaar and Lowest BIN tooltip prices.
-- **Bazaar/AH Quick Search**: Search hovered items instantly.
-- **Peek Chat**: Temporary expanded chat view.
-- **Spotify Overlay**: HUD for currently playing Spotify track.
-- **InvButtons**: Configurable inventory buttons.
-
-### Category: ZGUEGADDONS
-
-- **Chat Tools**: Chat hider, Implosion filter, radio filter.
-- **Dungeon Tools**: 5 crypt notify, class notify.
-- **Party Commands**: `!boom`, `!rng`, `!gay`, `!racist`, `!py`, `!gwer`, `!size`
+- **AutoPet Title** → HUD notifications for AutoPet messages.
+- **Bat Death Alert** → Alerts when bats die in dungeons.
+- **Better Party Finder** → Enhanced PF stats and quick actions.
+- **Dungeon Not Full Alert** → Warns if your party is incomplete.
+- **Invisibility Timer** → Tracks Bonzo, Spirit, and Phoenix invulnerability.
+- **Item Quality** → Dungeon item quality tooltip.
+- **Mask Reminder** → Reminds you to equip dungeon masks.
+- **Milestone Reminder** → Dungeon milestone HUD reminders.
+- **Players Leaped** → Displays leap progress in F7 terms.
+- **Pos Message** → Party callouts at configured spots.
+- **Pos Titles** → Displays teammate callouts as HUD text.
+- **Reminder Gate** → Gate reminder from lever progress.
+- **SecretRoutes** → Dungeon routes, secrets, and room helpers.
 
 ### Category: DEV
 
-- **Config GUI**: Theme color and GUI tweaks.
-- **Custom Size**: Custom player scaling from JSON.
-- **Edit HUD**: Move, scale, and reset HUD elements.
-- **Debug**: Enables development/testing tools.
+- **Config GUI** → Customize GUI appearance and theme settings.
+- **Cosmetics** → Custom names and player scaling.
+- **Custom Size** → Applies per-player custom scale.
+- **Edit HUD** → Move, scale, and reset HUD elements.
+- **Debug** → Internal testing and debugging tools.
 
 ---
 
 ## Visual Words / Custom Data
 
-Primary API:
-- `https://api.xenus.fr/`
+The mod uses a unified cosmetics snapshot.
 
-Fallback:
-- `assets/xenaddons/visual/cosmeticPeople.json`
+### Primary API
 
-Cosmetics login:
-- `https://addons.xenus.fr/login`
+```txt
+https://api.xenus.fr/
+````
+
+### Fallback Source
+
+```txt
+assets/xenaddons/visual/cosmeticPeople.json
+```
+
+Features:
+
+* Visual name replacements
+* Custom player scale
+* UUID-based mapping for stable behavior across nick/display changes
+
+### Cosmetics Portal
+
+```txt
+https://addons.xenus.fr/login
+```
 
 ---
 
 ## Update Checker
 
-- Checks updates on Modrinth
-- Shows update status in chat
-- Auto-downloads latest release to `mods/`
-- Requires restart after update
+* Runs once on first connection each launch
+* Checks latest release on Modrinth
+* Shows update status in chat:
+
+  * Checking update
+  * Update available / Up-to-date
+* Downloads the latest jar directly to `mods/`
+* Requires restart after updating
 
 ---
 
@@ -106,7 +137,7 @@ Cosmetics login:
 
 ```txt
 .minecraft/config/xenaddons_config.json
-````
+```
 
 ---
 
