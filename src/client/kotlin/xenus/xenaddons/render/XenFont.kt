@@ -1,10 +1,10 @@
-package xenus.xenaddons.gui.odin.ui.rendering
+package xenus.xenaddons.render
 
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class Font(
+class XenFont(
     val name: String,
     inputStream: InputStream
 ) {
@@ -20,5 +20,5 @@ class Font(
     override fun hashCode(): Int = name.hashCode()
 
     override fun equals(other: Any?): Boolean =
-        other is Font && name == other.name
+        other is XenFont && name == other.name
 }

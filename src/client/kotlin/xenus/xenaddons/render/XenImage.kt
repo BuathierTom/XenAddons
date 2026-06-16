@@ -1,4 +1,4 @@
-package xenus.xenaddons.gui.odin.ui.rendering
+package xenus.xenaddons.render
 
 import org.lwjgl.system.MemoryUtil
 import java.io.File
@@ -7,7 +7,7 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.file.Files
 
-class Image(
+class XenImage(
     val identifier: String,
     val isSvg: Boolean = identifier.endsWith(".svg", true),
     private val streamSupplier: () -> InputStream = { openStream(identifier) }
@@ -26,7 +26,7 @@ class Image(
 
     fun openFreshStream(): InputStream = streamSupplier()
 
-    override fun equals(other: Any?): Boolean = other is Image && identifier == other.identifier
+    override fun equals(other: Any?): Boolean = other is XenImage && identifier == other.identifier
 
     override fun hashCode(): Int = identifier.hashCode()
 
@@ -38,7 +38,7 @@ class Image(
                 return Files.newInputStream(file.toPath())
             }
 
-            return Image::class.java.getResourceAsStream(trimmed)
+            return XenImage::class.java.getResourceAsStream(trimmed)
                 ?: throw FileNotFoundException(trimmed)
         }
     }

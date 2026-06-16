@@ -1,7 +1,7 @@
 package xenus.xenaddons;
 
 import xenus.xenaddons.gui.GuiInvButtonMenu;
-import xenus.xenaddons.gui.odin.ui.rendering.NVGSpecialGuiElementRenderer;
+import xenus.xenaddons.render.nvg.XenNvgSpecialElementRenderer;
 import xenus.xenaddons.utils.HypixelItemManager;
 import xenus.xenaddons.utils.KotlinGuiBridge;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -28,7 +28,7 @@ public class XenAddonsClient implements ClientModInitializer {
 		// Initialize Modules
 		xenus.xenaddons.features.ModuleManager.init();
 
-		SpecialGuiElementRegistry.register(context -> new NVGSpecialGuiElementRenderer(context.vertexConsumers()));
+		SpecialGuiElementRegistry.register(context -> new XenNvgSpecialElementRenderer(context.vertexConsumers()));
 
         // Initialize Utilities
         xenus.xenaddons.utils.DungeonUtils.init();

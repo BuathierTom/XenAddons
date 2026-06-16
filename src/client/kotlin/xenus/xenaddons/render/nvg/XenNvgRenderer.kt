@@ -1,4 +1,8 @@
-package xenus.xenaddons.gui.odin.ui.rendering
+package xenus.xenaddons.render.nvg
+
+import xenus.xenaddons.render.XenFont
+import xenus.xenaddons.render.XenGradient
+import xenus.xenaddons.render.XenImage
 
 import net.minecraft.client.MinecraftClient
 import org.lwjgl.nanovg.NVGColor
@@ -66,21 +70,21 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
 
-object NVGRenderer {
+object XenNvgRenderer {
     private val nvgPaint = NVGPaint.malloc()
     private val nvgColor = NVGColor.malloc()
     private val nvgColor2 = NVGColor.malloc()
 
-    val defaultFont = Font(
+    val defaultFont = XenFont(
         "Default",
-        requireNotNull(NVGRenderer::class.java.getResourceAsStream("/assets/xenaddons/odin/font.ttf")) {
-            "Missing Odin font resource"
+        requireNotNull(XenNvgRenderer::class.java.getResourceAsStream("/assets/xenaddons/render/font.ttf")) {
+            "Missing XenAddons render font resource"
         }
     )
 
-    private val fontMap = HashMap<Font, NVGFont>()
+    private val fontMap = HashMap<XenFont, NVGFont>()
     private val fontBounds = FloatArray(4)
-    private val images = HashMap<Image, NVGImage>()
+    private val images = HashMap<XenImage, NVGImage>()
 
     private var scissor: Scissor? = null
     private var drawing = false
@@ -198,7 +202,7 @@ object NVGRenderer {
         nvgStroke(vg)
     }
 
-    fun gradientRect(x: Float, y: Float, width: Float, height: Float, color1: Int, color2: Int, gradient: Gradient, radius: Float = 0f) {
+    fun gradientRect(x: Float, y: Float, width: Float, height: Float, color1: Int, color2: Int, gradient: XenGradient, radius: Float = 0f) {
         nvgBeginPath(vg)
         if (radius > 0f) {
             nvgRoundedRect(vg, x, y, width, height, radius)
@@ -241,7 +245,7 @@ object NVGRenderer {
         nvgFill(vg)
     }
 
-    fun text(text: String, x: Float, y: Float, size: Float, color: Int, font: Font = defaultFont) {
+    fun text(text: String, x: Float, y: Float, size: Float, color: Int, font: XenFont = defaultFont) {
         nvgFontSize(vg, size)
         nvgFontFaceId(vg, getFontId(font))
         color(color)
@@ -249,7 +253,7 @@ object NVGRenderer {
         nvgText(vg, x, y + 0.5f, text)
     }
 
-    fun textShadow(text: String, x: Float, y: Float, size: Float, color: Int, font: Font = defaultFont) {
+    fun textShadow(text: String, x: Float, y: Float, size: Float, color: Int, font: XenFont = defaultFont) {
         nvgFontFaceId(vg, getFontId(font))
         nvgFontSize(vg, size)
         color(0xFF000000.toInt())
@@ -261,13 +265,13 @@ object NVGRenderer {
         nvgText(vg, round(x), round(y), text)
     }
 
-    fun textWidth(text: String, size: Float, font: Font = defaultFont): Float {
+    fun textWidth(text: String, size: Float, font: XenFont = defaultFont): Float {
         nvgFontSize(vg, size)
         nvgFontFaceId(vg, getFontId(font))
         return nvgTextBounds(vg, 0f, 0f, text, fontBounds)
     }
 
-    fun drawWrappedString(text: String, x: Float, y: Float, width: Float, size: Float, color: Int, font: Font = defaultFont, lineHeight: Float = 1f) {
+    fun drawWrappedString(text: String, x: Float, y: Float, width: Float, size: Float, color: Int, font: XenFont = defaultFont, lineHeight: Float = 1f) {
         nvgFontSize(vg, size)
         nvgFontFaceId(vg, getFontId(font))
         nvgTextLineHeight(vg, lineHeight)
@@ -276,7 +280,7 @@ object NVGRenderer {
         nvgTextBox(vg, x, y, width, text)
     }
 
-    fun wrappedTextBounds(text: String, width: Float, size: Float, font: Font = defaultFont, lineHeight: Float = 1f): FloatArray {
+    fun wrappedTextBounds(text: String, width: Float, size: Float, font: XenFont = defaultFont, lineHeight: Float = 1f): FloatArray {
         val bounds = FloatArray(4)
         nvgFontSize(vg, size)
         nvgFontFaceId(vg, getFontId(font))
@@ -316,7 +320,7 @@ object NVGRenderer {
         nvgFill(vg)
     }
 
-    fun image(image: Image, x: Float, y: Float, width: Float, height: Float, radius: Float = 0f) {
+    fun image(image: XenImage, x: Float, y: Float, width: Float, height: Float, radius: Float = 0f) {
         nvgImagePattern(vg, x, y, width, height, 0f, getImage(image), 1f, nvgPaint)
         nvgBeginPath(vg)
         if (radius > 0f) {
@@ -328,8 +332,8 @@ object NVGRenderer {
         nvgFill(vg)
     }
 
-    fun createImage(resourcePath: String): Image {
-        val image = images.keys.find { it.identifier == resourcePath } ?: Image(resourcePath)
+    fun createImage(resourcePath: String): XenImage {
+        val image = images.keys.find { it.identifier == resourcePath } ?: XenImage(resourcePath)
         if (image.isSvg) {
             images.getOrPut(image) { NVGImage(0, loadSvg(image)) }.count++
         } else {
@@ -338,7 +342,7 @@ object NVGRenderer {
         return image
     }
 
-    fun deleteImage(image: Image) {
+    fun deleteImage(image: XenImage) {
         val nvgImage = images[image] ?: return
         nvgImage.count--
         if (nvgImage.count == 0) {
@@ -347,10 +351,10 @@ object NVGRenderer {
         }
     }
 
-    private fun getImage(image: Image): Int =
-        images[image]?.nvg ?: throw IllegalStateException("Image (${image.identifier}) is not registered")
+    private fun getImage(image: XenImage): Int =
+        images[image]?.nvg ?: throw IllegalStateException("XenImage (${image.identifier}) is not registered")
 
-    private fun loadImage(image: Image): Int {
+    private fun loadImage(image: XenImage): Int {
         val width = IntArray(1)
         val height = IntArray(1)
         val channels = IntArray(1)
@@ -359,7 +363,7 @@ object NVGRenderer {
         return nvgCreateImageRGBA(vg, width[0], height[0], 0, buffer)
     }
 
-    private fun loadSvg(image: Image): Int {
+    private fun loadSvg(image: XenImage): Int {
         val source = image.openFreshStream().use { it.bufferedReader().readText() }
         val svg = nsvgParse(source, "px", 96f) ?: throw IllegalStateException("Failed to parse ${image.identifier}")
         val width = svg.width().toInt()
@@ -387,15 +391,15 @@ object NVGRenderer {
         nvgRGBA(color2.red.toByte(), color2.green.toByte(), color2.blue.toByte(), color2.alpha.toByte(), nvgColor2)
     }
 
-    private fun gradient(color1: Int, color2: Int, x: Float, y: Float, width: Float, height: Float, direction: Gradient) {
+    private fun gradient(color1: Int, color2: Int, x: Float, y: Float, width: Float, height: Float, direction: XenGradient) {
         color(color1, color2)
         when (direction) {
-            Gradient.LeftToRight -> nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, nvgPaint)
-            Gradient.TopToBottom -> nvgLinearGradient(vg, x, y, x, y + height, nvgColor, nvgColor2, nvgPaint)
+            XenGradient.LeftToRight -> nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, nvgPaint)
+            XenGradient.TopToBottom -> nvgLinearGradient(vg, x, y, x, y + height, nvgColor, nvgColor2, nvgPaint)
         }
     }
 
-    private fun getFontId(font: Font): Int {
+    private fun getFontId(font: XenFont): Int {
         return fontMap.getOrPut(font) {
             val buffer = font.buffer()
             NVGFont(nvgCreateFontMem(vg, font.name, buffer, false), buffer)

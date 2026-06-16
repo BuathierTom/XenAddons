@@ -1,4 +1,4 @@
-package xenus.xenaddons.gui.odin.ui.rendering
+package xenus.xenaddons.render.nvg
 
 import com.mojang.blaze3d.opengl.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
@@ -11,12 +11,12 @@ import net.minecraft.client.util.math.MatrixStack
 import org.lwjgl.opengl.GL33C
 import kotlin.math.min
 
-class NVGSpecialGuiElementRenderer(vertexConsumers: VertexConsumerProvider.Immediate) :
-    SpecialGuiElementRenderer<NanoVgGuiElementRenderState>(vertexConsumers) {
+class XenNvgSpecialElementRenderer(vertexConsumers: VertexConsumerProvider.Immediate) :
+    SpecialGuiElementRenderer<XenNvgRenderState>(vertexConsumers) {
 
-    override fun getElementClass(): Class<NanoVgGuiElementRenderState> = NanoVgGuiElementRenderState::class.java
+    override fun getElementClass(): Class<XenNvgRenderState> = XenNvgRenderState::class.java
 
-    override fun render(state: NanoVgGuiElementRenderState, matrices: MatrixStack) {
+    override fun render(state: XenNvgRenderState, matrices: MatrixStack) {
         val colorView = RenderSystem.outputColorTextureOverride as? GlTextureView ?: return
         val depthView = RenderSystem.outputDepthTextureOverride as? GlTextureView ?: return
         val device = RenderSystem.getDevice() as? GlBackend ?: return
@@ -45,12 +45,12 @@ class NVGSpecialGuiElementRenderer(vertexConsumers: VertexConsumerProvider.Immed
             GlStateManager._disableScissorTest()
             GL33C.glBindSampler(0, 0)
 
-            NVGRenderer.beginFrame(pixelWidth.toFloat(), pixelHeight.toFloat(), devicePixelRatio)
+            XenNvgRenderer.beginFrame(pixelWidth.toFloat(), pixelHeight.toFloat(), devicePixelRatio)
             frameStarted = true
             state.renderContent().run()
         } finally {
             if (frameStarted) {
-                NVGRenderer.endFrame()
+                XenNvgRenderer.endFrame()
             }
 
             RenderSystem.setupDefaultState()

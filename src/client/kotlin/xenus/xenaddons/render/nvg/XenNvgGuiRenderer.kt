@@ -1,9 +1,9 @@
-package xenus.xenaddons.gui.odin.ui.rendering
+package xenus.xenaddons.render.nvg
 
 import net.minecraft.client.gui.DrawContext
 import xenus.xenaddons.mixin.client.AccessorDrawContext
 
-object NVGPIPRenderer {
+object XenNvgGuiRenderer {
     fun draw(
         context: DrawContext,
         x: Int,
@@ -14,7 +14,7 @@ object NVGPIPRenderer {
     ) {
         if (width <= 0 || height <= 0) return
 
-        val state = NanoVgGuiElementRenderState(
+        val state = XenNvgRenderState(
             x,
             y,
             x + width,

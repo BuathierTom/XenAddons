@@ -5,7 +5,7 @@ import net.minecraft.client.input.CharInput
 import net.minecraft.client.input.KeyInput
 import net.minecraft.util.StringHelper
 import org.lwjgl.glfw.GLFW
-import xenus.xenaddons.gui.odin.ui.rendering.NVGRenderer
+import xenus.xenaddons.render.XenRenderer
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -65,15 +65,15 @@ class TextInputHandler(
 
         val startX = x + 4f + min(caretX, caretX + selectionWidth) - textOffset
         if (selectionWidth != 0f) {
-            NVGRenderer.pushScissor(x, y, width, height)
-            NVGRenderer.rect(startX, y + 1f, abs(selectionWidth), height - 2f, selectionColor, 3f)
-            NVGRenderer.popScissor()
+            XenRenderer.pushScissor(x, y, width, height)
+            XenRenderer.rect(startX, y + 1f, abs(selectionWidth), height - 2f, selectionColor, 3f)
+            XenRenderer.popScissor()
         }
 
         if (listening) {
             val time = System.currentTimeMillis()
             if (time - caretBlinkTime < 500) {
-                NVGRenderer.line(
+                XenRenderer.line(
                     x + caretX + 4f - textOffset,
                     y + 2f,
                     x + caretX + 4f - textOffset,
@@ -86,9 +86,9 @@ class TextInputHandler(
             }
         }
 
-        NVGRenderer.pushScissor(x, y, width, height)
-        NVGRenderer.text(text, x + 4f - textOffset, y + 2f, height - 4f, textColor, NVGRenderer.defaultFont)
-        NVGRenderer.popScissor()
+        XenRenderer.pushScissor(x, y, width, height)
+        XenRenderer.text(text, x + 4f - textOffset, y + 2f, height - 4f, textColor, XenRenderer.defaultFont)
+        XenRenderer.popScissor()
     }
 
     fun mouseClicked(mouseX: Float, mouseY: Float, button: Int): Boolean {
@@ -390,7 +390,7 @@ class TextInputHandler(
         updateCaretPosition()
     }
 
-    private fun textWidth(value: String): Float = NVGRenderer.textWidth(value, height - 4f, NVGRenderer.defaultFont)
+    private fun textWidth(value: String): Float = XenRenderer.textWidth(value, height - 4f, XenRenderer.defaultFont)
 
     private fun isHovered(mouseX: Float, mouseY: Float): Boolean =
         mouseX in x..(x + width) && mouseY in y..(y + height)
