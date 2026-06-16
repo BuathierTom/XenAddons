@@ -102,18 +102,8 @@ public final class SpotifyNowPlaying {
     }
 
     private static void refreshWindowsLikeSoopy() {
-        String currentSong = getSongFromPid(spotifyProcessId);
-        if (currentSong == null) {
-            spotifyProcessId = -1;
-            for (Integer pid : getSpotifyPids()) {
-                String song = getSongFromPid(pid);
-                if (song != null) {
-                    spotifyProcessId = pid;
-                    currentSong = song;
-                    break;
-                }
-            }
-        }
+        String currentSong = getWindowsSpotifyWindowTitle();
+        if (currentSong == null) currentSong = getWindowsSpotifyTasklistTitle();
 
         if (currentSong == null) {
             artist = "";
@@ -275,6 +265,63 @@ public final class SpotifyNowPlaying {
         NEXT
     }
 
+    private static String getWindowsSpotifyWindowTitle() {
+        Process process = null;
+        try {
+            String script = "$enc=New-Object System.Text.UTF8Encoding $false;"
+                + "[Console]::OutputEncoding=$enc;"
+                + "$OutputEncoding=$enc;"
+                + "Get-Process -Name Spotify -ErrorAction SilentlyContinue | "
+                + "Where-Object { $_.MainWindowTitle -and $_.MainWindowTitle.Trim().Length -gt 0 } | "
+                + "ForEach-Object { $_.MainWindowTitle }";
+            process = new ProcessBuilder(
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                script
+            ).start();
+
+            String pausedCandidate = null;
+            try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String windowTitle = line.trim();
+                    if (windowTitle.isBlank()) continue;
+                    if (isPausedWindowTitle(windowTitle)) {
+                        pausedCandidate = "__PAUSED__";
+                        continue;
+                    }
+                    return windowTitle;
+                }
+            }
+
+            process.waitFor(1500, TimeUnit.MILLISECONDS);
+            return pausedCandidate;
+        } catch (Exception ignored) {
+            return null;
+        } finally {
+            if (process != null && process.isAlive()) process.destroyForcibly();
+        }
+    }
+
+    private static String getWindowsSpotifyTasklistTitle() {
+        String currentSong = getSongFromPid(spotifyProcessId);
+        if (currentSong != null) return currentSong;
+
+        spotifyProcessId = -1;
+        for (Integer pid : getSpotifyPids()) {
+            String song = getSongFromPid(pid);
+            if (song != null) {
+                spotifyProcessId = pid;
+                return song;
+            }
+        }
+        return null;
+    }
+
     private static List<Integer> getSpotifyPids() {
         List<Integer> out = new ArrayList<>();
         Process process = null;
@@ -318,9 +365,7 @@ public final class SpotifyNowPlaying {
                     if (parts.length < 9) continue;
                     String status = parts[parts.length - 1];
                     if ("N/A".equalsIgnoreCase(status)) continue;
-                    if ("Spotify Free".equalsIgnoreCase(status)
-                        || "Spotify Premium".equalsIgnoreCase(status)
-                        || "AngleHiddenWindow".equalsIgnoreCase(status)) {
+                    if (isPausedWindowTitle(status)) {
                         return "__PAUSED__";
                     }
                     return status;
@@ -332,6 +377,12 @@ public final class SpotifyNowPlaying {
             if (process != null && process.isAlive()) process.destroyForcibly();
         }
         return null;
+    }
+
+    private static boolean isPausedWindowTitle(String title) {
+        return "Spotify Free".equalsIgnoreCase(title)
+            || "Spotify Premium".equalsIgnoreCase(title)
+            || "AngleHiddenWindow".equalsIgnoreCase(title);
     }
 
     private static String[] parseCsvLine(String line) {

@@ -375,10 +375,12 @@ public class SpotifyOverlayModule extends Module {
         int ellipsisWidth = mc.textRenderer.getWidth(ellipsis);
         int targetWidth = Math.max(0, maxUnscaledWidth - ellipsisWidth);
         StringBuilder out = new StringBuilder();
-        for (int i = 0; i < clean.length(); i++) {
-            char c = clean.charAt(i);
-            if (mc.textRenderer.getWidth(out.toString() + c) > targetWidth) break;
-            out.append(c);
+        for (int offset = 0; offset < clean.length();) {
+            int codePoint = clean.codePointAt(offset);
+            String next = new String(Character.toChars(codePoint));
+            if (mc.textRenderer.getWidth(out.toString() + next) > targetWidth) break;
+            out.append(next);
+            offset += Character.charCount(codePoint);
         }
         return out + ellipsis;
     }

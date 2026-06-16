@@ -82,6 +82,11 @@ object ConfigManager {
         return value.lowercase().replace("[^a-z0-9]+".toRegex(), "_").trim('_')
     }
 
+    private fun isInventoryButtonsModule(moduleName: String): Boolean {
+        return moduleName.equals("InvButtons", ignoreCase = true) ||
+            moduleName.equals("Inventory Buttons", ignoreCase = true)
+    }
+
     private fun resolveSectionName(
         moduleName: String,
         setting: Setting<*>,
@@ -134,9 +139,9 @@ object ConfigManager {
             is KeybindSetting -> ElementType.Keybind(setting.value)
             is ActionSetting -> {
                 val buttonText = when {
-                    moduleName.equals("InvButtons", ignoreCase = true) &&
+                    isInventoryButtonsModule(moduleName) &&
                         setting.name.equals("Edit Buttons Position", ignoreCase = true) -> "Edit buttons"
-                    moduleName.equals("InvButtons", ignoreCase = true) &&
+                    isInventoryButtonsModule(moduleName) &&
                         setting.name.equals("Profiles & Advanced", ignoreCase = true) -> "Configuration menu"
                     else -> setting.name
                 }

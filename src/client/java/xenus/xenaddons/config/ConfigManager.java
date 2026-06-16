@@ -9,6 +9,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.misc.CustomSizeModule;
+import xenus.xenaddons.features.impl.misc.InvButtonsModule;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ColorSetting;
 import xenus.xenaddons.settings.KeybindSetting;
@@ -130,6 +131,10 @@ public class ConfigManager {
 
         if (module instanceof CustomSizeModule && modulesObj.has("Custom Size")) {
             return modulesObj.get("Custom Size");
+        }
+
+        if (module instanceof InvButtonsModule && modulesObj.has("InvButtons")) {
+            return modulesObj.get("InvButtons");
         }
 
         return null;
