@@ -51,8 +51,14 @@ object XenRenderer {
     fun rect(x: Float, y: Float, width: Float, height: Float, color: Int) =
         XenNvgRenderer.rect(x, y, width, height, color)
 
+    fun beveledRect(x: Float, y: Float, width: Float, height: Float, color: Int, cut: Float) =
+        XenNvgRenderer.beveledRect(x, y, width, height, color, cut)
+
     fun hollowRect(x: Float, y: Float, width: Float, height: Float, thickness: Float, color: Int, radius: Float) =
         XenNvgRenderer.hollowRect(x, y, width, height, thickness, color, radius)
+
+    fun hollowBeveledRect(x: Float, y: Float, width: Float, height: Float, thickness: Float, color: Int, cut: Float) =
+        XenNvgRenderer.hollowBeveledRect(x, y, width, height, thickness, color, cut)
 
     fun gradientRect(
         x: Float,

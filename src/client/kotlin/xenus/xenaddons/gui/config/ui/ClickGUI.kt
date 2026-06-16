@@ -57,6 +57,10 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
     private const val BASE_LAYOUT_HEIGHT = 640f
     private const val MAX_UI_SCALE = 0.82f
     private const val UI_SCALE_MULTIPLIER = 0.6f
+    private const val PANEL_CUT = 10f
+    private const val ROW_CUT = 7f
+    private const val FIELD_CUT = 6f
+    private const val CHOICE_ROW_HEIGHT = 22f
 
     private val categoryOrder = listOf("misc", "dungeons", "dev")
     private val configListeners = mutableMapOf<String, MutableList<(Any) -> Unit>>()
@@ -291,8 +295,8 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         val x = tooltip.x.coerceAtMost(layoutWidth - width - 12f)
         val y = tooltip.y.coerceAtMost(layoutHeight - height - 12f)
 
-        XenRenderer.rect(x, y, width, height, Theme.BgLight.color, 5f)
-        XenRenderer.hollowRect(x, y, width, height, 1.5f, Theme.Primary.color, 5f)
+        XenRenderer.rect(x, y, width, height, Theme.BgLight.color, FIELD_CUT)
+        XenRenderer.hollowRect(x, y, width, height, 1.25f, Theme.Primary.color, FIELD_CUT)
         XenRenderer.drawWrappedString(tooltip.text, x + 8f, y + 8f, 300f, 15f, Theme.Text.color)
     }
 
@@ -350,9 +354,10 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             x = ClickGUI.layoutWidth / 2f - SEARCH_WIDTH / 2f
             y = ClickGUI.searchBarY()
 
-            XenRenderer.dropShadow(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, 6f, 0.5f, 7f)
-            XenRenderer.rect(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, Theme.BgLight.color, 7f)
-            XenRenderer.hollowRect(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, 1.25f, Theme.Primary.withAlpha(0.72f), 7f)
+            XenRenderer.dropShadow(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, 7f, 0.5f, PANEL_CUT)
+            XenRenderer.beveledRect(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, Theme.BgLight.color, PANEL_CUT)
+            XenRenderer.hollowBeveledRect(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, 1.25f, Theme.Primary.withAlpha(0.72f), PANEL_CUT)
+            XenRenderer.beveledRect(x + 9f, y + 8f, 5f, SEARCH_HEIGHT - 16f, Theme.Primary.color, 2f)
 
             val hudButtonX = x + SEARCH_WIDTH - SEARCH_HEIGHT
             hudHover.handle(mouseX, mouseY, hudButtonX, y, SEARCH_HEIGHT, SEARCH_HEIGHT)
@@ -360,25 +365,32 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
                 ClickGUI.setTooltip("HUD Editor", hudButtonX - 6f, y + SEARCH_HEIGHT + 8f, hudHover)
             }
 
-            XenRenderer.line(hudButtonX, y + 6f, hudButtonX, y + SEARCH_HEIGHT - 6f, 1f, Theme.Border.color)
+            XenRenderer.line(hudButtonX, y + 7f, hudButtonX, y + SEARCH_HEIGHT - 7f, 1f, Theme.Border.color)
+            XenRenderer.beveledRect(
+                hudButtonX + 6f,
+                y + 6f,
+                SEARCH_HEIGHT - 12f,
+                SEARCH_HEIGHT - 12f,
+                if (hudHover.isHovered) Theme.shift(Theme.BgLight.color, 1.16f) else Theme.Bg.color,
+                FIELD_CUT
+            )
             XenRenderer.image(movementImage, hudButtonX + 11f, y + 11f, 18f, 18f)
 
             val placeholder = "Search here..."
             val currentText = query
             if (currentText.isEmpty()) {
-                val placeholderWidth = XenRenderer.textWidth(placeholder, 20f)
                 XenRenderer.text(
                     placeholder,
-                    x + (SEARCH_WIDTH - SEARCH_HEIGHT) / 2f - placeholderWidth / 2f,
+                    x + 42f,
                     y + 10f,
                     20f,
                     Theme.TextMuted.color
                 )
             }
 
-            inputHandler.x = x + 12f
+            inputHandler.x = x + 38f
             inputHandler.y = y + 9f
-            inputHandler.width = SEARCH_WIDTH - SEARCH_HEIGHT - 18f
+            inputHandler.width = SEARCH_WIDTH - SEARCH_HEIGHT - 48f
             inputHandler.height = 22f
             inputHandler.draw(mouseX, mouseY, Theme.Primary.withAlpha(0.28f), Theme.Text.color, Theme.Text.color)
         }
@@ -425,7 +437,6 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         initialX: Float,
         initialY: Float
     ) {
-        private val titleWidth = XenRenderer.textWidth(category.name, 22f)
         private val features = category.features.sortedBy { it.featureName.lowercase() }.map { FeatureEntry(it) }
 
         var x = initialX
@@ -464,21 +475,22 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             scrollOffset = scrollOffset.coerceIn(-maxScroll, 0f)
             totalHeight = PANEL_HEADER_HEIGHT + bodyHeight
 
-            XenRenderer.dropShadow(x, y, PANEL_WIDTH, totalHeight, 7f, 1.5f, 5f)
-            XenRenderer.rect(x, y, PANEL_WIDTH, totalHeight, Theme.Bg.color, 5f)
-            XenRenderer.rect(
-                x,
-                y,
-                PANEL_WIDTH,
-                PANEL_HEADER_HEIGHT,
-                if (headerHover) Theme.shift(Theme.Bg.color, 1.08f) else Theme.Bg.color,
-                6f
-            )
+            XenRenderer.dropShadow(x, y, PANEL_WIDTH, totalHeight, 8f, 1.5f, PANEL_CUT)
+            XenRenderer.beveledRect(x, y, PANEL_WIDTH, totalHeight, Theme.Bg.color, PANEL_CUT)
+            XenRenderer.hollowBeveledRect(x, y, PANEL_WIDTH, totalHeight, 1f, Theme.Border.withAlpha(0.9f), PANEL_CUT)
+
+            val headerColor = if (headerHover) Theme.shift(Theme.Bg.color, 1.12f) else Theme.Bg.color
+            XenRenderer.beveledRect(x, y, PANEL_WIDTH, PANEL_HEADER_HEIGHT, headerColor, PANEL_CUT)
+            XenRenderer.rect(x + 1f, y + PANEL_HEADER_HEIGHT - 4f, PANEL_WIDTH - 2f, 5f, headerColor)
+            XenRenderer.line(x + 12f, y + PANEL_HEADER_HEIGHT - 2f, x + PANEL_WIDTH - 12f, y + PANEL_HEADER_HEIGHT - 2f, 1f, Theme.BorderMuted.color)
+
+            val categoryTitle = category.name.uppercase()
+            val categoryTitleWidth = XenRenderer.textWidth(categoryTitle, 16f)
             XenRenderer.text(
-                category.name,
-                x + PANEL_WIDTH / 2f - titleWidth / 2f,
-                y + PANEL_HEADER_HEIGHT / 2f - 11f,
-                22f,
+                categoryTitle,
+                x + PANEL_WIDTH / 2f - categoryTitleWidth / 2f,
+                y + PANEL_HEADER_HEIGHT / 2f - 8f,
+                16f,
                 Theme.Text.color
             )
 
@@ -573,7 +585,6 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
     private class FeatureEntry(
         val feature: FeatureElement
     ) {
-        private val titleWidth = XenRenderer.textWidth(feature.featureName, 18f)
         private val descriptionHover = HoverHandler(150)
         private val expandAnim = EaseInOutAnimation(180)
         private val sections = feature.options.entries.map { (sectionName, options) ->
@@ -609,27 +620,37 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
             val enabled = getFeatureEnabled()
             val hovered = mouseX in x..(x + width) && mouseY in y..(y + FEATURE_ROW_HEIGHT)
-            val baseColor = if (enabled) Theme.Primary.color else Theme.BgLight.color
-            val rowColor = if (hovered) Theme.shift(baseColor, 1.1f) else baseColor
+            val rowX = x
+            val rowY = y
+            val rowWidth = width
+            val rowHeight = FEATURE_ROW_HEIGHT
+            val rowColor = if (hovered) Theme.shift(Theme.BgLight.color, 1.06f) else Theme.BgLight.color
+            val stateColor = if (enabled) Theme.Primary.color else Theme.Border.color
 
             descriptionHover.handle(mouseX, mouseY, x, y, width, FEATURE_ROW_HEIGHT)
             if (hovered && feature.description.isNotBlank()) {
                 ClickGUI.setTooltip(feature.description, x + width + 10f, y, descriptionHover)
             }
 
-            XenRenderer.rect(x, y, width, FEATURE_ROW_HEIGHT, rowColor)
+            XenRenderer.rect(rowX, rowY, rowWidth, rowHeight, rowColor)
+            XenRenderer.rect(rowX, rowY, 5f, rowHeight, stateColor)
+            XenRenderer.line(rowX, rowY + rowHeight - 1f, rowX + rowWidth, rowY + rowHeight - 1f, 1f, Theme.BorderMuted.color)
+
+            val titleWidth = XenRenderer.textWidth(feature.featureName, 16f)
+            XenRenderer.pushScissor(rowX + 12f, rowY, rowWidth - 40f, rowHeight)
             XenRenderer.text(
                 feature.featureName,
-                x + width / 2f - titleWidth / 2f,
-                y + FEATURE_ROW_HEIGHT / 2f - 9f,
-                18f,
-                Theme.Text.color
+                rowX + rowWidth / 2f - titleWidth / 2f,
+                y + FEATURE_ROW_HEIGHT / 2f - 8f,
+                16f,
+                if (enabled) Theme.Text.color else Theme.TextMuted.color
             )
+            XenRenderer.popScissor()
 
             if (hasSettings) {
                 val rotation = ((if (expandAnim.isAnimating()) expandAnim.get(0f, 1f, !expanded) else if (expanded) 1f else 0f) * (PI.toFloat() / 2f))
                 XenRenderer.push()
-                XenRenderer.translate(x + width - 16f, y + FEATURE_ROW_HEIGHT / 2f)
+                XenRenderer.translate(rowX + rowWidth - 15f, y + FEATURE_ROW_HEIGHT / 2f)
                 XenRenderer.rotate(rotation)
                 XenRenderer.image(chevronImage, -6f, -6f, 12f, 12f)
                 XenRenderer.pop()
@@ -641,14 +662,16 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             val settingsHeight = settingsHeight()
             val animatedHeight = settingsHeight * progress
             XenRenderer.pushScissor(x, y + FEATURE_ROW_HEIGHT, width, animatedHeight)
-            XenRenderer.rect(x, y + FEATURE_ROW_HEIGHT, width, settingsHeight, Theme.Bg.color)
+            XenRenderer.rect(x, y + FEATURE_ROW_HEIGHT, width, settingsHeight, Theme.BgDark.color)
+            XenRenderer.line(x, y + FEATURE_ROW_HEIGHT, x + width, y + FEATURE_ROW_HEIGHT, 1f, Theme.BorderMuted.color)
+            XenRenderer.line(x, y + FEATURE_ROW_HEIGHT + settingsHeight - 1f, x + width, y + FEATURE_ROW_HEIGHT + settingsHeight - 1f, 1f, Theme.BorderMuted.color)
 
             var drawY = y + FEATURE_ROW_HEIGHT + FEATURE_PADDING
             for (section in sections) {
                 val visibleWidgets = section.widgets.filter { it.isVisible() }
                 if (visibleWidgets.isEmpty()) continue
 
-                XenRenderer.text(section.title.uppercase(), x + 8f, drawY + 2f, 11f, Theme.TextMuted.color)
+                XenRenderer.text(section.title.uppercase(), x + 16f, drawY + 2f, 11f, Theme.TextMuted.color)
                 drawY += SECTION_HEADER_HEIGHT
 
                 for ((index, widget) in visibleWidgets.withIndex()) {
@@ -793,6 +816,17 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
         protected fun labelY(localY: Float, labelHeight: Float = 15f): Float =
             localY + boundsHeight / 2f - labelHeight / 2f
+
+        protected fun field(x: Float, y: Float, width: Float, height: Float, active: Boolean = false, hovered: Boolean = false) {
+            val fill = if (hovered) Theme.shift(Theme.BgLight.color, 1.08f) else Theme.BgLight.color
+            val border = if (active) Theme.Primary.color else Theme.Primary.withAlpha(0.65f)
+            XenRenderer.rect(x, y, width, height, fill, FIELD_CUT)
+            XenRenderer.hollowRect(x, y, width, height, 1.2f, border, FIELD_CUT)
+        }
+
+        protected fun accentField(x: Float, y: Float, width: Float, height: Float, active: Boolean = false, hovered: Boolean = false) {
+            field(x, y, width, height, active, hovered)
+        }
     }
 
     private class SwitchWidget(option: OptionElement) : SettingWidget(option) {
@@ -807,8 +841,9 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
             val trackX = x + width - 46f
             val trackY = y + 7f
-            XenRenderer.rect(trackX, trackY, 38f, 20f, if (enabled) Theme.Primary.color else Theme.BgLight.color, 10f)
-            XenRenderer.circle(if (enabled) trackX + 28f else trackX + 10f, trackY + 10f, 7f, Theme.Text.color)
+            XenRenderer.rect(trackX, trackY, 38f, 20f, if (enabled) Theme.Primary.withAlpha(0.82f) else Theme.BgLight.color, 10f)
+            XenRenderer.hollowRect(trackX, trackY, 38f, 20f, 1f, if (enabled) Theme.Primary.color else Theme.Primary.withAlpha(0.65f), 10f)
+            XenRenderer.circle(if (enabled) trackX + 28f else trackX + 10f, trackY + 10f, 6.5f, Theme.Text.color)
             return boundsHeight
         }
 
@@ -833,8 +868,10 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
             val type = option.configElement.type as ElementType.Slider
             val value = (currentValue() as? Number)?.toDouble() ?: type.default
+            val trackWidth = max(96f, width - 36f).coerceAtMost(width - 12f)
+            val trackX = x + (width - trackWidth) / 2f
             if (dragging) {
-                val percent = ((mouseX - (x + 2f)) / (width - 4f)).coerceIn(0f, 1f)
+                val percent = ((mouseX - trackX) / trackWidth).coerceIn(0f, 1f)
                 val newValue = type.min + (type.max - type.min) * percent
                 update(if (type.showDouble) roundToStep(newValue, 0.01) else newValue.roundToInt().toDouble())
             }
@@ -844,9 +881,9 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             XenRenderer.text(formatSliderValue(value, type.showDouble), x + width - 48f, y + 2f, 16f, Theme.TextMuted.color)
 
             val trackY = y + 27f
-            XenRenderer.rect(x + 2f, trackY, width - 4f, 6f, Theme.BgLight.color, 3f)
-            XenRenderer.rect(x + 2f, trackY, (width - 4f) * normalized, 6f, Theme.Primary.color, 3f)
-            XenRenderer.circle(x + 2f + (width - 4f) * normalized, trackY + 3f, 6f, Theme.Text.color)
+            XenRenderer.rect(trackX, trackY, trackWidth, 8f, Theme.BgLight.color, 4f)
+            XenRenderer.rect(trackX, trackY, max(8f, trackWidth * normalized), 8f, Theme.Primary.color, 4f)
+            XenRenderer.circle(trackX + trackWidth * normalized, trackY + 4f, 6.5f, Theme.Text.color)
             return boundsHeight
         }
 
@@ -868,7 +905,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
         override fun getHeight(): Float {
             val type = option.configElement.type as ElementType.Dropdown
-            return STACKED_FIELD_BASE_HEIGHT + if (expanded) type.options.size * 26f else 0f
+            return STACKED_FIELD_BASE_HEIGHT + if (expanded) type.options.size * CHOICE_ROW_HEIGHT else 0f
         }
 
         override fun render(x: Float, y: Float, width: Float, mouseX: Float, mouseY: Float): Float {
@@ -881,8 +918,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             val selectedIndex = resolveDropdownIndex(type)
             val boxY = y + STACKED_FIELD_OFFSET_Y
             XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
-            XenRenderer.rect(x + 2f, boxY, width - 4f, 22f, Theme.BgLight.color, 5f)
-            XenRenderer.hollowRect(x + 2f, boxY, width - 4f, 22f, 1.5f, Theme.Primary.color, 5f)
+            accentField(x + 2f, boxY, width - 4f, 22f, expanded)
             XenRenderer.text(type.options[selectedIndex], x + 10f, boxY + 4f, 15f, Theme.Text.color)
 
             XenRenderer.push()
@@ -892,12 +928,31 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             XenRenderer.pop()
 
             if (expanded) {
-                var optionY = boxY + 26f
+                val listX = x + 2f
+                val listY = boxY + 26f
+                val listWidth = width - 4f
+                val listHeight = type.options.size * CHOICE_ROW_HEIGHT
+
+                XenRenderer.rect(listX, listY, listWidth, listHeight, Theme.BgLight.color, FIELD_CUT)
                 for ((index, value) in type.options.withIndex()) {
-                    val optionHovered = mouseX in (x + 2f)..(x + width - 2f) && mouseY in optionY..(optionY + 22f)
-                    XenRenderer.rect(x + 2f, optionY, width - 4f, 22f, if (optionHovered) Theme.shift(Theme.BgLight.color, 1.08f) else Theme.BgLight.color, 4f)
+                    val optionY = listY + index * CHOICE_ROW_HEIGHT
+                    val optionHovered = mouseX in listX..(listX + listWidth) && mouseY in optionY..(optionY + CHOICE_ROW_HEIGHT)
+                    if (optionHovered) {
+                        XenRenderer.rect(listX, optionY, listWidth, CHOICE_ROW_HEIGHT, Theme.shift(Theme.BgLight.color, 1.08f))
+                    } else if (index == selectedIndex) {
+                        XenRenderer.rect(listX, optionY, listWidth, CHOICE_ROW_HEIGHT, Theme.Primary.withAlpha(0.14f))
+                    }
+                    if (index < type.options.lastIndex) {
+                        XenRenderer.line(
+                            listX + 8f,
+                            optionY + CHOICE_ROW_HEIGHT,
+                            listX + listWidth - 8f,
+                            optionY + CHOICE_ROW_HEIGHT,
+                            1f,
+                            Theme.BorderMuted.color
+                        )
+                    }
                     XenRenderer.text(value, x + 10f, optionY + 4f, 15f, if (index == selectedIndex) Theme.Primary.color else Theme.Text.color)
-                    optionY += 26f
                 }
             }
 
@@ -922,12 +977,12 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
             var optionY = boxY + 26f
             for ((index, value) in type.options.withIndex()) {
-                if (mouseX in (x + 2f)..(x + width - 2f) && mouseY in optionY..(optionY + 22f)) {
+                if (mouseX in (x + 2f)..(x + width - 2f) && mouseY in optionY..(optionY + CHOICE_ROW_HEIGHT)) {
                     update(value)
                     expanded = false
                     return true
                 }
-                optionY += 26f
+                optionY += CHOICE_ROW_HEIGHT
             }
             return false
         }
@@ -958,8 +1013,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             this.boundsHeight = getHeight()
 
             XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
-            XenRenderer.rect(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, Theme.BgLight.color, 5f)
-            XenRenderer.hollowRect(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, 1.5f, Theme.Primary.color, 5f)
+            accentField(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, input.listening)
             input.x = x + 6f
             input.y = y + STACKED_FIELD_OFFSET_Y + 1f
             input.width = width - 12f
@@ -1025,9 +1079,8 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             }
 
             XenRenderer.text(option.optionName, x + 2f, y + 11f, 16f, Theme.Text.color)
-            XenRenderer.rect(previewX, previewY, 48f, 22f, Theme.BgLight.color, 5f)
-            XenRenderer.hollowRect(previewX, previewY, 48f, 22f, 1.5f, Theme.Primary.color, 5f)
-            XenRenderer.rect(previewX + 20f, previewY + 4f, 22f, 14f, currentColor.rgb, 3f)
+            field(previewX, previewY, 48f, 22f, expanded)
+            XenRenderer.rect(previewX + 20f, previewY + 4f, 22f, 14f, currentColor.rgb, 4f)
             XenRenderer.text(if (expanded) "Hide" else "Edit", previewX + 4f, previewY + 4f, 12f, Theme.TextMuted.color)
 
             if (!expanded) return boundsHeight
@@ -1041,12 +1094,13 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             val alphaY = hueY + 22f
             val cardHeight = alphaY + 14f - pickerY
 
-            XenRenderer.rect(x + 2f, pickerY, width - 4f, cardHeight, Theme.Bg.color, 6f)
+            XenRenderer.rect(x + 2f, pickerY, width - 4f, cardHeight, Theme.Bg.color, FIELD_CUT)
+            XenRenderer.hollowRect(x + 2f, pickerY, width - 4f, cardHeight, 1f, Theme.BorderMuted.color, FIELD_CUT)
 
-            XenRenderer.rect(pickerX, pickerY, pickerSize, pickerSize, hueColor, 4f)
+            XenRenderer.rect(pickerX, pickerY, pickerSize, pickerSize, hueColor, FIELD_CUT)
             XenRenderer.gradientRect(pickerX, pickerY, pickerSize, pickerSize, 0xFFFFFFFF.toInt(), 0x00FFFFFF, XenGradient.LeftToRight, 4f)
             XenRenderer.gradientRect(pickerX, pickerY, pickerSize, pickerSize, 0x00000000, 0xFF000000.toInt(), XenGradient.TopToBottom, 4f)
-            XenRenderer.hollowRect(pickerX, pickerY, pickerSize, pickerSize, 1.5f, Theme.Primary.withAlpha(0.35f), 4f)
+            XenRenderer.hollowRect(pickerX, pickerY, pickerSize, pickerSize, 1.5f, Theme.Primary.withAlpha(0.35f), FIELD_CUT)
 
             val selectorX = pickerX + saturation * pickerSize
             val selectorY = pickerY + (1f - brightness) * pickerSize
@@ -1055,8 +1109,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
             if (infoWidth >= 56f) {
                 XenRenderer.text("Preview", infoX, pickerY + 2f, 12f, Theme.TextMuted.color)
-                XenRenderer.rect(infoX, pickerY + 18f, infoWidth, 30f, Theme.BgLight.color, 5f)
-                XenRenderer.hollowRect(infoX, pickerY + 18f, infoWidth, 30f, 1.5f, Theme.Primary.withAlpha(0.35f), 5f)
+                field(infoX, pickerY + 18f, infoWidth, 30f)
                 XenRenderer.rect(infoX + 6f, pickerY + 24f, infoWidth - 12f, 18f, currentColor.rgb, 4f)
 
                 XenRenderer.text("Hex", infoX, pickerY + 58f, 12f, Theme.TextMuted.color)
@@ -1194,8 +1247,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             val buttonWidth = max(62f, XenRenderer.textWidth(text, 15f) + 16f)
 
             XenRenderer.text(option.optionName, x + 2f, y + 9f, 16f, Theme.Text.color)
-            XenRenderer.rect(x + width - buttonWidth, y + 6f, buttonWidth, 22f, Theme.BgLight.color, 5f)
-            XenRenderer.hollowRect(x + width - buttonWidth, y + 6f, buttonWidth, 22f, 1.5f, if (listening) Theme.Highlight.color else Theme.Primary.color, 5f)
+            field(x + width - buttonWidth, y + 6f, buttonWidth, 22f, listening)
             XenRenderer.text(text, x + width - buttonWidth + 8f, y + 10f, 15f, Theme.Text.color)
             return boundsHeight
         }
@@ -1254,8 +1306,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             this.boundsHeight = getHeight()
 
             val hovered = isHovered(mouseX, mouseY)
-            XenRenderer.rect(x + 2f, y + 6f, width - 4f, 24f, if (hovered) Theme.shift(Theme.BgLight.color, 1.08f) else Theme.BgLight.color, 5f)
-            XenRenderer.hollowRect(x + 2f, y + 6f, width - 4f, 24f, 1.5f, Theme.Primary.color, 5f)
+            accentField(x + 2f, y + 6f, width - 4f, 24f, active = true, hovered = hovered)
 
             val textWidth = XenRenderer.textWidth(type.text, 16f)
             XenRenderer.text(type.text, x + width / 2f - textWidth / 2f, y + 10f, 16f, Theme.Text.color)
@@ -1292,7 +1343,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
         override fun getHeight(): Float {
             val type = option.configElement.type as ElementType.MultiCheckbox
-            return STACKED_FIELD_BASE_HEIGHT + if (expanded) type.options.size * 24f else 0f
+            return STACKED_FIELD_BASE_HEIGHT + if (expanded) type.options.size * CHOICE_ROW_HEIGHT else 0f
         }
 
         override fun render(x: Float, y: Float, width: Float, mouseX: Float, mouseY: Float): Float {
@@ -1304,18 +1355,37 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
             val selected = (currentValue() as? Set<*>)?.mapNotNull { (it as? Number)?.toInt() }?.toSet() ?: type.default
             XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
-            XenRenderer.rect(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, Theme.BgLight.color, 5f)
-            XenRenderer.hollowRect(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, 1.5f, Theme.Primary.color, 5f)
+            accentField(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, expanded)
             XenRenderer.text("${selected.size} selected", x + 10f, y + STACKED_FIELD_OFFSET_Y + 4f, 15f, Theme.Text.color)
 
             if (expanded) {
-                var optionY = y + STACKED_FIELD_BASE_HEIGHT
+                val listX = x + 2f
+                val listY = y + STACKED_FIELD_BASE_HEIGHT
+                val listWidth = width - 4f
+                val listHeight = type.options.size * CHOICE_ROW_HEIGHT
+
+                XenRenderer.rect(listX, listY, listWidth, listHeight, Theme.BgLight.color, FIELD_CUT)
                 for ((index, value) in type.options.withIndex()) {
+                    val optionY = listY + index * CHOICE_ROW_HEIGHT
                     val selectedOption = index in selected
-                    XenRenderer.rect(x + 2f, optionY, width - 4f, 20f, Theme.BgLight.color, 4f)
+                    val optionHovered = mouseX in listX..(listX + listWidth) && mouseY in optionY..(optionY + CHOICE_ROW_HEIGHT)
+                    if (optionHovered) {
+                        XenRenderer.rect(listX, optionY, listWidth, CHOICE_ROW_HEIGHT, Theme.shift(Theme.BgLight.color, 1.08f))
+                    } else if (selectedOption) {
+                        XenRenderer.rect(listX, optionY, listWidth, CHOICE_ROW_HEIGHT, Theme.Primary.withAlpha(0.14f))
+                    }
+                    if (index < type.options.lastIndex) {
+                        XenRenderer.line(
+                            listX + 8f,
+                            optionY + CHOICE_ROW_HEIGHT,
+                            listX + listWidth - 8f,
+                            optionY + CHOICE_ROW_HEIGHT,
+                            1f,
+                            Theme.BorderMuted.color
+                        )
+                    }
                     XenRenderer.rect(x + 8f, optionY + 4f, 12f, 12f, if (selectedOption) Theme.Primary.color else Theme.Bg.color, 3f)
                     XenRenderer.text(value, x + 26f, optionY + 3f, 14f, Theme.Text.color)
-                    optionY += 24f
                 }
             }
 
@@ -1340,12 +1410,12 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             val current = (currentValue() as? Set<*>)?.mapNotNull { (it as? Number)?.toInt() }?.toMutableSet() ?: type.default.toMutableSet()
             var optionY = y + STACKED_FIELD_BASE_HEIGHT
             for (index in type.options.indices) {
-                if (mouseX in (x + 2f)..(x + width - 2f) && mouseY in optionY..(optionY + 20f)) {
+                if (mouseX in (x + 2f)..(x + width - 2f) && mouseY in optionY..(optionY + CHOICE_ROW_HEIGHT)) {
                     if (!current.add(index)) current.remove(index)
                     update(current.toSet())
                     return true
                 }
-                optionY += 24f
+                optionY += CHOICE_ROW_HEIGHT
             }
             return false
         }

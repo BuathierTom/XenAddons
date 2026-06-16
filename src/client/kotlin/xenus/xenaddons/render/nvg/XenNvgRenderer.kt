@@ -192,11 +192,26 @@ object XenNvgRenderer {
         nvgFill(vg)
     }
 
+    fun beveledRect(x: Float, y: Float, width: Float, height: Float, color: Int, cut: Float) {
+        beveledPath(x, y, width, height, cut)
+        color(color)
+        nvgFillColor(vg, nvgColor)
+        nvgFill(vg)
+    }
+
     fun hollowRect(x: Float, y: Float, width: Float, height: Float, thickness: Float, color: Int, radius: Float) {
         nvgBeginPath(vg)
         nvgRoundedRect(vg, x, y, width, height, radius)
         nvgStrokeWidth(vg, thickness)
         nvgPathWinding(vg, NVG_HOLE)
+        color(color)
+        nvgStrokeColor(vg, nvgColor)
+        nvgStroke(vg)
+    }
+
+    fun hollowBeveledRect(x: Float, y: Float, width: Float, height: Float, thickness: Float, color: Int, cut: Float) {
+        beveledPath(x, y, width, height, cut)
+        nvgStrokeWidth(vg, thickness)
         color(color)
         nvgStrokeColor(vg, nvgColor)
         nvgStroke(vg)
@@ -397,6 +412,20 @@ object XenNvgRenderer {
             XenGradient.LeftToRight -> nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, nvgPaint)
             XenGradient.TopToBottom -> nvgLinearGradient(vg, x, y, x, y + height, nvgColor, nvgColor2, nvgPaint)
         }
+    }
+
+    private fun beveledPath(x: Float, y: Float, width: Float, height: Float, cut: Float) {
+        val c = cut.coerceIn(0f, min(width, height) / 2f)
+        nvgBeginPath(vg)
+        nvgMoveTo(vg, x + c, y)
+        nvgLineTo(vg, x + width - c, y)
+        nvgLineTo(vg, x + width, y + c)
+        nvgLineTo(vg, x + width, y + height - c)
+        nvgLineTo(vg, x + width - c, y + height)
+        nvgLineTo(vg, x + c, y + height)
+        nvgLineTo(vg, x, y + height - c)
+        nvgLineTo(vg, x, y + c)
+        nvgClosePath(vg)
     }
 
     private fun getFontId(font: XenFont): Int {
