@@ -22,7 +22,7 @@ public class InvButtonsModule extends Module {
     });
 
     public InvButtonsModule() {
-        super("InvButtons", "Add custom buttons to your inventory", Category.MISC);
+        super("Inventory Buttons", "Add custom buttons to your inventory", Category.MISC);
         
         showTooltips.setListener(v -> { XenAddons.instance.showTooltips = v; XenAddons.save(); });
         hideRecipeBook.setListener(v -> { XenAddons.instance.hideRecipeBook = v; XenAddons.save(); });
