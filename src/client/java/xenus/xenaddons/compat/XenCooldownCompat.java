@@ -20,7 +20,6 @@ public final class XenCooldownCompat {
 
     public static void renderInventorySlot(DrawContext context, Slot slot) {
         if (slot == null) return;
-        ExperimentationTableSolverTracker.renderSlotHighlight(context, slot);
         renderSuperpairsOverlay(context, slot);
 
         ItemStack stack = slot.getStack();

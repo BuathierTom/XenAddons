@@ -6,15 +6,11 @@ import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.settings.BooleanSetting;
 
 public class ExperimentationTableSolverModule extends Module {
-    public final BooleanSetting highlightNextClick = new BooleanSetting("Highlight Next Click", true);
-    public final BooleanSetting preventMisclicks = new BooleanSetting("Prevent Misclicks", true);
     public final BooleanSetting keepItemsVisible = new BooleanSetting("Keep Items Visible", true);
     private static boolean initialized = false;
 
     public ExperimentationTableSolverModule() {
-        super("Exp Table Solver", "Solver for Chronomatron and Ultrasequencer", Category.MISC);
-        this.registerSetting(highlightNextClick);
-        this.registerSetting(preventMisclicks);
+        super("Exp Table Addons", "Quality of life additions for the Experimentation Table", Category.MISC);
         this.registerSetting(keepItemsVisible);
         if (!initialized) {
             initialized = true;

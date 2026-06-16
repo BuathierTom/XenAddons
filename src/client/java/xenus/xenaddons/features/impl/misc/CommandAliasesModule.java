@@ -47,14 +47,14 @@ public class CommandAliasesModule extends Module {
     public static void init() {
          ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
              
-             // d, dung -> warp dungeon_hub
+             // d, dung -> warp dh
              registerSimple(dispatcher, "d", context -> {
                  if (!isEnabled(getInstance().warpDungeon)) return 0;
-                 return runCommand("warp dungeon_hub");
+                 return runCommand("warp dh");
              });
              registerSimple(dispatcher, "dung", context -> {
                  if (!isEnabled(getInstance().warpDungeon)) return 0;
-                 return runCommand("warp dungeon_hub");
+                 return runCommand("warp dh");
              });
              
              // ai -> p settings allinvite
@@ -187,7 +187,7 @@ public class CommandAliasesModule extends Module {
                 Thread.sleep(2200);
                 
                 if (MinecraftClient.getInstance().player != null) 
-                    MinecraftClient.getInstance().player.networkHandler.sendChatCommand("warp dungeon_hub");
+                    MinecraftClient.getInstance().player.networkHandler.sendChatCommand("warp dh");
             } catch (Exception e) {}
         }).start();
     }
