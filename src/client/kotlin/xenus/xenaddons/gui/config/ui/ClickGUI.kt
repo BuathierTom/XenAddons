@@ -57,8 +57,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
     private const val BASE_LAYOUT_HEIGHT = 640f
     private const val MAX_UI_SCALE = 0.82f
     private const val UI_SCALE_MULTIPLIER = 0.6f
-    private const val PANEL_CUT = 10f
-    private const val ROW_CUT = 7f
+    private const val PANEL_RADIUS = 15f
     private const val FIELD_CUT = 6f
     private const val CHOICE_ROW_HEIGHT = 22f
 
@@ -354,25 +353,26 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             x = ClickGUI.layoutWidth / 2f - SEARCH_WIDTH / 2f
             y = ClickGUI.searchBarY()
 
-            XenRenderer.dropShadow(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, 7f, 0.5f, PANEL_CUT)
-            XenRenderer.beveledRect(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, Theme.BgLight.color, PANEL_CUT)
-            XenRenderer.hollowBeveledRect(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, 1.25f, Theme.Primary.withAlpha(0.72f), PANEL_CUT)
-            XenRenderer.beveledRect(x + 9f, y + 8f, 5f, SEARCH_HEIGHT - 16f, Theme.Primary.color, 2f)
+            val searchRadius = SEARCH_HEIGHT / 2f
+            XenRenderer.dropShadow(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, 7f, 0.5f, searchRadius)
+            XenRenderer.rect(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, Theme.BgLight.color, searchRadius)
+            XenRenderer.hollowRect(x, y, SEARCH_WIDTH, SEARCH_HEIGHT, 1.25f, Theme.Primary.withAlpha(0.72f), searchRadius)
 
             val hudButtonX = x + SEARCH_WIDTH - SEARCH_HEIGHT
+            val searchInputX = x + 18f
             hudHover.handle(mouseX, mouseY, hudButtonX, y, SEARCH_HEIGHT, SEARCH_HEIGHT)
             if (hudHover.isHovered) {
                 ClickGUI.setTooltip("HUD Editor", hudButtonX - 6f, y + SEARCH_HEIGHT + 8f, hudHover)
             }
 
             XenRenderer.line(hudButtonX, y + 7f, hudButtonX, y + SEARCH_HEIGHT - 7f, 1f, Theme.Border.color)
-            XenRenderer.beveledRect(
+            XenRenderer.rect(
                 hudButtonX + 6f,
                 y + 6f,
                 SEARCH_HEIGHT - 12f,
                 SEARCH_HEIGHT - 12f,
                 if (hudHover.isHovered) Theme.shift(Theme.BgLight.color, 1.16f) else Theme.Bg.color,
-                FIELD_CUT
+                (SEARCH_HEIGHT - 12f) / 2f
             )
             XenRenderer.image(movementImage, hudButtonX + 11f, y + 11f, 18f, 18f)
 
@@ -381,16 +381,16 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             if (currentText.isEmpty()) {
                 XenRenderer.text(
                     placeholder,
-                    x + 42f,
+                    searchInputX + 4f,
                     y + 10f,
                     20f,
                     Theme.TextMuted.color
                 )
             }
 
-            inputHandler.x = x + 38f
+            inputHandler.x = searchInputX
             inputHandler.y = y + 9f
-            inputHandler.width = SEARCH_WIDTH - SEARCH_HEIGHT - 48f
+            inputHandler.width = hudButtonX - searchInputX - 14f
             inputHandler.height = 22f
             inputHandler.draw(mouseX, mouseY, Theme.Primary.withAlpha(0.28f), Theme.Text.color, Theme.Text.color)
         }
@@ -475,13 +475,13 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             scrollOffset = scrollOffset.coerceIn(-maxScroll, 0f)
             totalHeight = PANEL_HEADER_HEIGHT + bodyHeight
 
-            XenRenderer.dropShadow(x, y, PANEL_WIDTH, totalHeight, 8f, 1.5f, PANEL_CUT)
-            XenRenderer.beveledRect(x, y, PANEL_WIDTH, totalHeight, Theme.Bg.color, PANEL_CUT)
-            XenRenderer.hollowBeveledRect(x, y, PANEL_WIDTH, totalHeight, 1f, Theme.Border.withAlpha(0.9f), PANEL_CUT)
+            XenRenderer.dropShadow(x, y, PANEL_WIDTH, totalHeight, 8f, 1.5f, PANEL_RADIUS)
+            XenRenderer.rect(x, y, PANEL_WIDTH, totalHeight, Theme.Bg.color, PANEL_RADIUS)
+            XenRenderer.hollowRect(x, y, PANEL_WIDTH, totalHeight, 1f, Theme.Border.withAlpha(0.9f), PANEL_RADIUS)
 
             val headerColor = if (headerHover) Theme.shift(Theme.Bg.color, 1.12f) else Theme.Bg.color
-            XenRenderer.beveledRect(x, y, PANEL_WIDTH, PANEL_HEADER_HEIGHT, headerColor, PANEL_CUT)
-            XenRenderer.rect(x + 1f, y + PANEL_HEADER_HEIGHT - 4f, PANEL_WIDTH - 2f, 5f, headerColor)
+            XenRenderer.rect(x, y, PANEL_WIDTH, PANEL_HEADER_HEIGHT, headerColor, PANEL_RADIUS)
+            XenRenderer.rect(x + 1f, y + PANEL_HEADER_HEIGHT - PANEL_RADIUS, PANEL_WIDTH - 2f, PANEL_RADIUS + 1f, headerColor)
             XenRenderer.line(x + 12f, y + PANEL_HEADER_HEIGHT - 2f, x + PANEL_WIDTH - 12f, y + PANEL_HEADER_HEIGHT - 2f, 1f, Theme.BorderMuted.color)
 
             val categoryTitle = category.name.uppercase()
@@ -591,6 +591,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             SectionBlock(sectionName, options.map { createWidget(it) })
         }
         private val hasSettings = sections.any { it.widgets.isNotEmpty() }
+        private val searchContent = buildSearchContent(feature)
 
         private var expanded = false
         private var lastX = 0f
@@ -603,8 +604,12 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             sections.flatMap { it.widgets }.forEach { elementRefs[it.option.configElement.configKey] = it.option.configElement }
         }
 
-        fun matchesSearch(query: String): Boolean =
-            query.isBlank() || feature.featureName.contains(query, ignoreCase = true)
+        fun matchesSearch(query: String): Boolean {
+            val terms = query.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+            return terms.isEmpty() || terms.all { term ->
+                searchContent.any { it.contains(term, ignoreCase = true) }
+            }
+        }
 
         fun getHeight(): Float {
             val settingsHeight = settingsHeight()
@@ -765,6 +770,41 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
                 total += SECTION_GAP
             }
             return total
+        }
+
+        private fun buildSearchContent(feature: FeatureElement): List<String> {
+            val content = mutableListOf(
+                feature.featureName,
+                feature.description,
+                feature.configElement.configKey
+            )
+
+            for ((sectionName, options) in feature.options) {
+                content += sectionName
+
+                for (option in options) {
+                    content += option.optionName
+                    content += option.configElement.configKey
+
+                    when (val type = option.configElement.type) {
+                        is ElementType.Button -> content += type.text
+                        is ElementType.Dropdown -> content += type.options
+                        is ElementType.TextInput -> {
+                            content += type.default
+                            content += type.placeholder
+                        }
+                        is ElementType.TextParagraph -> content += type.text
+                        is ElementType.MultiCheckbox -> content += type.options
+                        is ElementType.MCColorPicker -> content += type.default.name
+                        is ElementType.Slider,
+                        is ElementType.Switch,
+                        is ElementType.ColorPicker,
+                        is ElementType.Keybind -> Unit
+                    }
+                }
+            }
+
+            return content.filter { it.isNotBlank() }
         }
 
         private fun getFeatureEnabled(): Boolean {
