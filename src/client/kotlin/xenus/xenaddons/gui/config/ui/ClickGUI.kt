@@ -55,8 +55,8 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
     private const val SIDE_MARGIN = 36f
     private const val PANEL_TOP_OFFSET = 36f
     private const val BASE_LAYOUT_HEIGHT = 640f
-    private const val MAX_UI_SCALE = 0.82f
-    private const val UI_SCALE_MULTIPLIER = 0.6f
+    private const val MAX_UI_SCALE = 1.0f
+    private const val UI_SCALE_MULTIPLIER = 0.8f
     private const val PANEL_RADIUS = 15f
     private const val FIELD_CUT = 6f
     private const val CHOICE_ROW_HEIGHT = 22f
@@ -456,7 +456,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             if (dragging) {
                 x = (mouseX + dragOffsetX).coerceIn(12f, ClickGUI.layoutWidth - PANEL_WIDTH - 12f)
                 y = (mouseY + dragOffsetY).coerceIn(
-                    TOP_MARGIN + 28f,
+                    12f,
                     ClickGUI.searchBarY() - PANEL_HEADER_HEIGHT - 12f
                 )
             }
