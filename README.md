@@ -56,12 +56,12 @@ Available when `Debug` is enabled:
 - **Copy Chat** → Right-click messages to copy chat text.
 - **Cursor 1.8.9** → Legacy-style inventory cursor behavior.
 - **Custom Hyperion Sound** → Replace Wither Blade sounds.
-- **Experimentation Table Solver** → Chronomatron, Ultrasequencer & Superpairs solver.
-- **InvButtons** → Configurable inventory buttons.
+- **Exp Table Addons** → Keeps Experimentation Table items visible.
+- **Inventory Buttons** → Configurable inventory buttons.
 - **Item Price** → Bazaar & Lowest BIN tooltip prices.
 - **Lava Replacement** → Replaces lava visuals with water visuals.
 - **Peek Chat** → Temporarily expand chat without opening it.
-- **Spotify Overlay** → Displays currently playing Spotify song.
+- **Spotify Overlay** → Displays the current Spotify track as a HUD element, with optional better display controls.
 - **ZguegAddons** → Chat, dungeon, and party QoL tools.
 
 ### Category: DUNGEONS
@@ -83,8 +83,7 @@ Available when `Debug` is enabled:
 ### Category: DEV
 
 - **Config GUI** → Customize GUI appearance and theme settings.
-- **Cosmetics** → Custom names and player scaling.
-- **Custom Size** → Applies per-player custom scale.
+- **Cosmetics** → Custom names, player scaling, and cosmetics refresh with a 30s cooldown.
 - **Edit HUD** → Move, scale, and reset HUD elements.
 - **Debug** → Internal testing and debugging tools.
 
@@ -97,8 +96,8 @@ The mod uses a unified cosmetics snapshot.
 ### Primary API
 
 ```txt
-https://api.xenus.fr/
-````
+https://api.xenus.fr/public/cosmetics
+```
 
 ### Fallback Source
 
@@ -108,9 +107,9 @@ assets/xenaddons/visual/cosmeticPeople.json
 
 Features:
 
-* Visual name replacements
-* Custom player scale
-* UUID-based mapping for stable behavior across nick/display changes
+- Visual name replacements
+- Custom player scale
+- UUID-based mapping for stable behavior across nick/display changes
 
 ### Cosmetics Portal
 
@@ -122,14 +121,13 @@ https://addons.xenus.fr/login
 
 ## Update Checker
 
-* Runs once on first connection each launch
-* Checks latest release on Modrinth
-* Shows update status in chat:
-
-  * Checking update
-  * Update available / Up-to-date
-* Downloads the latest jar directly to `mods/`
-* Requires restart after updating
+- Runs once on first connection each launch
+- Checks latest release on Modrinth
+- Shows update status in chat:
+  - Checking update
+  - Update available / Up-to-date
+- Downloads the latest jar directly to `mods/`
+- Requires restart after updating
 
 ---
 

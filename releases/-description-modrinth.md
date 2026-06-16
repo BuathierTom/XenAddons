@@ -37,12 +37,12 @@ XenAddons is a Fabric mod for Minecraft **1.21.11** focused on Hypixel SkyBlock 
 - **Copy Chat**: Right-click chat messages to copy their content.
 - **Cursor 1.8.9**: Restores inventory cursor behavior closer to Minecraft 1.8.9.
 - **Custom Hyperion Sound**: Replaces Wither Blade sounds with selectable custom sounds.
-- **Experimentation Table Solver**: Adds helpers for Chronomatron, Ultrasequencer, and Superpairs.
-- **InvButtons**: Adds configurable inventory buttons.
+- **Exp Table Addons**: Keeps Experimentation Table items visible.
+- **Inventory Buttons**: Adds configurable inventory buttons.
 - **Item Price**: Shows item prices in tooltips.
 - **Lava Replacement**: Replaces lava visuals with water visuals.
 - **Peek Chat**: Temporarily displays expanded chat without opening chat.
-- **Spotify Overlay**: Displays the currently playing Spotify track as a HUD element.
+- **Spotify Overlay**: Displays the current Spotify track as a HUD element, with optional better display controls.
 - **ZguegAddons**: Extra chat, dungeon, and party utilities.
 
 ### Category: DUNGEONS
@@ -61,6 +61,29 @@ XenAddons is a Fabric mod for Minecraft **1.21.11** focused on Hypixel SkyBlock 
 - **Reminder Gate**: Shows gate reminders based on lever progress messages.
 - **SecretRoutes**: Renders dungeon routes, secrets, waypoints, and room helpers.
 
+### Category: DEV
+
+- **Config GUI**: Customize the GUI appearance and theme settings.
+- **Cosmetics**: Applies custom names, player scaling, and cosmetics refresh with a 30s cooldown.
+- **Edit HUD**: Move, scale, and reset HUD elements.
+- **Debug**: Internal testing and debugging tools.
+
+## Visual Words / Custom Data
+
+XenAddons uses a unified cosmetics snapshot.
+
+### Features:
+
+- Visual name replacements
+- Custom player scale
+- UUID-based mapping for stable behavior across nick/display changes
+
+### Cosmetics Portal
+
+```txt
+https://addons.xenus.fr/login
+```
+
 ## Update Checker
 
 - Checks for updates once per launch.
@@ -72,4 +95,4 @@ XenAddons is a Fabric mod for Minecraft **1.21.11** focused on Hypixel SkyBlock 
 
 ```txt
 .minecraft/config/xenaddons_config.json
-````
+```
