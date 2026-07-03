@@ -9,6 +9,8 @@ import xenus.xenaddons.features.impl.misc.PeekChatController;
 import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule;
 
 public final class XenMouseCompat {
+    private static double peekChatAccumulatedScroll = 0.0D;
+
     private XenMouseCompat() {}
 
     public static boolean handleSpotifyOverlayClick(Minecraft client, long window, MouseButtonInfo input, int action) {
@@ -47,10 +49,20 @@ public final class XenMouseCompat {
         boolean discrete = client.options.discreteMouseScroll().get();
         double sensitivity = client.options.mouseWheelSensitivity().get();
         double adjustedVertical = (discrete ? Math.signum(vertical) : vertical) * sensitivity;
-        adjustedVertical = Mth.clamp(adjustedVertical, -1.0D, 1.0D);
-        if (!client.hasShiftDown()) {
-            adjustedVertical *= 7.0D;
+
+        if (peekChatAccumulatedScroll != 0.0D && Math.signum(adjustedVertical) != Math.signum(peekChatAccumulatedScroll)) {
+            peekChatAccumulatedScroll = 0.0D;
         }
-        return (int) adjustedVertical;
+
+        peekChatAccumulatedScroll += adjustedVertical;
+        double scroll = Mth.clamp(peekChatAccumulatedScroll, -1.0D, 1.0D);
+        int scrollAmount = (int) scroll;
+        if (scrollAmount == 0) return 0;
+
+        peekChatAccumulatedScroll -= scrollAmount;
+        if (!client.hasShiftDown()) {
+            scrollAmount *= 7;
+        }
+        return scrollAmount;
     }
 }
