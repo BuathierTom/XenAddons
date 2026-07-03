@@ -25,7 +25,7 @@ public class SecretRoutesModule extends Module {
     public final BooleanSetting renderLines = new BooleanSetting("Render Lines", true);
     public final ColorSetting lineColor = new ColorSetting("Line color", new Color(255, 0, 0).getRGB());
     public final NumberSetting lineWidth = new NumberSetting("Line width", 2, 1, 10, 1);
-    public final NumberSetting boxAlpha = new NumberSetting("Box Alpha", 1.0, 0, 1, 0.1);
+    public final NumberSetting boxAlpha = new NumberSetting("AABB Alpha", 1.0, 0, 1, 0.1);
 
     // Feature Toggles (matching SecretRoutesLite defaults)
     public final BooleanSetting renderEtherwarps = new BooleanSetting("Etherwarps", true);

@@ -1,6 +1,6 @@
 package xenus.xenaddons.compat;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import xenus.xenaddons.features.impl.misc.CooldownItemsTracker;
 import xenus.xenaddons.features.impl.misc.CustomHyperionSoundHandler;
 

@@ -1,6 +1,6 @@
 package xenus.xenaddons.features.impl.dungeons.secretroutes.dungeon;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import org.joml.Vector2i;
 
 public record RoomComponent(int x, int z, int core) {

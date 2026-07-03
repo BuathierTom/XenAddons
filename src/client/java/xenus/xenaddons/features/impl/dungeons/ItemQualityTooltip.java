@@ -1,11 +1,11 @@
 package xenus.xenaddons.features.impl.dungeons;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.text.Text;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.features.ModuleManager;
 
 import java.util.List;
@@ -15,17 +15,17 @@ public final class ItemQualityTooltip {
     private ItemQualityTooltip() {
     }
 
-    public static void appendQualityBonus(List<Text> tooltip, ItemStack stack) {
+    public static void appendQualityBonus(List<Component> tooltip, ItemStack stack) {
         ItemQualityModule module = ModuleManager.getModule(ItemQualityModule.class);
         if (module == null || !module.isEnabled()) return;
         if (tooltip == null || stack == null || stack.isEmpty()) return;
-        if (tooltip.stream().map(Text::getString).anyMatch(s -> s != null && s.contains("Quality Bonus:"))) return;
+        if (tooltip.stream().map(Component::getString).anyMatch(s -> s != null && s.contains("Quality Bonus:"))) return;
 
-        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) return;
-        NbtCompound root = customData.copyNbt();
+        CompoundTag root = customData.copyTag();
         if (root == null) return;
-        NbtCompound extra = resolveExtraAttributes(root);
+        CompoundTag extra = resolveExtraAttributes(root);
         if (extra == null) extra = root;
 
         int boost = readIntFlexible(extra, "baseStatBoostPercentage", "base_stat_boost_percentage");
@@ -40,7 +40,7 @@ public final class ItemQualityTooltip {
         if (req.isBlank()) req = readStringFlexible(root, "dungeon_skill_req", "dungeonSkillReq");
         String floor = resolveFloorDisplay(req, tier);
         String color = resolveBoostColor(boost);
-        Text qualityLine = Text.literal("§6Quality Bonus: " + color + "+" + boost + "% §7(" + floor + "§7)");
+        Component qualityLine = Component.literal("§6Quality Bonus: " + color + "+" + boost + "% §7(" + floor + "§7)");
         int insertIndex = findRarityLineInsertIndex(tooltip);
         if (insertIndex >= 0 && insertIndex <= tooltip.size()) {
             tooltip.add(insertIndex, qualityLine);
@@ -49,7 +49,7 @@ public final class ItemQualityTooltip {
         }
     }
 
-    private static int findRarityLineInsertIndex(List<Text> tooltip) {
+    private static int findRarityLineInsertIndex(List<Component> tooltip) {
         for (int i = tooltip.size() - 1; i >= 0; i--) {
             String line = tooltip.get(i).getString();
             if (line == null) continue;
@@ -91,52 +91,44 @@ public final class ItemQualityTooltip {
         return -1;
     }
 
-    private static NbtCompound resolveExtraAttributes(NbtCompound root) {
+    private static CompoundTag resolveExtraAttributes(CompoundTag root) {
         if (root == null) return null;
-        NbtCompound extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
+        CompoundTag extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
         if (extra != null) return extra;
 
-        NbtCompound tag = root.getCompound("tag").orElse(null);
+        CompoundTag tag = root.getCompound("tag").orElse(null);
         if (tag == null) return null;
         return tag.getCompound("ExtraAttributes").orElse(tag.getCompound("extra_attributes").orElse(null));
     }
 
-    private static int readIntFlexible(NbtCompound nbt, String... keys) {
+    private static int readIntFlexible(CompoundTag nbt, String... keys) {
         if (nbt == null || keys == null) return 0;
         for (String key : keys) {
             if (key == null || key.isBlank()) continue;
             if (!nbt.contains(key)) continue;
-            NbtElement element = nbt.get(key);
+            Tag element = nbt.get(key);
             if (element == null) continue;
             try {
-                return switch (element.getType()) {
-                    case NbtElement.BYTE_TYPE -> ((net.minecraft.nbt.NbtByte) element).byteValue();
-                    case NbtElement.SHORT_TYPE -> ((net.minecraft.nbt.NbtShort) element).shortValue();
-                    case NbtElement.INT_TYPE -> ((net.minecraft.nbt.NbtInt) element).intValue();
-                    case NbtElement.LONG_TYPE -> (int) ((net.minecraft.nbt.NbtLong) element).longValue();
-                    case NbtElement.FLOAT_TYPE -> Math.round(((net.minecraft.nbt.NbtFloat) element).floatValue());
-                    case NbtElement.DOUBLE_TYPE -> (int) Math.round(((net.minecraft.nbt.NbtDouble) element).doubleValue());
-                    case NbtElement.STRING_TYPE -> {
-                        String raw = ((net.minecraft.nbt.NbtString) element).value();
-                        try {
-                            yield Integer.parseInt(raw);
-                        } catch (Exception ignored) {
-                            yield 0;
-                        }
-                    }
-                    default -> 0;
-                };
+                Number number = element.asNumber().orElse(null);
+                if (number != null) {
+                    return Math.round(number.floatValue());
+                }
+
+                String raw = element.asString().orElse(null);
+                if (raw != null) {
+                    return Integer.parseInt(raw);
+                }
             } catch (Exception ignored) {
             }
         }
         return 0;
     }
 
-    private static String readStringFlexible(NbtCompound nbt, String... keys) {
+    private static String readStringFlexible(CompoundTag nbt, String... keys) {
         if (nbt == null || keys == null) return "";
         for (String key : keys) {
             if (key == null || key.isBlank()) continue;
-            String s = nbt.getString(key, "");
+            String s = nbt.getStringOr(key, "");
             if (s != null && !s.isBlank()) return s;
         }
         return "";

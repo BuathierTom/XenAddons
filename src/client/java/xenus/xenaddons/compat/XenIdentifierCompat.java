@@ -1,12 +1,12 @@
 package xenus.xenaddons.compat;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 public final class XenIdentifierCompat {
     private XenIdentifierCompat() {}
 
     public static Identifier of(String namespace, String path) {
-        return Identifier.of(namespace, path);
+        return Identifier.fromNamespaceAndPath(namespace, path);
     }
 
     public static Identifier xen(String path) {

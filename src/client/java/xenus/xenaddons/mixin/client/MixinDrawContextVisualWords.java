@@ -1,7 +1,7 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -9,60 +9,60 @@ import xenus.xenaddons.compat.XenTextCompat;
 
 import java.util.List;
 
-@Mixin(DrawContext.class)
+@Mixin(GuiGraphicsExtractor.class)
 public class MixinDrawContextVisualWords {
     @ModifyVariable(
-        method = "drawTooltip(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;II)V",
+        method = "setTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;II)V",
         at = @At("HEAD"),
         argsOnly = true,
         ordinal = 1,
         require = 0
     )
-    private Text xenaddons$drawTooltipSingle(Text text) {
+    private Component xenaddons$drawTooltipSingle(Component text) {
         return XenTextCompat.replaceTooltip(text);
     }
 
     @ModifyVariable(
-        method = "drawTooltip(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;IILnet/minecraft/util/Identifier;)V",
+        method = "setTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IILnet/minecraft/resources/Identifier;)V",
         at = @At("HEAD"),
         argsOnly = true,
         ordinal = 1,
         require = 0
     )
-    private Text xenaddons$drawTooltipSingleWithId(Text text) {
+    private Component xenaddons$drawTooltipSingleWithId(Component text) {
         return XenTextCompat.replaceTooltip(text);
     }
 
     @ModifyVariable(
-        method = "drawTooltip(Lnet/minecraft/text/Text;II)V",
+        method = "setTooltipForNextFrame(Lnet/minecraft/network/chat/Component;II)V",
         at = @At("HEAD"),
         argsOnly = true,
         ordinal = 0,
         require = 0
     )
-    private Text xenaddons$drawTooltipNoRenderer(Text text) {
+    private Component xenaddons$drawTooltipNoRenderer(Component text) {
         return XenTextCompat.replaceTooltip(text);
     }
 
     @ModifyVariable(
-        method = "drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;II)V",
+        method = "setComponentTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Ljava/util/List;II)V",
         at = @At("HEAD"),
         argsOnly = true,
         ordinal = 1,
         require = 0
     )
-    private List<Text> xenaddons$drawTooltipList(List<Text> lines) {
+    private List<Component> xenaddons$drawTooltipList(List<Component> lines) {
         return XenTextCompat.replaceTooltipList(lines);
     }
 
     @ModifyVariable(
-        method = "drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/util/Identifier;)V",
+        method = "setComponentTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/resources/Identifier;)V",
         at = @At("HEAD"),
         argsOnly = true,
         ordinal = 1,
         require = 0
     )
-    private List<Text> xenaddons$drawTooltipListWithId(List<Text> lines) {
+    private List<Component> xenaddons$drawTooltipListWithId(List<Component> lines) {
         return XenTextCompat.replaceTooltipList(lines);
     }
 

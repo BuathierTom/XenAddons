@@ -1,11 +1,11 @@
 package xenus.xenaddons.render.nvg
 
-import net.minecraft.client.gui.DrawContext
-import xenus.xenaddons.mixin.client.AccessorDrawContext
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import org.joml.Matrix3x2f
 
 object XenNvgGuiRenderer {
     fun draw(
-        context: DrawContext,
+        context: GuiGraphicsExtractor,
         x: Int,
         y: Int,
         width: Int,
@@ -17,13 +17,14 @@ object XenNvgGuiRenderer {
         val state = XenNvgRenderState(
             x,
             y,
-            x + width,
-            y + height,
+            width,
+            height,
             1f,
-            null,
+            Matrix3x2f(context.pose()),
+            context.scissorStack.peek(),
             Runnable(renderContent)
         )
 
-        (context as AccessorDrawContext).`xenaddons$getState`().addSpecialElement(state)
+        context.guiRenderState.addPicturesInPictureState(state)
     }
 }

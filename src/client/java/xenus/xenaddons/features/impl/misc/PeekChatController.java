@@ -1,8 +1,8 @@
 package xenus.xenaddons.features.impl.misc;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.gui.screens.ChatScreen;
 
 public final class PeekChatController {
     private static boolean peekHeld = false;
@@ -13,27 +13,27 @@ public final class PeekChatController {
         peekHeld = held;
     }
 
-    public static boolean shouldRenderPeek(MinecraftClient client) {
+    public static boolean shouldRenderPeek(Minecraft client) {
         return peekHeld
                 && client != null
                 && client.player != null
-                && client.inGameHud != null
-                && client.currentScreen == null;
+                && client.gui != null
+                && client.screen == null;
     }
 
-    public static boolean shouldUseFocusedHeight(MinecraftClient client) {
+    public static boolean shouldUseFocusedHeight(Minecraft client) {
         return shouldRenderPeek(client);
     }
 
-    public static void stop(MinecraftClient client) {
+    public static void stop(Minecraft client) {
         boolean wasHeld = peekHeld;
         peekHeld = false;
-        if (!wasHeld || client == null || client.inGameHud == null) return;
-        if (client.currentScreen instanceof ChatScreen) return;
+        if (!wasHeld || client == null || client.gui == null) return;
+        if (client.screen instanceof ChatScreen) return;
 
-        ChatHud chatHud = client.inGameHud.getChatHud();
+        ChatComponent chatHud = client.gui.getChat();
         if (chatHud != null) {
-            chatHud.resetScroll();
+            chatHud.resetChatScroll();
         }
     }
 }

@@ -1,13 +1,13 @@
 package xenus.xenaddons.features;
 
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public abstract class Module {
     public final String name;
     public final String description;
     public final Category category;
     private boolean enabled = false;
-    protected final MinecraftClient mc = MinecraftClient.getInstance();
+    protected final Minecraft mc = Minecraft.getInstance();
     public final java.util.List<xenus.xenaddons.settings.Setting<?>> settings = new java.util.ArrayList<>();
 
     public Module(String name, String description, Category category) {

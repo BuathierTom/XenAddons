@@ -1,6 +1,6 @@
 package xenus.xenaddons.features.impl.misc;
 
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
@@ -26,8 +26,8 @@ public class LavaReplacementModule extends Module {
     }
 
     private static void refreshWorldRenderer() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client == null || client.worldRenderer == null) return;
-        client.worldRenderer.reload();
+        Minecraft client = Minecraft.getInstance();
+        if (client == null || client.levelRenderer == null) return;
+        client.levelRenderer.allChanged();
     }
 }

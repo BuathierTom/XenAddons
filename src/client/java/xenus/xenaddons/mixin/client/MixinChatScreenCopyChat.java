@@ -1,15 +1,15 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.hud.ChatHudLine.Visible;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.text.Text;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.ClickEvent;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage.Line;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.ClickEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -53,23 +53,23 @@ public class MixinChatScreenCopyChat {
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    private void xenaddons$copyChatOnRightClick(Click click, boolean bl, CallbackInfoReturnable<Boolean> cir) {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.inGameHud == null) return;
+    private void xenaddons$copyChatOnRightClick(MouseButtonEvent click, boolean bl, CallbackInfoReturnable<Boolean> cir) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.gui == null) return;
 
-        ChatHud chatHud = mc.inGameHud.getChatHud();
+        ChatComponent chatHud = mc.gui.getChat();
 
         double chatX = XenChatHudCompat.toChatLineX(chatHud, click.x());
         double chatY = XenChatHudCompat.toChatLineY(chatHud, click.y());
         int lineIndex = XenChatHudCompat.getMessageLineIndex(chatHud, chatX, chatY);
         if (lineIndex < 0) return;
 
-        List<Visible> visibleLines = XenChatHudCompat.getVisibleMessages(chatHud);
+        List<Line> visibleLines = XenChatHudCompat.getVisibleMessages(chatHud);
         if (lineIndex >= visibleLines.size()) return;
-        Visible visibleLine = visibleLines.get(lineIndex);
+        Line visibleLine = visibleLines.get(lineIndex);
         if (visibleLine == null) return;
 
-        ChatHudLine line = resolveClickedMessage(XenChatHudCompat.getMessages(chatHud), visibleLine);
+        GuiMessage line = resolveClickedMessage(XenChatHudCompat.getMessages(chatHud), visibleLine);
         if (line == null || line.content() == null) return;
 
         CopyChatModule module = ModuleManager.getModule(CopyChatModule.class);
@@ -79,8 +79,8 @@ public class MixinChatScreenCopyChat {
                 && module.isEnabled()
                 && click.button() == copyButton
                 && (!module.isRequireCtrlClickEnabled() || isCopyModifierDown(mc))) {
-            Text original = VisualWordsChatStore.getOriginalOrNull(line.content());
-            Text source = (original != null ? original : line.content());
+            Component original = VisualWordsChatStore.getOriginalOrNull(line.content());
+            Component source = (original != null ? original : line.content());
 
             boolean altDown = isAltOrOptionDown(mc);
             boolean formattedCopy = altDown;
@@ -90,21 +90,21 @@ public class MixinChatScreenCopyChat {
             if (copied.isBlank()) return;
 
             int previousScrolledLines = XenChatHudCompat.getScrolledLines(chatHud);
-            mc.keyboard.setClipboard(copied);
+            mc.keyboardHandler.setClipboard(copied);
             ChatUtils.success(formattedCopy ? "Copied formatted message to clipboard" : "Copied message to clipboard");
             XenChatHudCompat.setScrolledLines(chatHud, previousScrolledLines);
             cir.setReturnValue(true);
             return;
         }
 
-        if (click.button() == 0 && mc.player != null && mc.player.networkHandler != null) {
+        if (click.button() == 0 && mc.player != null && mc.player.connection != null) {
             Style clickedStyle = XenChatHudCompat.getTextStyleAt(mc, visibleLine, chatX);
             ClickEvent clickEvent = clickedStyle == null ? null : clickedStyle.getClickEvent();
             if (clickEvent instanceof ClickEvent.RunCommand runCommand) {
                 String cmd = runCommand.command();
                 if (cmd != null && DIRECT_COMMAND_PATTERN.matcher(cmd).matches()) {
                     String toSend = cmd.startsWith("/") ? cmd.substring(1) : cmd;
-                    mc.player.networkHandler.sendChatCommand(toSend);
+                    mc.player.connection.sendCommand(toSend);
                     cir.setReturnValue(true);
                     return;
                 }
@@ -114,39 +114,18 @@ public class MixinChatScreenCopyChat {
             java.util.regex.Matcher kickMatcher = XEN_KICK_PROMPT.matcher(plain);
             if (kickMatcher.matches()) {
                 String target = kickMatcher.group(1);
-                mc.player.networkHandler.sendChatCommand("p kick " + target);
+                mc.player.connection.sendCommand("p kick " + target);
                 cir.setReturnValue(true);
                 return;
             }
         }
     }
 
-    private ChatHudLine resolveClickedMessage(List<ChatHudLine> allMessages, Visible visibleLine) {
-        if (allMessages == null || allMessages.isEmpty()) return null;
-
-        int addedTime = visibleLine.addedTime();
-        List<ChatHudLine> matches = new ArrayList<>();
-        for (ChatHudLine msg : allMessages) {
-            if (msg == null || msg.content() == null) continue;
-            if (msg.creationTick() == addedTime && !msg.content().getString().isBlank()) {
-                matches.add(msg);
-            }
-        }
-
-        if (matches.isEmpty()) return null;
-        if (matches.size() == 1) return matches.get(0);
-
-        String visibleText = stripCodes(orderedTextToString(visibleLine.content()));
-        for (ChatHudLine candidate : matches) {
-            String candidateText = stripCodes(candidate.content().getString());
-            if (!visibleText.isBlank() && candidateText.contains(visibleText)) {
-                return candidate;
-            }
-        }
-        return matches.get(0);
+    private GuiMessage resolveClickedMessage(List<GuiMessage> allMessages, Line visibleLine) {
+        return visibleLine == null ? null : visibleLine.parent();
     }
 
-    private String orderedTextToString(OrderedText text) {
+    private String orderedTextToString(FormattedCharSequence text) {
         if (text == null) return "";
         StringBuilder sb = new StringBuilder();
         text.accept((index, style, codePoint) -> {
@@ -161,27 +140,27 @@ public class MixinChatScreenCopyChat {
         return LEGACY_COLOR_CODE.matcher(input).replaceAll("");
     }
 
-    private boolean isAltOrOptionDown(MinecraftClient mc) {
+    private boolean isAltOrOptionDown(Minecraft mc) {
         if (mc == null || mc.getWindow() == null) return false;
-        long handle = mc.getWindow().getHandle();
+        long handle = mc.getWindow().handle();
         return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS
                 || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
     }
 
-    private boolean isCopyModifierDown(MinecraftClient mc) {
+    private boolean isCopyModifierDown(Minecraft mc) {
         if (mc == null || mc.getWindow() == null) return false;
-        long handle = mc.getWindow().getHandle();
+        long handle = mc.getWindow().handle();
         return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
                 || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS
                 || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SUPER) == GLFW.GLFW_PRESS
                 || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SUPER) == GLFW.GLFW_PRESS;
     }
 
-    private String toLegacyFormatted(Text text) {
+    private String toLegacyFormatted(Component text) {
         if (text == null) return "";
         StringBuilder sb = new StringBuilder();
         final Style[] lastStyle = new Style[]{null};
-        OrderedText ordered = text.asOrderedText();
+        FormattedCharSequence ordered = text.getVisualOrderText();
         ordered.accept((index, style, codePoint) -> {
             if (!style.equals(lastStyle[0])) {
                 sb.append(styleToLegacyPrefix(style));
@@ -197,7 +176,7 @@ public class MixinChatScreenCopyChat {
         if (style == null) return "§r";
         StringBuilder sb = new StringBuilder("§r");
         if (style.getColor() != null) {
-            Integer rgb = style.getColor().getRgb();
+            Integer rgb = style.getColor().getValue();
             if (rgb != null) {
                 Character code = LEGACY_COLOR_BY_RGB.get(rgb & 0xFFFFFF);
                 if (code != null) sb.append('§').append(code);

@@ -3,10 +3,10 @@ package xenus.xenaddons.features.impl.misc;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
@@ -119,8 +119,8 @@ public class CommandAliasesModule extends Module {
     }
 
     private static int runCommand(String cmd) {
-        if (MinecraftClient.getInstance().player != null) {
-            MinecraftClient.getInstance().player.networkHandler.sendChatCommand(cmd);
+        if (Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.connection.sendCommand(cmd);
         }
         return 1;
     }
@@ -133,22 +133,22 @@ public class CommandAliasesModule extends Module {
     }
 
     private static void registerSimple(CommandDispatcher<FabricClientCommandSource> dispatcher, String command, com.mojang.brigadier.Command<FabricClientCommandSource> execution) {
-        dispatcher.register(ClientCommandManager.literal(command).executes(execution));
+        dispatcher.register(ClientCommands.literal(command).executes(execution));
         String capitalized = capitalizeFirst(command);
         if (!capitalized.equals(command)) {
-            dispatcher.register(ClientCommandManager.literal(capitalized).executes(execution));
+            dispatcher.register(ClientCommands.literal(capitalized).executes(execution));
         }
     }
 
     private static void registerPlayerArg(CommandDispatcher<FabricClientCommandSource> dispatcher, String command, com.mojang.brigadier.Command<FabricClientCommandSource> execution) {
-        LiteralArgumentBuilder<FabricClientCommandSource> base = ClientCommandManager.literal(command)
-            .then(ClientCommandManager.argument("player", StringArgumentType.word()).executes(execution));
+        LiteralArgumentBuilder<FabricClientCommandSource> base = ClientCommands.literal(command)
+            .then(ClientCommands.argument("player", StringArgumentType.word()).executes(execution));
         dispatcher.register(base);
 
         String capitalized = capitalizeFirst(command);
         if (!capitalized.equals(command)) {
-            LiteralArgumentBuilder<FabricClientCommandSource> cap = ClientCommandManager.literal(capitalized)
-                .then(ClientCommandManager.argument("player", StringArgumentType.word()).executes(execution));
+            LiteralArgumentBuilder<FabricClientCommandSource> cap = ClientCommands.literal(capitalized)
+                .then(ClientCommands.argument("player", StringArgumentType.word()).executes(execution));
             dispatcher.register(cap);
         }
     }
@@ -162,13 +162,13 @@ public class CommandAliasesModule extends Module {
         new Thread(() -> {
             try {
                 // l -> /l
-                if (MinecraftClient.getInstance().player != null) 
-                    MinecraftClient.getInstance().player.networkHandler.sendChatCommand("l");
+                if (Minecraft.getInstance().player != null) 
+                    Minecraft.getInstance().player.connection.sendCommand("l");
                 
                 Thread.sleep(500);
                 
-                if (MinecraftClient.getInstance().player != null) 
-                    MinecraftClient.getInstance().player.networkHandler.sendChatCommand("play sb");
+                if (Minecraft.getInstance().player != null) 
+                    Minecraft.getInstance().player.connection.sendCommand("play sb");
             } catch (Exception e) {}
         }).start();
     }
@@ -176,18 +176,18 @@ public class CommandAliasesModule extends Module {
     private static void executeLd() {
          new Thread(() -> {
             try {
-                if (MinecraftClient.getInstance().player != null) 
-                    MinecraftClient.getInstance().player.networkHandler.sendChatCommand("l");
+                if (Minecraft.getInstance().player != null) 
+                    Minecraft.getInstance().player.connection.sendCommand("l");
                 
                 Thread.sleep(500);
                 
-                if (MinecraftClient.getInstance().player != null) 
-                    MinecraftClient.getInstance().player.networkHandler.sendChatCommand("play sb");
+                if (Minecraft.getInstance().player != null) 
+                    Minecraft.getInstance().player.connection.sendCommand("play sb");
                     
                 Thread.sleep(2200);
                 
-                if (MinecraftClient.getInstance().player != null) 
-                    MinecraftClient.getInstance().player.networkHandler.sendChatCommand("warp dh");
+                if (Minecraft.getInstance().player != null) 
+                    Minecraft.getInstance().player.connection.sendCommand("warp dh");
             } catch (Exception e) {}
         }).start();
     }

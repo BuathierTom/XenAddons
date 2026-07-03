@@ -6,7 +6,7 @@ enum class Theme(private val baseColor: Int) {
     BgDark(0xFF090B0D.toInt()),
     Bg(0xFF15181C.toInt()),
     BgLight(0xFF20252B.toInt()),
-    Text(0xFFF2F4F7.toInt()),
+    Component(0xFFF2F4F7.toInt()),
     TextMuted(0xFFA7B0BC.toInt()),
     Highlight(0xFF62B6CB.toInt()),
     Border(0xFF323943.toInt()),

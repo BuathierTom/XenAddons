@@ -5,13 +5,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.component.DataComponentTypes;
+import net.minecraft.core.component.DataComponents;
 
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.item.component.ResolvableProfile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,33 @@ public class XenAddons implements ModInitializer {
 	}
 
 	private static void registerCustom(String name, String fileName) {
-		CUSTOM_TEXTURES.put(name, Identifier.of("xenaddons", "textures/icons/custom/" + fileName + ".png"));
+		CUSTOM_TEXTURES.put(name, Identifier.fromNamespaceAndPath("xenaddons", "textures/icons/custom/" + fileName + ".png"));
+	}
+
+	public static Identifier findCustomTexture(String itemId) {
+		if (itemId == null || itemId.isBlank()) return null;
+
+		String normalized = itemId.trim();
+		String lower = normalized.toLowerCase(Locale.ROOT);
+
+		for (Map.Entry<String, Identifier> entry : CUSTOM_TEXTURES.entrySet()) {
+			String textureId = entry.getValue().toString();
+			String name = entry.getKey();
+			String fileName = textureId.substring(textureId.lastIndexOf('/') + 1);
+			String fileNameWithoutExtension = fileName.endsWith(".png")
+				? fileName.substring(0, fileName.length() - 4)
+				: fileName;
+
+			if (textureId.equals(normalized)
+				|| name.equalsIgnoreCase(normalized)
+				|| name.replace(' ', '_').equalsIgnoreCase(normalized)
+				|| fileName.equalsIgnoreCase(lower)
+				|| fileNameWithoutExtension.equalsIgnoreCase(lower)) {
+				return entry.getValue();
+			}
+		}
+
+		return null;
 	}
 
 	public static class CustomButtonData {
@@ -92,7 +118,7 @@ public class XenAddons implements ModInitializer {
 			if (itemId.startsWith("skull:")) return getSkullStack(itemId);
 			try {
 				if (!itemId.contains(":")) return ItemStack.EMPTY;
-				return new ItemStack(Registries.ITEM.get(Identifier.of(itemId)));
+				return new ItemStack(BuiltInRegistries.ITEM.get(Identifier.parse(itemId)).get().value());
 			} catch (Exception e) { return ItemStack.EMPTY; }
 		}
 
@@ -108,11 +134,15 @@ public class XenAddons implements ModInitializer {
 				map.put("textures", new com.mojang.authlib.properties.Property("textures", base64));
 				com.mojang.authlib.properties.PropertyMap properties = new com.mojang.authlib.properties.PropertyMap(map);
 				GameProfile profile = new GameProfile(uuid, "Skull", properties);
-				head.set(DataComponentTypes.PROFILE, ProfileComponent.ofStatic(profile));
+				head.set(DataComponents.PROFILE, ResolvableProfile.createResolved(profile));
 				return head;
 			} catch (Exception e) {
-				LOGGER.error("Failed to create skull stack", e);
-				return new ItemStack(Items.PLAYER_HEAD);
+				LOGGER.debug("Failed to create skull stack", e);
+				try {
+					return new ItemStack(Items.PLAYER_HEAD);
+				} catch (Exception ignored) {
+					return ItemStack.EMPTY;
+				}
 			}
 		}
 	}

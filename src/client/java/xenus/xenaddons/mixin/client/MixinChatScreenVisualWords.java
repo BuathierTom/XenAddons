@@ -1,11 +1,11 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.util.Formatting;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.Style;
+import net.minecraft.ChatFormatting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,22 +20,22 @@ import java.util.List;
 @Mixin(ChatScreen.class)
 public abstract class MixinChatScreenVisualWords {
     @Shadow
-    protected TextFieldWidget chatField;
+    protected EditBox input;
 
     @Inject(method = "init", at = @At("TAIL"))
     private void xenaddons$addVisualWordsFormatter(CallbackInfo ci) {
-        if (chatField == null) return;
+        if (input == null) return;
 
-        chatField.addFormatter((text, firstCharacterIndex) -> {
+        input.addFormatter((text, firstCharacterIndex) -> {
             String replaced = XenTextCompat.normalizeLegacyCodes(XenTextCompat.replaceVisualWords(text));
             return toOrderedTextWithLegacyCodes(replaced);
         });
     }
 
-    private OrderedText toOrderedTextWithLegacyCodes(String input) {
-        if (input == null || input.isEmpty()) return OrderedText.empty();
+    private FormattedCharSequence toOrderedTextWithLegacyCodes(String input) {
+        if (input == null || input.isEmpty()) return FormattedCharSequence.EMPTY;
 
-        List<OrderedText> parts = new ArrayList<>();
+        List<FormattedCharSequence> parts = new ArrayList<>();
         StringBuilder plain = new StringBuilder();
         Style currentStyle = Style.EMPTY;
 
@@ -45,7 +45,7 @@ public abstract class MixinChatScreenVisualWords {
                 int rgb = parseLegacyHexColor(input, i);
                 if (rgb >= 0) {
                     if (!plain.isEmpty()) {
-                        parts.add(OrderedText.styledForwardsVisitedString(plain.toString(), currentStyle));
+                        parts.add(FormattedCharSequence.forward(plain.toString(), currentStyle));
                         plain.setLength(0);
                     }
                     currentStyle = Style.EMPTY.withColor(rgb);
@@ -54,18 +54,18 @@ public abstract class MixinChatScreenVisualWords {
                 }
 
                 if (!plain.isEmpty()) {
-                    parts.add(OrderedText.styledForwardsVisitedString(plain.toString(), currentStyle));
+                    parts.add(FormattedCharSequence.forward(plain.toString(), currentStyle));
                     plain.setLength(0);
                 }
 
-                Formatting fmt = Formatting.byCode(input.charAt(i + 1));
+                ChatFormatting fmt = ChatFormatting.getByCode(input.charAt(i + 1));
                 if (fmt != null) {
-                    if (fmt == Formatting.RESET) {
+                    if (fmt == ChatFormatting.RESET) {
                         currentStyle = Style.EMPTY;
                     } else if (fmt.isColor()) {
-                        currentStyle = Style.EMPTY.withFormatting(fmt);
+                        currentStyle = Style.EMPTY.applyFormat(fmt);
                     } else {
-                        currentStyle = currentStyle.withFormatting(fmt);
+                        currentStyle = currentStyle.applyFormat(fmt);
                     }
                 }
                 i++;
@@ -75,9 +75,9 @@ public abstract class MixinChatScreenVisualWords {
         }
 
         if (!plain.isEmpty()) {
-            parts.add(OrderedText.styledForwardsVisitedString(plain.toString(), currentStyle));
+            parts.add(FormattedCharSequence.forward(plain.toString(), currentStyle));
         }
-        return OrderedText.concat(parts);
+        return FormattedCharSequence.composite(parts);
     }
 
     private static int parseLegacyHexColor(String input, int start) {
@@ -98,13 +98,13 @@ public abstract class MixinChatScreenVisualWords {
         return (nibble[0] << 20) | (nibble[1] << 16) | (nibble[2] << 12) | (nibble[3] << 8) | (nibble[4] << 4) | nibble[5];
     }
 
-    @Inject(method = "render", at = @At("HEAD"))
-    private void xenaddons$beginChatScreenRender(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    private void xenaddons$beginChatScreenRender(GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
         VisualWordsRenderState.pushChatRender();
     }
 
-    @Inject(method = "render", at = @At("TAIL"))
-    private void xenaddons$endChatScreenRender(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    private void xenaddons$endChatScreenRender(GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
         VisualWordsRenderState.popChatRender();
     }
 }

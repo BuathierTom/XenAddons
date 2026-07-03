@@ -1,8 +1,8 @@
 package xenus.xenaddons.features.impl.misc;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import xenus.xenaddons.compat.XenDrawContextCompat;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
@@ -67,7 +67,7 @@ public class SpotifyOverlayModule extends Module {
         this.registerSetting(hudScale);
     }
 
-    public void renderInGameHud(DrawContext drawContext) {
+    public void renderInGameHud(GuiGraphicsExtractor drawContext) {
         if (!this.isEnabled()) return;
         SpotifyNowPlaying.requestRefreshIfNeeded(betterDisplay.getValue());
 
@@ -81,13 +81,13 @@ public class SpotifyOverlayModule extends Module {
         renderLine(drawContext, line);
     }
 
-    public void renderPreview(DrawContext drawContext) {
-        int leftX = (mc.getWindow().getScaledWidth() / 2) + hudOffsetX.getValue().intValue();
+    public void renderPreview(GuiGraphicsExtractor drawContext) {
+        int leftX = (mc.getWindow().getGuiScaledWidth() / 2) + hudOffsetX.getValue().intValue();
         int y = hudY.getValue().intValue();
         renderPreviewAt(drawContext, leftX, y);
     }
 
-    public void renderPreviewAt(DrawContext drawContext, int leftX, int y) {
+    public void renderPreviewAt(GuiGraphicsExtractor drawContext, int leftX, int y) {
         float scale = (float) hudScale.getValue().doubleValue();
         if (betterDisplay.getValue()) {
             SpotifyNowPlaying.Snapshot preview = new SpotifyNowPlaying.Snapshot(
@@ -105,57 +105,57 @@ public class SpotifyOverlayModule extends Module {
         }
     }
 
-    private void renderLine(DrawContext drawContext, String line) {
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-        int textWidth = mc.textRenderer.getWidth(line);
-        int textHeight = mc.textRenderer.fontHeight;
+    private void renderLine(GuiGraphicsExtractor drawContext, String line) {
+        int width = mc.getWindow().getGuiScaledWidth();
+        int height = mc.getWindow().getGuiScaledHeight();
+        int textWidth = mc.font.width(line);
+        int textHeight = mc.font.lineHeight;
         float scale = (float) hudScale.getValue().doubleValue();
         int leftXRaw = (width / 2) + hudOffsetX.getValue().intValue();
         int yRaw = hudY.getValue().intValue();
         int maxLeftX = width - (int) Math.ceil(textWidth * scale) - 2;
-        int leftX = MathHelper.clamp(leftXRaw, 2, Math.max(2, maxLeftX));
+        int leftX = Mth.clamp(leftXRaw, 2, Math.max(2, maxLeftX));
         int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
 
         renderLineAt(drawContext, line, leftX, y, scale);
     }
 
-    private void renderLineAt(DrawContext drawContext, String line, int leftX, int y, float scale) {
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
+    private void renderLineAt(GuiGraphicsExtractor drawContext, String line, int leftX, int y, float scale) {
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
         float inv = 1.0f / scale;
         int x = (int) (leftX * inv);
         int drawY = (int) (y * inv);
-        drawContext.drawTextWithShadow(mc.textRenderer, line, x, drawY, 0xFFFFFFFF);
-        drawContext.getMatrices().popMatrix();
+        drawContext.text(mc.font, line, x, drawY, 0xFFFFFFFF);
+        drawContext.pose().popMatrix();
     }
 
-    private void renderBetterDisplay(DrawContext drawContext, SpotifyNowPlaying.Snapshot snapshot) {
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
+    private void renderBetterDisplay(GuiGraphicsExtractor drawContext, SpotifyNowPlaying.Snapshot snapshot) {
+        int width = mc.getWindow().getGuiScaledWidth();
+        int height = mc.getWindow().getGuiScaledHeight();
         float scale = (float) hudScale.getValue().doubleValue();
 
         int leftXRaw = (width / 2) + hudOffsetX.getValue().intValue();
         int yRaw = hudY.getValue().intValue();
         int maxLeftX = width - (int) Math.ceil(BETTER_DISPLAY_WIDTH * scale) - 2;
-        int leftX = MathHelper.clamp(leftXRaw, 2, Math.max(2, maxLeftX));
+        int leftX = Mth.clamp(leftXRaw, 2, Math.max(2, maxLeftX));
         int maxY = height - (int) Math.ceil(BETTER_DISPLAY_HEIGHT * scale) - 2;
-        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
 
         updateControlBounds(leftX, y, scale);
         renderBetterDisplayAt(drawContext, snapshot, leftX, y, scale);
     }
 
     private void renderBetterDisplayAt(
-        DrawContext drawContext,
+        GuiGraphicsExtractor drawContext,
         SpotifyNowPlaying.Snapshot snapshot,
         int leftX,
         int y,
         float scale
     ) {
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
         float inv = 1.0f / scale;
         int x = (int) (leftX * inv);
         int drawY = (int) (y * inv);
@@ -178,10 +178,10 @@ public class SpotifyOverlayModule extends Module {
         }
         drawControls(drawContext, snapshot, x, drawY);
 
-        drawContext.getMatrices().popMatrix();
+        drawContext.pose().popMatrix();
     }
 
-    private void drawCover(DrawContext drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y, int size) {
+    private void drawCover(GuiGraphicsExtractor drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y, int size) {
         drawContext.fill(x, y, x + size, y + size, 0xFF151A1F);
         Identifier cover = SpotifyCoverCache.getOrLoad(snapshot);
         if (cover != null) {
@@ -204,7 +204,7 @@ public class SpotifyOverlayModule extends Module {
         }
     }
 
-    private void drawAlbumPlaceholder(DrawContext drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y, int size) {
+    private void drawAlbumPlaceholder(GuiGraphicsExtractor drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y, int size) {
         int baseColor = snapshot.isPlaying() ? 0xFF132A20 : snapshot.isPaused() ? 0xFF252A30 : 0xFF151A1F;
         drawContext.fill(x, y, x + size, y + size, baseColor);
 
@@ -219,7 +219,7 @@ public class SpotifyOverlayModule extends Module {
         }
     }
 
-    private void drawTimeLabels(DrawContext drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y, int width) {
+    private void drawTimeLabels(GuiGraphicsExtractor drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y, int width) {
         if (!snapshot.hasProgress()) return;
 
         String start = formatTime(snapshot.progressSeconds());
@@ -228,11 +228,11 @@ public class SpotifyOverlayModule extends Module {
         drawScaledText(drawContext, end, x + width - scaledTextWidth(end, TIME_SCALE), y, TIME_SCALE, 0xFFEAEAEA);
     }
 
-    private void drawProgress(DrawContext drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y, int width, int height) {
+    private void drawProgress(GuiGraphicsExtractor drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y, int width, int height) {
         drawRoundedRect(drawContext, x, y, width, height, 0, PROGRESS_BACKGROUND);
         if (snapshot.isPaused()) {
             int filled = snapshot.hasProgress()
-                ? MathHelper.clamp((int) Math.round(width * (snapshot.progressSeconds() / (double) snapshot.durationSeconds())), 1, width)
+                ? Mth.clamp((int) Math.round(width * (snapshot.progressSeconds() / (double) snapshot.durationSeconds())), 1, width)
                 : width / 3;
             drawRoundedRect(drawContext, x, y, filled, height, 0, SPOTIFY_GREEN);
             return;
@@ -241,7 +241,7 @@ public class SpotifyOverlayModule extends Module {
 
         if (snapshot.hasProgress()) {
             double raw = snapshot.progressSeconds() / (double) snapshot.durationSeconds();
-            int filled = MathHelper.clamp((int) Math.round(width * raw), 1, width);
+            int filled = Mth.clamp((int) Math.round(width * raw), 1, width);
             drawRoundedRect(drawContext, x, y, filled, height, 0, SPOTIFY_GREEN);
             return;
         }
@@ -257,14 +257,14 @@ public class SpotifyOverlayModule extends Module {
         }
     }
 
-    private void drawControls(DrawContext drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y) {
+    private void drawControls(GuiGraphicsExtractor drawContext, SpotifyNowPlaying.Snapshot snapshot, int x, int y) {
         drawControlButton(drawContext, x + PREVIOUS_X, y + CONTROLS_Y, ControlButton.PREVIOUS, snapshot);
         drawControlButton(drawContext, x + PLAY_X, y + CONTROLS_Y, ControlButton.PLAY_PAUSE, snapshot);
         drawControlButton(drawContext, x + NEXT_X, y + CONTROLS_Y, ControlButton.NEXT, snapshot);
     }
 
     private void drawControlButton(
-        DrawContext drawContext,
+        GuiGraphicsExtractor drawContext,
         int x,
         int y,
         ControlButton button,
@@ -309,7 +309,7 @@ public class SpotifyOverlayModule extends Module {
         }
     }
 
-    private void drawPreviousIcon(DrawContext context, int x, int y, int color) {
+    private void drawPreviousIcon(GuiGraphicsExtractor context, int x, int y, int color) {
         context.fill(x + 3, y + 3, x + 5, y + 9, color);
         for (int row = 0; row < 6; row++) {
             int width = row < 3 ? row + 1 : 6 - row;
@@ -317,7 +317,7 @@ public class SpotifyOverlayModule extends Module {
         }
     }
 
-    private void drawNextIcon(DrawContext context, int x, int y, int color) {
+    private void drawNextIcon(GuiGraphicsExtractor context, int x, int y, int color) {
         context.fill(x + 8, y + 3, x + 10, y + 9, color);
         for (int row = 0; row < 6; row++) {
             int width = row < 3 ? row + 1 : 6 - row;
@@ -325,14 +325,14 @@ public class SpotifyOverlayModule extends Module {
         }
     }
 
-    private void drawPlayIcon(DrawContext context, int x, int y, int color) {
+    private void drawPlayIcon(GuiGraphicsExtractor context, int x, int y, int color) {
         for (int row = 0; row < 7; row++) {
             int width = row < 4 ? row + 1 : 7 - row;
             context.fill(x + 4, y + 3 + row, x + 4 + width, y + 4 + row, color);
         }
     }
 
-    private void drawPauseIcon(DrawContext context, int x, int y, int color) {
+    private void drawPauseIcon(GuiGraphicsExtractor context, int x, int y, int color) {
         context.fill(x + 4, y + 3, x + 6, y + 10, color);
         context.fill(x + 8, y + 3, x + 10, y + 10, color);
     }
@@ -351,17 +351,17 @@ public class SpotifyOverlayModule extends Module {
         return "Spotify is not running";
     }
 
-    private void drawScaledText(DrawContext context, String text, float x, float y, float scale, int color) {
+    private void drawScaledText(GuiGraphicsExtractor context, String text, float x, float y, float scale, int color) {
         if (text == null || text.isBlank()) return;
-        context.getMatrices().pushMatrix();
-        context.getMatrices().translate(x, y);
-        context.getMatrices().scale(scale, scale);
-        context.drawText(mc.textRenderer, text, 0, 0, color, false);
-        context.getMatrices().popMatrix();
+        context.pose().pushMatrix();
+        context.pose().translate(x, y);
+        context.pose().scale(scale, scale);
+        context.text(mc.font, text, 0, 0, color, false);
+        context.pose().popMatrix();
     }
 
     private int scaledTextWidth(String text, float scale) {
-        return (int) Math.ceil(mc.textRenderer.getWidth(text) * scale);
+        return (int) Math.ceil(mc.font.width(text) * scale);
     }
 
     private String fitText(String value, int maxWidth, float scale) {
@@ -372,13 +372,13 @@ public class SpotifyOverlayModule extends Module {
 
         String ellipsis = "...";
         int maxUnscaledWidth = Math.max(0, (int) Math.floor(maxWidth / safeScale));
-        int ellipsisWidth = mc.textRenderer.getWidth(ellipsis);
+        int ellipsisWidth = mc.font.width(ellipsis);
         int targetWidth = Math.max(0, maxUnscaledWidth - ellipsisWidth);
         StringBuilder out = new StringBuilder();
         for (int offset = 0; offset < clean.length();) {
             int codePoint = clean.codePointAt(offset);
             String next = new String(Character.toChars(codePoint));
-            if (mc.textRenderer.getWidth(out.toString() + next) > targetWidth) break;
+            if (mc.font.width(out.toString() + next) > targetWidth) break;
             out.append(next);
             offset += Character.charCount(codePoint);
         }
@@ -390,7 +390,7 @@ public class SpotifyOverlayModule extends Module {
         return (safeSeconds / 60) + ":" + String.format("%02d", safeSeconds % 60);
     }
 
-    private void drawRoundedRect(DrawContext context, int x, int y, int width, int height, int radius, int color) {
+    private void drawRoundedRect(GuiGraphicsExtractor context, int x, int y, int width, int height, int radius, int color) {
         if (width <= 0 || height <= 0) return;
         int r = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
         if (r <= 1) {
@@ -407,7 +407,7 @@ public class SpotifyOverlayModule extends Module {
         }
     }
 
-    private void drawRoundedBorder(DrawContext context, int x, int y, int width, int height, int radius, int color) {
+    private void drawRoundedBorder(GuiGraphicsExtractor context, int x, int y, int width, int height, int radius, int color) {
         drawRoundedRect(context, x, y, width, 1, 0, color);
         drawRoundedRect(context, x, y + height - 1, width, 1, 0, color);
         drawRoundedRect(context, x, y, 1, height, 0, color);
@@ -440,11 +440,11 @@ public class SpotifyOverlayModule extends Module {
     }
 
     public int getPreviewWidth() {
-        return betterDisplay.getValue() ? BETTER_DISPLAY_WIDTH : mc.textRenderer.getWidth(STANDARD_PREVIEW_LINE);
+        return betterDisplay.getValue() ? BETTER_DISPLAY_WIDTH : mc.font.width(STANDARD_PREVIEW_LINE);
     }
 
     public int getPreviewHeight() {
-        return betterDisplay.getValue() ? BETTER_DISPLAY_HEIGHT : mc.textRenderer.fontHeight;
+        return betterDisplay.getValue() ? BETTER_DISPLAY_HEIGHT : mc.font.lineHeight;
     }
 
     public boolean onMouseClicked(double mouseX, double mouseY, int button) {
@@ -471,9 +471,9 @@ public class SpotifyOverlayModule extends Module {
     }
 
     private boolean isHovered(ControlButton button) {
-        if (mc.currentScreen == null) return false;
-        double mouseX = mc.mouse.getScaledX(mc.getWindow());
-        double mouseY = mc.mouse.getScaledY(mc.getWindow());
+        if (mc.screen == null) return false;
+        double mouseX = mc.mouseHandler.getScaledXPos(mc.getWindow());
+        double mouseY = mc.mouseHandler.getScaledYPos(mc.getWindow());
         return switch (button) {
             case PREVIOUS -> previousButtonBounds.contains(mouseX, mouseY);
             case PLAY_PAUSE -> playPauseButtonBounds.contains(mouseX, mouseY);

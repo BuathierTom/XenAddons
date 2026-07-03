@@ -1,9 +1,9 @@
 package xenus.xenaddons.features.impl.dungeons.secretroutes;
 
 import com.google.gson.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.dungeon.DungeonScanner;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.multistorage.Triple;
 
@@ -146,9 +146,9 @@ public class Room {
                 }
 
                 for (Map.Entry<String, Integer> entry : map.entrySet()) {
-                    ClientPlayerEntity p = MinecraftClient.getInstance().player;
+                    LocalPlayer p = Minecraft.getInstance().player;
                     if (p == null) continue;
-                    BlockPos pPos = p.getBlockPos();
+                    BlockPos pPos = p.blockPosition();
                     if (pPos == null) continue;
 
                     BlockPos relPos = RoomRotationUtils.actualToRelative(pPos, RoomDirectionUtils.roomDirection(), RoomDirectionUtils.roomCorner());

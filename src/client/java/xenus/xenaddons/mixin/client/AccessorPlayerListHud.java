@@ -1,15 +1,15 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.gui.hud.PlayerListHud;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.PlayerTabOverlay;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(PlayerListHud.class)
+@Mixin(PlayerTabOverlay.class)
 public interface AccessorPlayerListHud {
     @Accessor("header")
-    Text getHeader();
+    Component getHeader();
 
     @Accessor("footer")
-    Text getFooter();
+    Component getFooter();
 }

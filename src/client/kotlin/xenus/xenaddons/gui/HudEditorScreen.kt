@@ -1,11 +1,13 @@
 package xenus.xenaddons.gui
 
-import net.minecraft.client.gui.Click
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.screen.Screen
-import net.minecraft.client.input.KeyInput
-import net.minecraft.text.Text
-import net.minecraft.util.math.MathHelper
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.Font
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.input.KeyEvent
+import net.minecraft.client.input.MouseButtonEvent
+import net.minecraft.network.chat.Component
+import net.minecraft.util.Mth as Mth
 import org.lwjgl.glfw.GLFW
 import xenus.xenaddons.config.ConfigManager
 import xenus.xenaddons.features.ModuleManager
@@ -20,7 +22,26 @@ import xenus.xenaddons.hud.HudState
 import xenus.xenaddons.utils.RenderUtils
 import java.util.Locale
 
-open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("Edit HUD")) {
+private val textRenderer: Font
+    get() = Minecraft.getInstance().font
+
+private fun Font.getWidth(text: String): Int = width(text)
+
+private val Font.fontHeight: Int
+    get() = lineHeight
+
+private val GuiGraphicsExtractor.matrices
+    get() = pose()
+
+private fun GuiGraphicsExtractor.drawTextWithShadow(font: Font, text: String, x: Int, y: Int, color: Int) {
+    text(font, text, x, y, color, true)
+}
+
+private fun GuiGraphicsExtractor.drawCenteredTextWithShadow(font: Font, text: String, centerX: Int, y: Int, color: Int) {
+    text(font, text, centerX - font.width(text) / 2, y, color, true)
+}
+
+open class HudEditorScreen(private val parent: Screen?) : Screen(Component.literal("Edit HUD")) {
     private var posTitlesModule: PosTitlesModule? = null
     private var autoPetModule: AutoPetRuleTitleModule? = null
     private var playersLeapedModule: PlayersLeapedModule? = null
@@ -49,7 +70,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         spotifyOverlayModule = ModuleManager.getModule(SpotifyOverlayModule::class.java)
     }
 
-    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    override fun extractRenderState(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, delta: Float) {
         lastMouseX = mouseX
         lastMouseY = mouseY
 
@@ -74,13 +95,14 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         renderHelpButton(context, mouseX, mouseY)
         renderActiveTooltip(context, mouseX, mouseY)
         if (showHelp) renderHelpPanel(context)
+        super.extractRenderState(context, mouseX, mouseY, delta)
     }
 
-    override fun mouseClicked(click: Click, doubled: Boolean): Boolean {
+    override fun mouseClicked(click: MouseButtonEvent, doubled: Boolean): Boolean {
         if (click.button() != 0) return super.mouseClicked(click, doubled)
 
-        val mouseX = click.x().toInt()
-        val mouseY = click.y().toInt()
+        val mouseX = click.x.toInt()
+        val mouseY = click.y.toInt()
 
         if (isOverHelpButton(mouseX, mouseY)) {
             showHelp = !showHelp
@@ -104,14 +126,14 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return super.mouseClicked(click, doubled)
     }
 
-    override fun mouseReleased(click: Click): Boolean {
+    override fun mouseReleased(click: MouseButtonEvent): Boolean {
         dragging = null
         return super.mouseReleased(click)
     }
 
-    override fun mouseDragged(click: Click, deltaX: Double, deltaY: Double): Boolean {
+    override fun mouseDragged(click: MouseButtonEvent, deltaX: Double, deltaY: Double): Boolean {
         if (dragging == null) return super.mouseDragged(click, deltaX, deltaY)
-        applyDrag(click.x().toInt(), click.y().toInt())
+        applyDrag(click.x.toInt(), click.y.toInt())
         return true
     }
 
@@ -126,12 +148,12 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return true
     }
 
-    override fun keyPressed(input: KeyInput): Boolean {
-        val keyCode = input.key()
-        val modifiers = input.modifiers()
+    override fun keyPressed(input: KeyEvent): Boolean {
+        val keyCode = input.key
+        val modifiers = input.modifiers
 
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-            close()
+            onClose()
             return true
         }
 
@@ -167,17 +189,17 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return true
     }
 
-    override fun close() {
+    override fun onClose() {
         ConfigManager.save()
-        client?.setScreen(parent)
+        Minecraft.getInstance().setScreen(parent)
     }
 
-    private fun renderGrid(context: DrawContext) {
+    private fun renderGrid(context: GuiGraphicsExtractor) {
         for (x in 0..width step GRID_SIZE) context.fill(x, 0, x + 1, height, 0x33FFFFFF)
         for (y in 0..height step GRID_SIZE) context.fill(0, y, width, y + 1, 0x33FFFFFF)
     }
 
-    private fun renderComponent(context: DrawContext, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
+    private fun renderComponent(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
         if (type == ComponentType.SPOTIFY_OVERLAY && spotifyOverlayModule?.isBetterDisplayEnabled == true) {
             renderSpotifyPreview(context, bounds)
             renderComponentBox(context, mouseX, mouseY, type, bounds)
@@ -293,7 +315,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     }
 
     private fun setScale(type: ComponentType, value: Double) {
-        val clamped = MathHelper.clamp(value, 0.5, 6.0)
+        val clamped = Mth.clamp(value, 0.5, 6.0)
         when (type) {
             ComponentType.POS_TITLES -> posTitlesModule?.setHudScale(clamped)
             ComponentType.AUTOPET_TITLE -> autoPetModule?.setHudScale(clamped)
@@ -337,8 +359,8 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         var x = newX
         var y = newY
         if (clampToScreen) {
-            x = MathHelper.clamp(x, 0, (width - referenceBounds.w).coerceAtLeast(0))
-            y = MathHelper.clamp(y, 0, (height - referenceBounds.h).coerceAtLeast(0))
+            x = Mth.clamp(x, 0, (width - referenceBounds.w).coerceAtLeast(0))
+            y = Mth.clamp(y, 0, (height - referenceBounds.h).coerceAtLeast(0))
         }
 
         when (type) {
@@ -384,7 +406,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         }
     }
 
-    private fun renderResetButton(context: DrawContext, mouseX: Int, mouseY: Int) {
+    private fun renderResetButton(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) {
         val x = width - RESET_BTN_W - RESET_BTN_MARGIN
         val y = height - RESET_BTN_H - RESET_BTN_MARGIN
         val hovered = isOverResetButton(mouseX, mouseY)
@@ -402,7 +424,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return mouseX in x..(x + RESET_BTN_W) && mouseY in y..(y + RESET_BTN_H)
     }
 
-    private fun renderHelpButton(context: DrawContext, mouseX: Int, mouseY: Int) {
+    private fun renderHelpButton(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) {
         val x = width - HELP_BTN_W - RESET_BTN_MARGIN
         val y = height - RESET_BTN_H - RESET_BTN_MARGIN - HELP_BTN_H - 6
         val hovered = isOverHelpButton(mouseX, mouseY)
@@ -426,7 +448,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return mouseX in x..(x + HELP_BTN_W) && mouseY in y..(y + HELP_BTN_H)
     }
 
-    private fun renderActiveTooltip(context: DrawContext, mouseX: Int, mouseY: Int) {
+    private fun renderActiveTooltip(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) {
         val target = dragging ?: getActiveComponent(mouseX, mouseY) ?: return
         val bounds = getBounds(target)
         val text = "${target.label} | x=${bounds.x} y=${bounds.y} | scale=${String.format(Locale.US, "%.2f", getScale(target))}"
@@ -441,7 +463,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.drawTextWithShadow(textRenderer, text, boxX, boxY, 0xFFFFFFFF.toInt())
     }
 
-    private fun renderHelpPanel(context: DrawContext) {
+    private fun renderHelpPanel(context: GuiGraphicsExtractor) {
         val lines = arrayOf(
             "Left click: drag component",
             "Scroll on component: scale",
@@ -595,7 +617,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
     }
 
-    private fun renderPosTitlesPreview(context: DrawContext, bounds: Bounds) {
+    private fun renderPosTitlesPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
         val scale = (posTitlesModule?.hudScale ?: 1.0).toFloat()
         val inv = 1.0f / scale
         context.matrices.pushMatrix()
@@ -604,7 +626,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
-    private fun renderAutoPetPreview(context: DrawContext, bounds: Bounds) {
+    private fun renderAutoPetPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
         val centerX = bounds.x + (bounds.w / 2)
         val baseY = bounds.y
         val titleScale = (autoPetModule?.hudScale ?: HudState.PET_NOTIFICATION.scale.toDouble()).toFloat()
@@ -630,7 +652,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
-    private fun renderPlayersLeapedPreview(context: DrawContext, bounds: Bounds) {
+    private fun renderPlayersLeapedPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
         val scale = (playersLeapedModule?.hudScale ?: 1.0).toFloat()
         val inv = 1.0f / scale
         context.matrices.pushMatrix()
@@ -639,11 +661,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
-    private fun renderSpotifyPreview(context: DrawContext, bounds: Bounds) {
+    private fun renderSpotifyPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
         spotifyOverlayModule?.renderPreviewAt(context, bounds.x, bounds.y)
     }
 
-    private fun renderInvisibilityTimerPreview(context: DrawContext, bounds: Bounds) {
+    private fun renderInvisibilityTimerPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
         val preview = invisibilityTimerModule?.getDisplayText(true) ?: "2500"
         val scale = (invisibilityTimerModule?.hudScale ?: 1.0).toFloat()
         val inv = 1.0f / scale
@@ -653,7 +675,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
-    private fun renderMilestoneDisplayPreview(context: DrawContext, bounds: Bounds) {
+    private fun renderMilestoneDisplayPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
         val preview = "§bMilestone§f: §c2"
         val scale = (milestoneDisplayModule?.hudScale ?: 1.0).toFloat()
         val inv = 1.0f / scale
@@ -663,7 +685,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
-    private fun renderMaskProcAlertPreview(context: DrawContext, bounds: Bounds) {
+    private fun renderMaskProcAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
         val scale = (invisibilityTimerModule?.alertHudScale ?: 4.0).toFloat()
         val inv = 1.0f / scale
         context.matrices.pushMatrix()
@@ -672,7 +694,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
-    private fun renderReminderGatePreview(context: DrawContext, bounds: Bounds) {
+    private fun renderReminderGatePreview(context: GuiGraphicsExtractor, bounds: Bounds) {
         val scale = (reminderGateModule?.hudScale ?: 5.0).toFloat()
         val inv = 1.0f / scale
         context.matrices.pushMatrix()
@@ -681,7 +703,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
         context.matrices.popMatrix()
     }
 
-    private fun renderComponentBox(context: DrawContext, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
+    private fun renderComponentBox(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
         val hovered = bounds.contains(mouseX, mouseY)
         val active = dragging == type
         val fillColor = when {
@@ -718,12 +740,12 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Text.literal("E
     }
 
     companion object {
-        private val POS_TITLES_PREVIEW = Text.literal("Player (M) At P2!")
-        private val AUTOPET_TITLE_PREVIEW = Text.literal("Golden Dragon")
-        private val AUTOPET_SUB_PREVIEW = Text.literal("Autopet")
-        private val PLAYERS_LEAPED_PREVIEW = Text.literal("2/4 Players Leaped")
-        private val REMINDER_GATE_PREVIEW = Text.literal("GATEEEEEE !!!!!!!")
-        private val SPOTIFY_PREVIEW = Text.literal("Spotify > Author - Song Title")
+        private const val POS_TITLES_PREVIEW = "Player (M) At P2!"
+        private const val AUTOPET_TITLE_PREVIEW = "Golden Dragon"
+        private const val AUTOPET_SUB_PREVIEW = "Autopet"
+        private const val PLAYERS_LEAPED_PREVIEW = "2/4 Players Leaped"
+        private const val REMINDER_GATE_PREVIEW = "GATEEEEEE !!!!!!!"
+        private const val SPOTIFY_PREVIEW = "Spotify > Author - Song Title"
 
         private const val RESET_BTN_W = 120
         private const val RESET_BTN_H = 16

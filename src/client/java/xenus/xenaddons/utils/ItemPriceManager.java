@@ -3,12 +3,12 @@ package xenus.xenaddons.utils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.Text;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.XenAddons;
 
 import java.net.URI;
@@ -78,13 +78,13 @@ public final class ItemPriceManager {
 
     public static String extractSkyBlockId(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return null;
-        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) return null;
 
-        NbtCompound root = customData.copyNbt();
+        CompoundTag root = customData.copyTag();
         if (root == null) return null;
 
-        NbtCompound extra = root.getCompound("ExtraAttributes").orElse(null);
+        CompoundTag extra = root.getCompound("ExtraAttributes").orElse(null);
         if (extra != null) {
             String id = readString(extra, "id");
             if (id != null) return id;
@@ -124,17 +124,17 @@ public final class ItemPriceManager {
         return s;
     }
 
-    private static String readString(NbtCompound nbt, String key) {
+    private static String readString(CompoundTag nbt, String key) {
         if (nbt == null || key == null) return null;
-        String value = nbt.getString(key, "");
+        String value = nbt.getStringOr(key, "");
         if (value == null || value.isBlank()) return null;
         return value;
     }
 
     private static String getFirstLoreLine(ItemStack stack) {
-        LoreComponent lore = stack.get(DataComponentTypes.LORE);
+        ItemLore lore = stack.get(DataComponents.LORE);
         if (lore == null || lore.lines().isEmpty()) return null;
-        Text first = lore.lines().getFirst();
+        Component first = lore.lines().getFirst();
         return first == null ? null : stripFormatting(first.getString());
     }
 

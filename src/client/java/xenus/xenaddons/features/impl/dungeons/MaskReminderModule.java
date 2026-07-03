@@ -2,17 +2,18 @@ package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.NumberSetting;
@@ -23,17 +24,17 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class MaskReminderModule extends Module {
-    private static final Box[] REGIONS = {
-            new Box(90, 106, 50, 111, 145, 123),
-            new Box(17, 106, 121, 108, 145, 143),
-            new Box(-2, 106, 51, 20, 145, 142),
-            new Box(-1, 26, 29, 191, 145, 58),
-            new Box(3, 5, 0, 128, 48, 140)
+    private static final AABB[] REGIONS = {
+            new AABB(90, 106, 50, 111, 145, 123),
+            new AABB(17, 106, 121, 108, 145, 143),
+            new AABB(-2, 106, 51, 20, 145, 142),
+            new AABB(-1, 26, 29, 191, 145, 58),
+            new AABB(3, 5, 0, 128, 48, 140)
     };
     private static final Pattern COLOR_PATTERN = Pattern.compile("§[0-9a-fk-or]", Pattern.CASE_INSENSITIVE);
     private static final String GOLDOR_START = "[boss] goldor: who dares trespass into my domain?";
 
-    private final StringSetting displayText = new StringSetting("Display Text", "&c⚠ MASK NOT EQUIPPED! ⚠", 64);
+    private final StringSetting displayText = new StringSetting("Display Component", "&c⚠ MASK NOT EQUIPPED! ⚠", 64);
     private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
     private final NumberSetting hudY = new NumberSetting("HUD Y", 60, -1000, 1000, 1);
     private final NumberSetting hudScale = new NumberSetting("HUD Scale", 3.0, 0.5, 6.0, 0.05);
@@ -71,7 +72,7 @@ public class MaskReminderModule extends Module {
             return true;
         });
 
-        HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "mask_reminder_hud"), (drawContext, tickDelta) -> {
             if (!this.isEnabled() || reminderTicks <= 0) return;
             renderHud(drawContext);
         });
@@ -87,12 +88,12 @@ public class MaskReminderModule extends Module {
         currentRegion = getRegionIndex(mc.player);
     }
 
-    private int getRegionIndex(ClientPlayerEntity player) {
+    private int getRegionIndex(LocalPlayer player) {
         double x = player.getX();
         double y = player.getY();
         double z = player.getZ();
         for (int i = 0; i < REGIONS.length; i++) {
-            Box box = REGIONS[i];
+            AABB box = REGIONS[i];
             if (x >= Math.min(box.minX, box.maxX) && x <= Math.max(box.minX, box.maxX)
                 && y >= Math.min(box.minY, box.maxY) && y <= Math.max(box.minY, box.maxY)
                 && z >= Math.min(box.minZ, box.maxZ) && z <= Math.max(box.minZ, box.maxZ)) {
@@ -126,29 +127,29 @@ public class MaskReminderModule extends Module {
         }
     }
 
-    private void renderHud(DrawContext drawContext) {
+    private void renderHud(GuiGraphicsExtractor drawContext) {
         String text = getDisplayTextFormatted();
 
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-        int textWidth = mc.textRenderer.getWidth(text);
-        int textHeight = mc.textRenderer.fontHeight;
+        int width = mc.getWindow().getGuiScaledWidth();
+        int height = mc.getWindow().getGuiScaledHeight();
+        int textWidth = mc.font.width(text);
+        int textHeight = mc.font.lineHeight;
         float scale = (float) hudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
         int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
         int yRaw = hudY.getValue().intValue();
         int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
         int maxCenterX = width - minCenterX;
-        int centerX = MathHelper.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
+        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
         int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
 
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
         int x = (int) ((centerX * inv) - (textWidth / 2f));
         int drawY = (int) (y * inv);
-        drawContext.drawTextWithShadow(mc.textRenderer, text, x, drawY, 0xFFFF5555);
-        drawContext.getMatrices().popMatrix();
+        drawContext.text(mc.font, text, x, drawY, 0xFFFF5555);
+        drawContext.pose().popMatrix();
     }
 
     private String getDisplayTextFormatted() {
@@ -167,10 +168,10 @@ public class MaskReminderModule extends Module {
 
     private boolean isMaskEquipped() {
         if (mc.player == null) return false;
-        ItemStack helmet = mc.player.getEquippedStack(EquipmentSlot.HEAD);
+        ItemStack helmet = mc.player.getItemBySlot(EquipmentSlot.HEAD);
         if (helmet == null || helmet.isEmpty()) return false;
 
-        String name = Formatting.strip(helmet.getName().getString());
+        String name = ChatFormatting.stripFormatting(helmet.getHoverName().getString());
         if (name != null) {
             String lowerName = name.toLowerCase(Locale.ROOT);
             if ((lowerName.contains("spirit") || lowerName.contains("bonzo")) && lowerName.contains("mask")) {
@@ -185,20 +186,20 @@ public class MaskReminderModule extends Module {
     }
 
     private String getSkyblockId(ItemStack stack) {
-        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) return null;
-        NbtCompound root = customData.copyNbt();
+        CompoundTag root = customData.copyTag();
         if (root == null) return null;
-        NbtCompound extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
+        CompoundTag extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
         if (extra != null) {
-            String id = extra.getString("id", "");
+            String id = extra.getStringOr("id", "");
             if (id != null && !id.isBlank()) return id;
-            id = extra.getString("ID", "");
+            id = extra.getStringOr("ID", "");
             if (id != null && !id.isBlank()) return id;
         }
-        String direct = root.getString("id", "");
+        String direct = root.getStringOr("id", "");
         if (direct != null && !direct.isBlank()) return direct;
-        direct = root.getString("ID", "");
+        direct = root.getStringOr("ID", "");
         if (direct != null && !direct.isBlank()) return direct;
         return null;
     }

@@ -1,10 +1,10 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.DeltaTracker;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,15 +13,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xenus.xenaddons.compat.XenChatHudCompat;
 
-@Mixin(InGameHud.class)
+@Mixin(Gui.class)
 public abstract class MixinInGameHudPeekChat {
-    @Shadow @Final private MinecraftClient client;
-    @Shadow @Final private ChatHud chatHud;
-    @Shadow private int ticks;
+    @Shadow @Final private Minecraft minecraft;
+    @Shadow @Final private ChatComponent chat;
+    @Shadow private int tickCount;
 
-    @Inject(method = "renderChat", at = @At("HEAD"), cancellable = true)
-    private void xenaddons$renderPeekChat(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
-        if (XenChatHudCompat.renderPeekChat(client, chatHud, context, ticks)) {
+    @Inject(method = "extractChat", at = @At("HEAD"), cancellable = true)
+    private void xenaddons$renderPeekChat(GuiGraphicsExtractor context, DeltaTracker tickCounter, CallbackInfo ci) {
+        if (XenChatHudCompat.renderPeekChat(minecraft, chat, context, tickCount)) {
             ci.cancel();
         }
     }

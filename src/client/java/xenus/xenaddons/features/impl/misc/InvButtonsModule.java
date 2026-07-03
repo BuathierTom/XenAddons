@@ -14,11 +14,11 @@ public class InvButtonsModule extends Module {
     public final BooleanSetting hideRecipeBook = new BooleanSetting("Hide Recipe Book", XenAddons.instance.hideRecipeBook);
     
     public final ActionSetting editButtons = new ActionSetting("Edit Buttons Position", () -> {
-        mc.execute(() -> mc.setScreen(new GuiInvButtonEditor(mc.currentScreen)));
+        mc.execute(() -> mc.setScreen(new GuiInvButtonEditor(mc.screen)));
     });
     
     public final ActionSetting openProfiles = new ActionSetting("Profiles & Advanced", () -> {
-        mc.execute(() -> mc.setScreen(new GuiInvButtonConfig(mc.currentScreen)));
+        mc.execute(() -> mc.setScreen(new GuiInvButtonConfig(mc.screen)));
     });
 
     public InvButtonsModule() {

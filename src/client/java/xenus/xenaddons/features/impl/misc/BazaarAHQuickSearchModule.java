@@ -1,11 +1,11 @@
 package xenus.xenaddons.features.impl.misc;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import org.lwjgl.glfw.GLFW;
 import xenus.xenaddons.compat.XenHandledScreenCompat;
 import xenus.xenaddons.features.Category;
@@ -33,7 +33,7 @@ public class BazaarAHQuickSearchModule extends Module {
                 wasPressed = false;
                 return;
             }
-            if (!(client.currentScreen instanceof HandledScreen<?> handled)) {
+            if (!(client.screen instanceof AbstractContainerScreen<?> handled)) {
                 wasPressed = false;
                 return;
             }
@@ -48,7 +48,7 @@ public class BazaarAHQuickSearchModule extends Module {
 
     private boolean isKeyPressed(int key) {
         if (key == -1 || mc == null || mc.getWindow() == null) return false;
-        long handle = mc.getWindow().getHandle();
+        long handle = mc.getWindow().handle();
         try {
             if (key < 0) {
                 int btn = -100 - key;
@@ -60,19 +60,19 @@ public class BazaarAHQuickSearchModule extends Module {
         }
     }
 
-    private void runSearchForHoveredItem(HandledScreen<?> handled) {
+    private void runSearchForHoveredItem(AbstractContainerScreen<?> handled) {
         var slot = XenHandledScreenCompat.getFocusedSlot(handled);
-        if (slot == null || !slot.hasStack()) return;
+        if (slot == null || !slot.hasItem()) return;
 
-        ItemStack stack = slot.getStack();
+        ItemStack stack = slot.getItem();
         if (stack == null || stack.isEmpty()) return;
-        String itemName = sanitizeItemName(stack.getName().getString(), stack);
+        String itemName = sanitizeItemName(stack.getHoverName().getString(), stack);
         if (itemName.isBlank()) return;
 
         String cmd = buildCommand(handled.getTitle().getString(), stack, itemName);
         if (cmd == null || cmd.isBlank()) return;
-        if (mc.player == null || mc.player.networkHandler == null) return;
-        mc.player.networkHandler.sendChatCommand(cmd);
+        if (mc.player == null || mc.player.connection == null) return;
+        mc.player.connection.sendCommand(cmd);
     }
 
     private String buildCommand(String screenTitle, ItemStack stack, String itemName) {
@@ -152,14 +152,14 @@ public class BazaarAHQuickSearchModule extends Module {
 
     private static String readModifier(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return "";
-        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) return "";
-        NbtCompound root = customData.copyNbt();
+        CompoundTag root = customData.copyTag();
         if (root == null) return "";
-        NbtCompound extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
+        CompoundTag extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
         if (extra == null) return "";
-        String mod = extra.getString("modifier", "");
-        if (mod == null || mod.isBlank()) mod = extra.getString("MODIFIER", "");
+        String mod = extra.getStringOr("modifier", "");
+        if (mod == null || mod.isBlank()) mod = extra.getStringOr("MODIFIER", "");
         if (mod == null || mod.isBlank()) return "";
         return mod.replace('_', ' ').trim();
     }

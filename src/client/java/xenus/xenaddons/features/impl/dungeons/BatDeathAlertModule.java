@@ -1,9 +1,9 @@
 package xenus.xenaddons.features.impl.dungeons;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.passive.BatEntity;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.ambient.Bat;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
@@ -23,21 +23,21 @@ public class BatDeathAlertModule extends Module {
         // No periodic polling needed; we react to true entity death events from mixin hooks.
     }
 
-    public static void onBatDeath(BatEntity bat) {
+    public static void onBatDeath(Bat bat) {
         BatDeathAlertModule module = ModuleManager.getModule(BatDeathAlertModule.class);
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (module == null || !module.isEnabled() || client == null || client.world == null || client.player == null) return;
+        Minecraft client = Minecraft.getInstance();
+        if (module == null || !module.isEnabled() || client == null || client.level == null || client.player == null) return;
         if (!DungeonUtils.inDungeon() || DungeonUtils.currentPhase > 0) return;
         if (bat == null) return;
-        if (bat.hasVehicle() && bat.getVehicle() instanceof ArmorStandEntity) return;
-        if (client.player.squaredDistanceTo(bat) > MAX_ALERT_DISTANCE_SQ) return;
+        if (bat.isPassenger() && bat.getVehicle() instanceof ArmorStand) return;
+        if (client.player.distanceToSqr(bat) > MAX_ALERT_DISTANCE_SQ) return;
 
         long now = System.currentTimeMillis();
         if (now - lastAlertAt < ALERT_COOLDOWN_MS) return;
         lastAlertAt = now;
 
-        if (client.inGameHud == null) return;
-        client.inGameHud.setTitle(Text.of("§cBat Dead!"));
-        client.inGameHud.setTitleTicks(5, 20, 5);
+        if (client.gui == null) return;
+        client.gui.setTitle(Component.literal("§cBat Dead!"));
+        client.gui.setTimes(5, 20, 5);
     }
 }

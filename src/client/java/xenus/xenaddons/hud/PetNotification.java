@@ -1,10 +1,10 @@
 package xenus.xenaddons.hud;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public final class PetNotification {
-    private Text title = Text.empty();
-    private Text subtitle = Text.empty();
+    private Component title = Component.empty();
+    private Component subtitle = Component.empty();
     private int ticksLeft = 0;
 
     // Réglages
@@ -12,7 +12,7 @@ public final class PetNotification {
     public int yOffset = -20;    // ajustable
     public boolean enabled = true;
 
-    public void show(Text title, Text subtitle, int durationTicks) {
+    public void show(Component title, Component subtitle, int durationTicks) {
         this.title = title;
         this.subtitle = subtitle;
         this.ticksLeft = durationTicks;
@@ -26,6 +26,6 @@ public final class PetNotification {
         return enabled && ticksLeft > 0;
     }
 
-    public Text getTitle() { return title; }
-    public Text getSubtitle() { return subtitle; }
+    public Component getTitle() { return title; }
+    public Component getSubtitle() { return subtitle; }
 }

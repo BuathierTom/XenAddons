@@ -1,6 +1,6 @@
 package xenus.xenaddons.features.impl.dungeons.secretroutes.dungeon;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import java.util.Set;
 
 public class DungeonRoom {

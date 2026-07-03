@@ -1,63 +1,60 @@
 package xenus.xenaddons.render.nvg
 
+import com.mojang.blaze3d.opengl.GlConst
+import com.mojang.blaze3d.opengl.DirectStateAccess
 import com.mojang.blaze3d.opengl.GlStateManager
+import com.mojang.blaze3d.opengl.GlTexture
 import com.mojang.blaze3d.systems.RenderSystem
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gl.GlBackend
-import net.minecraft.client.gui.render.SpecialGuiElementRenderer
-import net.minecraft.client.render.VertexConsumerProvider
-import net.minecraft.client.texture.GlTextureView
-import net.minecraft.client.util.math.MatrixStack
+import com.mojang.blaze3d.vertex.PoseStack
+import net.minecraft.client.gui.render.pip.PictureInPictureRenderer
+import net.minecraft.client.renderer.MultiBufferSource
 import org.lwjgl.opengl.GL33C
-import kotlin.math.min
 
-class XenNvgSpecialElementRenderer(vertexConsumers: VertexConsumerProvider.Immediate) :
-    SpecialGuiElementRenderer<XenNvgRenderState>(vertexConsumers) {
+class XenNvgSpecialElementRenderer(vertexConsumers: MultiBufferSource.BufferSource) :
+    PictureInPictureRenderer<XenNvgRenderState>(vertexConsumers) {
 
-    override fun getElementClass(): Class<XenNvgRenderState> = XenNvgRenderState::class.java
+    override fun getRenderStateClass(): Class<XenNvgRenderState> = XenNvgRenderState::class.java
 
-    override fun render(state: XenNvgRenderState, matrices: MatrixStack) {
-        val colorView = RenderSystem.outputColorTextureOverride as? GlTextureView ?: return
-        val depthView = RenderSystem.outputDepthTextureOverride as? GlTextureView ?: return
-        val device = RenderSystem.getDevice() as? GlBackend ?: return
+    override fun renderToTexture(state: XenNvgRenderState, poseStack: PoseStack) {
+        val colorTextureView = RenderSystem.outputColorTextureOverride ?: return
+        val bufferManager = directStateAccess() ?: return
+        val depthTexture = (RenderSystem.outputDepthTextureOverride?.texture() as? GlTexture) ?: return
 
-        val colorTexture = colorView.texture()
-        val depthTexture = depthView.texture()
-        val pixelWidth = colorTexture.getWidth(0)
-        val pixelHeight = colorTexture.getHeight(0)
+        val pixelWidth = colorTextureView.getWidth(0)
+        val pixelHeight = colorTextureView.getHeight(0)
         if (pixelWidth <= 0 || pixelHeight <= 0) return
 
-        val framebufferId = colorTexture.getOrCreateFramebuffer(device.bufferManager, depthTexture)
-        val previousFramebuffer = GlStateManager.getFrameBuffer(GL33C.GL_FRAMEBUFFER)
-        val client = MinecraftClient.getInstance()
-        val logicalWidth = (state.x2() - state.x1()).coerceAtLeast(1)
-        val logicalHeight = (state.y2() - state.y1()).coerceAtLeast(1)
-        val devicePixelRatio = min(
-            pixelWidth.toFloat() / logicalWidth.toFloat(),
-            pixelHeight.toFloat() / logicalHeight.toFloat()
-        ).coerceAtLeast(1f)
-
-        var frameStarted = false
-
-        try {
-            GlStateManager._glBindFramebuffer(GL33C.GL_FRAMEBUFFER, framebufferId)
+        (colorTextureView.texture() as? GlTexture)?.getFbo(bufferManager, depthTexture)?.let { framebufferId ->
+            GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, framebufferId)
             GlStateManager._viewport(0, 0, pixelWidth, pixelHeight)
-            GlStateManager._disableScissorTest()
-            GL33C.glBindSampler(0, 0)
-
-            XenNvgRenderer.beginFrame(pixelWidth.toFloat(), pixelHeight.toFloat(), devicePixelRatio)
-            frameStarted = true
-            state.renderContent().run()
-        } finally {
-            if (frameStarted) {
-                XenNvgRenderer.endFrame()
-            }
-
-            RenderSystem.setupDefaultState()
-            GlStateManager._glBindFramebuffer(GL33C.GL_FRAMEBUFFER, previousFramebuffer)
-            GlStateManager._viewport(0, 0, client.window.framebufferWidth, client.window.framebufferHeight)
         }
+
+        GL33C.glBindSampler(0, 0)
+        XenNvgRenderer.beginFrame(pixelWidth.toFloat(), pixelHeight.toFloat())
+        state.renderContent().run()
+        XenNvgRenderer.endFrame()
+
+        GlStateManager._disableDepthTest()
+        GlStateManager._disableCull()
+        GlStateManager._enableBlend()
+        GlStateManager._blendFuncSeparate(770, 771, 1, 0)
     }
 
-    override fun getName(): String = "xenaddons_nvg"
+    override fun getTranslateY(height: Int, windowScaleFactor: Int): Float = height / 2f
+
+    override fun getTextureLabel(): String = "xenaddons_nvg"
+
+    companion object {
+        private fun directStateAccess(): DirectStateAccess? {
+            return runCatching {
+                val device = RenderSystem.getDevice()
+                val backendField = device.javaClass.getDeclaredField("backend")
+                backendField.isAccessible = true
+                val backend = backendField.get(device)
+                val method = backend.javaClass.getDeclaredMethod("directStateAccess")
+                method.isAccessible = true
+                method.invoke(backend) as? DirectStateAccess
+            }.getOrNull()
+        }
+    }
 }

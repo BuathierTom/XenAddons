@@ -1,9 +1,9 @@
 package xenus.xenaddons.gui.odin.ui
 
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.input.CharInput
-import net.minecraft.client.input.KeyInput
-import net.minecraft.util.StringHelper
+import net.minecraft.client.Minecraft
+import net.minecraft.client.input.CharacterEvent
+import net.minecraft.client.input.KeyEvent
+import net.minecraft.util.StringUtil
 import org.lwjgl.glfw.GLFW
 import xenus.xenaddons.render.XenRenderer
 import kotlin.math.abs
@@ -121,12 +121,12 @@ class TextInputHandler(
         dragging = false
     }
 
-    fun keyPressed(input: KeyInput): Boolean {
+    fun keyPressed(input: KeyEvent): Boolean {
         if (!listening) return false
-        val ctrl = (input.modifiers() and GLFW.GLFW_MOD_CONTROL) != 0
-        val shift = (input.modifiers() and GLFW.GLFW_MOD_SHIFT) != 0
+        val ctrl = input.hasControlDown()
+        val shift = input.hasShiftDown()
 
-        val handled = when (input.key()) {
+        val handled = when (input.key) {
             GLFW.GLFW_KEY_BACKSPACE -> {
                 if (selection != caret) deleteSelection()
                 else if (ctrl) {
@@ -185,20 +185,20 @@ class TextInputHandler(
             }
             else -> {
                 if (ctrl && !shift) {
-                    when (input.key()) {
+                    when (input.key) {
                         GLFW.GLFW_KEY_V -> {
-                            insert(MinecraftClient.getInstance().keyboard.clipboard)
+                            insert(Minecraft.getInstance().keyboardHandler.clipboard)
                             true
                         }
                         GLFW.GLFW_KEY_C -> {
                             if (caret != selection) {
-                                MinecraftClient.getInstance().keyboard.clipboard = text.substringSafe(caret, selection)
+                                Minecraft.getInstance().keyboardHandler.clipboard = text.substringSafe(caret, selection)
                                 true
                             } else false
                         }
                         GLFW.GLFW_KEY_X -> {
                             if (caret != selection) {
-                                MinecraftClient.getInstance().keyboard.clipboard = text.substringSafe(caret, selection)
+                                Minecraft.getInstance().keyboardHandler.clipboard = text.substringSafe(caret, selection)
                                 deleteSelection()
                                 true
                             } else false
@@ -231,9 +231,9 @@ class TextInputHandler(
         return handled
     }
 
-    fun charTyped(input: CharInput): Boolean {
-        if (!listening || !input.isValidChar()) return false
-        insert(StringHelper.stripInvalidChars(input.asString()))
+    fun charTyped(input: CharacterEvent): Boolean {
+        if (!listening) return false
+        insert(StringUtil.filterText(input.codepointAsString()))
         return true
     }
 
@@ -261,7 +261,7 @@ class TextInputHandler(
             return
         }
 
-        val filtered = StringHelper.stripInvalidChars(string).take(available)
+        val filtered = StringUtil.filterText(string).take(available)
         if (filtered.isEmpty()) return
 
         textSetter(text.substringSafe(0, caret) + filtered + text.substring(caret))

@@ -5,13 +5,13 @@ import com.google.gson.reflect.TypeToken;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.resource.Resource;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.client.Minecraft;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import org.joml.Vector2i;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.LocationUtils;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.OnEnterNewRoom;
@@ -24,7 +24,7 @@ import java.util.*;
 
 public class DungeonScanner {
 
-    private static final MinecraftClient client = MinecraftClient.getInstance();
+    private static final Minecraft client = Minecraft.getInstance();
     private static final Gson GSON = new Gson();
 
     private static final Map<Integer, RoomData> CORE_TO_ROOM_MAP = new HashMap<>();
@@ -44,7 +44,7 @@ public class DungeonScanner {
         ClientPlayConnectionEvents.DISCONNECT.register((h, c) -> reset());
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null || client.world == null) return;
+            if (client.player == null || client.level == null) return;
             if (!LocationUtils.isInDungeons()) {
                 if (currentRoom != null) {
                     currentRoom = null;
@@ -59,11 +59,11 @@ public class DungeonScanner {
 
     private static void loadResources() {
         CORE_TO_ROOM_MAP.clear();
-        Identifier roomsId = Identifier.of("xenaddons", "dungeons/rooms.json");
+        Identifier roomsId = Identifier.fromNamespaceAndPath("xenaddons", "dungeons/rooms.json");
         Optional<Resource> resource = client.getResourceManager().getResource(roomsId);
         
         resource.ifPresent(res -> {
-            try (Reader reader = new InputStreamReader(res.getInputStream())) {
+            try (Reader reader = new InputStreamReader(res.open())) {
                 List<RoomData> data = GSON.fromJson(reader, new TypeToken<List<RoomData>>(){}.getType());
                 for (RoomData room : data) {
                     if (room.cores() != null) {
@@ -98,7 +98,7 @@ public class DungeonScanner {
             }
         }
 
-        if (!client.world.getChunkManager().isChunkLoaded(roomCentre.x >> 4, roomCentre.y >> 4)) return;
+        if (!client.level.hasChunk(roomCentre.x >> 4, roomCentre.y >> 4)) return;
 
         DungeonRoom newRoom = scanRoom(roomCentre);
         if (newRoom != null && newRoom.rotation != Rotations.NONE) enterRoom(newRoom);
@@ -145,8 +145,8 @@ public class DungeonScanner {
         if (!cores.contains(core)) return tiles;
         tiles.add(new RoomComponent(vec2.x, vec2.y, core));
         for (Direction facing : HORIZONTALS) {
-            int dx = (facing.getAxis() == Direction.Axis.X ? facing.getOffsetX() : 0) << ROOM_SIZE_SHIFT;
-            int dz = (facing.getAxis() == Direction.Axis.Z ? facing.getOffsetZ() : 0) << ROOM_SIZE_SHIFT;
+            int dx = (facing.getAxis() == Direction.Axis.X ? facing.getStepX() : 0) << ROOM_SIZE_SHIFT;
+            int dz = (facing.getAxis() == Direction.Axis.Z ? facing.getStepZ() : 0) << ROOM_SIZE_SHIFT;
             findRoomComponentsRecursively(new Vector2i(vec2.x + dx, vec2.y + dz), cores, roomHeight, visited, tiles);
         }
         return tiles;
@@ -169,7 +169,7 @@ public class DungeonScanner {
                     boolean neighborsValid = true;
                     if (room.roomComponents.size() > 1) {
                         for (Direction facing : HORIZONTALS) {
-                            BlockPos neighbor = checkPos.offset(facing);
+                            BlockPos neighbor = checkPos.relative(facing);
                             if (!isBlueTerracottaOrAir(neighbor)) { neighborsValid = false; break; }
                         }
                     }
@@ -221,13 +221,13 @@ public class DungeonScanner {
     }
 
     private static boolean isBlueTerracotta(BlockPos pos) {
-        if (client.world == null) return false;
-        return client.world.getBlockState(pos).getBlock() == Blocks.BLUE_TERRACOTTA;
+        if (client.level == null) return false;
+        return client.level.getBlockState(pos).getBlock() == Blocks.BLUE_TERRACOTTA;
     }
 
     private static boolean isBlueTerracottaOrAir(BlockPos pos) {
-        if (client.world == null) return false;
-        Block b = client.world.getBlockState(pos).getBlock();
+        if (client.level == null) return false;
+        Block b = client.level.getBlockState(pos).getBlock();
         return b == Blocks.AIR || b == Blocks.BLUE_TERRACOTTA;
     }
 
@@ -238,16 +238,16 @@ public class DungeonScanner {
     }
 
     private static int getCore(Vector2i vec2, Integer knownHeight) {
-        if (client.world == null) return 0;
+        if (client.level == null) return 0;
         int roomHeight = (knownHeight != null ? knownHeight : getTopLayerOfRoom(vec2));
         int clampedHeight = Math.max(11, Math.min(140, roomHeight));
         StringBuilder sb = new StringBuilder(150);
         for (int i = 0; i < 140 - clampedHeight; i++) sb.append('0');
         int bedrock = 0;
-        BlockPos.Mutable pos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int y = clampedHeight; y >= 12; y--) {
             pos.set(vec2.x, y, vec2.y);
-            Block block = client.world.getBlockState(pos).getBlock();
+            Block block = client.level.getBlockState(pos).getBlock();
             if (block == Blocks.AIR && bedrock >= 2 && y < 69) {
                 int remaining = y - 11;
                 for(int k=0; k < remaining; k++) sb.append('0');
@@ -264,12 +264,12 @@ public class DungeonScanner {
     }
 
     private static int getTopLayerOfRoom(Vector2i vec2) {
-        if (client.world == null) return 0;
-        BlockPos.Mutable pos = new BlockPos.Mutable();
+        if (client.level == null) return 0;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int y = 160; y >= 12; y--) {
             pos.set(vec2.x, y, vec2.y);
-            if (!client.world.isAir(pos)) {
-                if (client.world.getBlockState(pos).getBlock() == Blocks.GOLD_BLOCK) return y - 1;
+            if (!client.level.getBlockState(pos).isAir()) {
+                if (client.level.getBlockState(pos).getBlock() == Blocks.GOLD_BLOCK) return y - 1;
                 return y;
             }
         }

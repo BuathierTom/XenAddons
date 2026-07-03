@@ -4,7 +4,7 @@ import xenus.xenaddons.render.XenFont
 import xenus.xenaddons.render.XenGradient
 import xenus.xenaddons.render.XenImage
 
-import net.minecraft.client.MinecraftClient
+import net.minecraft.client.Minecraft
 import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGPaint
 import org.lwjgl.nanovg.NanoSVG.nsvgCreateRasterizer
@@ -96,8 +96,8 @@ object XenNvgRenderer {
     }
 
     fun devicePixelRatio(): Float {
-        val window = MinecraftClient.getInstance().window
-        return if (window.scaledWidth == 0) 1f else window.framebufferWidth.toFloat() / window.scaledWidth.toFloat()
+        val window = Minecraft.getInstance().window
+        return if (window.screenWidth == 0) 1f else window.width.toFloat() / window.screenWidth.toFloat()
     }
 
     fun beginFrame(width: Float, height: Float) {

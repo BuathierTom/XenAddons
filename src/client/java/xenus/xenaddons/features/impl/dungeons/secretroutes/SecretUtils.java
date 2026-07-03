@@ -4,9 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import xenus.xenaddons.features.impl.dungeons.SecretRoutesModule;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.multistorage.Triple;
 
@@ -41,7 +41,7 @@ public class SecretUtils {
         if (isCurrentSecret && config.playerWaypointLine.getValue()) {
             BlockPos secretPos = OnEnterNewRoom.currentRoom.getSecretLocation();
             if (secretPos != null) {
-                Vec3d target = new Vec3d(secretPos.getX() + 0.5, secretPos.getY() + 0.5, secretPos.getZ() + 0.5);
+                Vec3 target = new Vec3(secretPos.getX() + 0.5, secretPos.getY() + 0.5, secretPos.getZ() + 0.5);
                 AnotherRenderingUtil.addLineFromCursor(new RenderTypes.LineFromCursor(target, new Color(config.lineColor.getValue()), (float)config.lineWidth.getValue().doubleValue(), false));
             }
         }
@@ -52,7 +52,7 @@ public class SecretUtils {
             for (JsonElement etherwarpLocationElement : etherwarpLocations) {
                 JsonArray etherwarpLocation = etherwarpLocationElement.getAsJsonArray();
                 BlockPos pos = RoomRotationUtils.relativeToActual(new BlockPos(etherwarpLocation.get(0).getAsInt(), etherwarpLocation.get(1).getAsInt(), etherwarpLocation.get(2).getAsInt()), RoomDirectionUtils.roomDirection(), RoomDirectionUtils.roomCorner());
-                Vec3d position = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
+                Vec3 position = new Vec3(pos.getX(), pos.getY(), pos.getZ());
                 Color color = new Color(128, 0, 128);
                 if (config.etherwarpFullBlock.getValue()) {
                     AnotherRenderingUtil.addFilledBox(new RenderTypes.FilledBox(position, color, 1, 1, true));
@@ -68,7 +68,7 @@ public class SecretUtils {
             for (JsonElement mineLocationElement : mineLocations) {
                 JsonArray mineLocation = mineLocationElement.getAsJsonArray();
                 BlockPos pos = RoomRotationUtils.relativeToActual(new BlockPos(mineLocation.get(0).getAsInt(), mineLocation.get(1).getAsInt(), mineLocation.get(2).getAsInt()), RoomDirectionUtils.roomDirection(), RoomDirectionUtils.roomCorner());
-                Vec3d position = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
+                Vec3 position = new Vec3(pos.getX(), pos.getY(), pos.getZ());
                 if (config.mineFullBlock.getValue()) {
                     AnotherRenderingUtil.addFilledBox(new RenderTypes.FilledBox(position, Color.YELLOW, 1, 1, true));
                 } else {
@@ -83,7 +83,7 @@ public class SecretUtils {
             for (JsonElement interactLocationElement : interactLocations) {
                 JsonArray interactLocation = interactLocationElement.getAsJsonArray();
                 BlockPos pos = RoomRotationUtils.relativeToActual(new BlockPos(interactLocation.get(0).getAsInt(), interactLocation.get(1).getAsInt(), interactLocation.get(2).getAsInt()), RoomDirectionUtils.roomDirection(), RoomDirectionUtils.roomCorner());
-                Vec3d position = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
+                Vec3 position = new Vec3(pos.getX(), pos.getY(), pos.getZ());
                 if (config.interactsFullBlock.getValue()) {
                     AnotherRenderingUtil.addFilledBox(new RenderTypes.FilledBox(position, Color.BLUE, 1, 1, true));
                 } else {
@@ -98,7 +98,7 @@ public class SecretUtils {
             for (JsonElement tntLocationElement : tntLocations) {
                 JsonArray tntLocation = tntLocationElement.getAsJsonArray();
                 BlockPos pos = RoomRotationUtils.relativeToActual(new BlockPos(tntLocation.get(0).getAsInt(), tntLocation.get(1).getAsInt(), tntLocation.get(2).getAsInt()), RoomDirectionUtils.roomDirection(), RoomDirectionUtils.roomCorner());
-                Vec3d position = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
+                Vec3 position = new Vec3(pos.getX(), pos.getY(), pos.getZ());
                 if (config.superboomsFullBlock.getValue()) {
                     AnotherRenderingUtil.addFilledBox(new RenderTypes.FilledBox(position, Color.RED, 1, 1, true));
                 } else {
@@ -120,10 +120,10 @@ public class SecretUtils {
                 lines.add(linePos);
             }
 
-            Vec3d[] linePoints = new Vec3d[lines.size()];
+            Vec3[] linePoints = new Vec3[lines.size()];
             for (int j = 0; j < lines.size(); j++) {
                 Triple<Double, Double, Double> line = lines.get(j);
-                linePoints[j] = new Vec3d(line.getOne(), line.getTwo(), line.getThree());
+                linePoints[j] = new Vec3(line.getOne(), line.getTwo(), line.getThree());
             }
 
             AnotherRenderingUtil.addLinesFromPoints(linePoints, new Color(config.lineColor.getValue()), (float)config.lineWidth.getValue().doubleValue(), false);
@@ -142,8 +142,8 @@ public class SecretUtils {
                         RoomDirectionUtils.roomCorner()
                 );
                 AnotherRenderingUtil.addWorldText(new RenderTypes.WorldText(
-                        Text.literal("Start"),
-                        new Vec3d(startPos.getOne() + 0.5, startPos.getTwo() + 1.2, startPos.getThree() + 0.5),
+                        Component.literal("Start"),
+                        new Vec3(startPos.getOne() + 0.5, startPos.getTwo() + 1.2, startPos.getThree() + 0.5),
                         true,
                         1.8f
                 ));
@@ -177,13 +177,13 @@ public class SecretUtils {
             }
             
             if (shouldRender) {
-                Vec3d position = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
+                Vec3 position = new Vec3(pos.getX(), pos.getY(), pos.getZ());
                 if (isFullBlock) {
                     AnotherRenderingUtil.addFilledBox(new RenderTypes.FilledBox(position, color, 1, 1, true));
                 } else {
                     AnotherRenderingUtil.addOutlinedBox(new RenderTypes.OutlinedBox(position, color, 1, 1, true));
                 }
-                AnotherRenderingUtil.addWorldText(new RenderTypes.WorldText(Text.literal(textStr), position.add(0.5, 0.5, 0.5), true, 1.0f));
+                AnotherRenderingUtil.addWorldText(new RenderTypes.WorldText(Component.literal(textStr), position.add(0.5, 0.5, 0.5), true, 1.0f));
             }
         }
     }
@@ -222,7 +222,7 @@ public class SecretUtils {
                 
                 if (shouldRender) {
                     Triple<Double, Double, Double> abs = RoomRotationUtils.relativeToActual(xPos, yPos, zPos, RoomDirectionUtils.roomDirection(), RoomDirectionUtils.roomCorner());
-                    Vec3d position = new Vec3d(abs.getOne(), abs.getTwo(), abs.getThree());
+                    Vec3 position = new Vec3(abs.getOne(), abs.getTwo(), abs.getThree());
                     AnotherRenderingUtil.addOutlinedBox(new RenderTypes.OutlinedBox(position, color, 1f, 1f, true));
                 }
             }
@@ -281,8 +281,8 @@ public class SecretUtils {
             );
 
             AnotherRenderingUtil.addWorldText(new RenderTypes.WorldText(
-                Text.literal("Start"),
-                new Vec3d(start.getOne() + 0.5, start.getTwo() + 1.3, start.getThree() + 0.5),
+                Component.literal("Start"),
+                new Vec3(start.getOne() + 0.5, start.getTwo() + 1.3, start.getThree() + 0.5),
                 true,
                 3.0f
             ));
@@ -368,7 +368,7 @@ public class SecretUtils {
                         RoomDirectionUtils.roomCorner()
                 );
 
-                Vec3d position = new Vec3d(absLeverPos.getX(), absLeverPos.getY(), absLeverPos.getZ());
+                Vec3 position = new Vec3(absLeverPos.getX(), absLeverPos.getY(), absLeverPos.getZ());
                 Color color = Color.BLUE;
                 if (config.secretsInteractFullBlock.getValue()) {
                     AnotherRenderingUtil.addFilledBox(new RenderTypes.FilledBox(position, color, 1, 1, true));
@@ -376,7 +376,7 @@ public class SecretUtils {
                     AnotherRenderingUtil.addOutlinedBox(new RenderTypes.OutlinedBox(position, color, 1, 1, true));
                 }
                 AnotherRenderingUtil.addWorldText(new RenderTypes.WorldText(
-                        Text.literal("Locked chest lever"),
+                        Component.literal("Locked chest lever"),
                         position.add(0.5, 1.0, 0.5),
                         true,
                         1.3f

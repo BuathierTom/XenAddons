@@ -1,10 +1,10 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -14,60 +14,28 @@ import xenus.xenaddons.config.VisualWordsChatStore;
 import xenus.xenaddons.config.VisualWordsRenderState;
 import xenus.xenaddons.features.impl.misc.CompactPotionMessageProcessor;
 
-@Mixin(net.minecraft.client.gui.hud.ChatHud.class)
+@Mixin(net.minecraft.client.gui.components.ChatComponent.class)
 public class MixinChatHud {
-    @Unique
-    private static final ThreadLocal<Text> XENADDONS_ORIGINAL_MESSAGE = new ThreadLocal<>();
-
-    @Unique
-    private static final ThreadLocal<Text> XENADDONS_REPLACED_MESSAGE = new ThreadLocal<>();
-
     @ModifyVariable(
-        method = "addMessage(Lnet/minecraft/text/Text;)V",
+        method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
         at = @At("HEAD"),
         argsOnly = true,
         ordinal = 0
     )
-    private Text xenaddons$replaceChatTextSimple(Text text) {
-        Text compacted = CompactPotionMessageProcessor.compact(text);
-        Text replaced = XenTextCompat.replaceText(compacted);
-        XENADDONS_ORIGINAL_MESSAGE.set(text);
-        XENADDONS_REPLACED_MESSAGE.set(replaced);
+    private Component xenaddons$replaceChatText(Component text) {
+        Component compacted = CompactPotionMessageProcessor.compact(text);
+        Component replaced = XenTextCompat.replaceText(compacted);
         VisualWordsChatStore.put(replaced, text);
         return replaced;
     }
 
-    @ModifyVariable(
-        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 0
-    )
-    private Text xenaddons$replaceChatTextAdvanced(Text text) {
-        Text pendingOriginal = XENADDONS_ORIGINAL_MESSAGE.get();
-        Text pendingReplaced = XENADDONS_REPLACED_MESSAGE.get();
-        if (pendingOriginal != null && pendingReplaced != null && pendingReplaced.equals(text)) {
-            VisualWordsChatStore.put(text, pendingOriginal);
-            return text;
-        }
-
-        Text compacted = CompactPotionMessageProcessor.compact(text);
-        Text replaced = XenTextCompat.replaceText(compacted);
-        XENADDONS_ORIGINAL_MESSAGE.set(text);
-        XENADDONS_REPLACED_MESSAGE.set(replaced);
-        VisualWordsChatStore.put(replaced, text);
-        return replaced;
-    }
-
-    @Inject(method = "render", at = @At("HEAD"))
-    private void xenaddons$beginChatRender(DrawContext context, TextRenderer textRenderer, int currentTick, int mouseX, int mouseY, boolean focused, boolean refreshIndicator, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    private void xenaddons$beginChatRender(GuiGraphicsExtractor context, Font textRenderer, int currentTick, int mouseX, int mouseY, ChatComponent.DisplayMode displayMode, boolean refreshIndicator, CallbackInfo ci) {
         VisualWordsRenderState.pushChatRender();
     }
 
-    @Inject(method = "render", at = @At("TAIL"))
-    private void xenaddons$endChatRender(DrawContext context, TextRenderer textRenderer, int currentTick, int mouseX, int mouseY, boolean focused, boolean refreshIndicator, CallbackInfo ci) {
-        XENADDONS_ORIGINAL_MESSAGE.remove();
-        XENADDONS_REPLACED_MESSAGE.remove();
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    private void xenaddons$endChatRender(GuiGraphicsExtractor context, Font textRenderer, int currentTick, int mouseX, int mouseY, ChatComponent.DisplayMode displayMode, boolean refreshIndicator, CallbackInfo ci) {
         VisualWordsRenderState.popChatRender();
     }
 }

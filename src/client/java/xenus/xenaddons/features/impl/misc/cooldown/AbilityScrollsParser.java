@@ -1,11 +1,11 @@
 package xenus.xenaddons.features.impl.misc.cooldown;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,15 +18,15 @@ final class AbilityScrollsParser {
         Set<ItemAbility> out = new HashSet<>();
         if (stack == null || stack.isEmpty()) return out;
 
-        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) return out;
-        NbtCompound root = customData.copyNbt();
+        CompoundTag root = customData.copyTag();
         if (root == null) return out;
-        NbtCompound extra = root.getCompound("ExtraAttributes").orElse(root);
-        NbtList scrolls = extra.getList("ability_scroll").orElseGet(() -> extra.getList("ABILITY_SCROLL").orElse(null));
+        CompoundTag extra = root.getCompound("ExtraAttributes").orElse(root);
+        ListTag scrolls = extra.getList("ability_scroll").orElseGet(() -> extra.getList("ABILITY_SCROLL").orElse(null));
         if (scrolls == null || scrolls.isEmpty()) return out;
 
-        for (NbtElement element : scrolls) {
+        for (Tag element : scrolls) {
             String token = element.asString().orElse("").toUpperCase(java.util.Locale.ROOT);
             switch (token) {
                 case "WITHER_SHIELD" -> {

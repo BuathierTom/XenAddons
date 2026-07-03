@@ -1,24 +1,24 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.hud.ChatHudLine.Visible;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage.Line;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.List;
 
-@Mixin(ChatHud.class)
+@Mixin(ChatComponent.class)
 public interface AccessorChatHud {
-    @Accessor("messages")
-    List<ChatHudLine> xenaddons$getMessages();
+    @Accessor("allMessages")
+    List<GuiMessage> xenaddons$getMessages();
 
-    @Accessor("visibleMessages")
-    List<Visible> xenaddons$getVisibleMessages();
+    @Accessor("trimmedMessages")
+    List<Line> xenaddons$getVisibleMessages();
 
-    @Accessor("scrolledLines")
+    @Accessor("chatScrollbarPos")
     int xenaddons$getScrolledLines();
 
-    @Accessor("scrolledLines")
+    @Accessor("chatScrollbarPos")
     void xenaddons$setScrolledLines(int value);
 }

@@ -1,9 +1,9 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,12 +21,12 @@ import java.util.List;
 public class MixinScreenTooltipVisualWords {
 
     @Inject(method = "getTooltipFromItem", at = @At("RETURN"), cancellable = true)
-    private static void xenaddons$replaceItemTooltipText(MinecraftClient client, ItemStack stack, CallbackInfoReturnable<List<Text>> cir) {
-        List<Text> original = cir.getReturnValue();
+    private static void xenaddons$replaceItemTooltipText(Minecraft client, ItemStack stack, CallbackInfoReturnable<List<Component>> cir) {
+        List<Component> original = cir.getReturnValue();
         if (original == null || original.isEmpty()) return;
         if (isPartyFinderScreen(client)) return;
 
-        List<Text> replaced = XenTextCompat.replaceTooltipList(original);
+        List<Component> replaced = XenTextCompat.replaceTooltipList(original);
 
         ItemPriceModule itemPrice = ModuleManager.getModule(ItemPriceModule.class);
         if (itemPrice != null && itemPrice.isEnabled()) {
@@ -41,14 +41,14 @@ public class MixinScreenTooltipVisualWords {
                 if (bazaar != null) {
                     int stackAmountForShift = count > 1 ? count : 64;
                     boolean showStack = true;
-                    long handle = client.getWindow().getHandle();
+                    long handle = client.getWindow().handle();
                     boolean shiftDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
                         || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
                     int multiplier = (showStack && shiftDown) ? stackAmountForShift : 1;
 
                     addPriceSectionSpacer(replaced);
                     if (showStack && !shiftDown) {
-                        replaced.add(Text.literal("§7[SHIFT show x" + stackAmountForShift + "]"));
+                        replaced.add(Component.literal("§7[SHIFT show x" + stackAmountForShift + "]"));
                     }
 
                     addBazaarLine(replaced, "Bazaar Buy", bazaar.buy(), multiplier);
@@ -59,7 +59,7 @@ public class MixinScreenTooltipVisualWords {
                     Double lowestBin = ItemPriceManager.getLowestBin(itemId);
                     if (lowestBin != null) {
                         addPriceSectionSpacer(replaced);
-                        replaced.add(Text.literal("§b§lLowest BIN: §6" + ItemPriceManager.formatCoins(lowestBin)));
+                        replaced.add(Component.literal("§b§lLowest BIN: §6" + ItemPriceManager.formatCoins(lowestBin)));
                     }
                 }
             }
@@ -70,21 +70,21 @@ public class MixinScreenTooltipVisualWords {
         cir.setReturnValue(replaced);
     }
 
-    private static boolean isPartyFinderScreen(MinecraftClient client) {
-        if (client == null || client.currentScreen == null || client.currentScreen.getTitle() == null) return false;
-        return "Party Finder".equals(client.currentScreen.getTitle().getString());
+    private static boolean isPartyFinderScreen(Minecraft client) {
+        if (client == null || client.screen == null || client.screen.getTitle() == null) return false;
+        return "Party Finder".equals(client.screen.getTitle().getString());
     }
 
-    private static void addBazaarLine(List<Text> tooltip, String label, Double price, int multiplier) {
+    private static void addBazaarLine(List<Component> tooltip, String label, Double price, int multiplier) {
         if (price == null) return;
         double shown = price * Math.max(1, multiplier);
-        tooltip.add(Text.literal("§b§l" + label + ": §6" + ItemPriceManager.formatCoins(shown)));
+        tooltip.add(Component.literal("§b§l" + label + ": §6" + ItemPriceManager.formatCoins(shown)));
     }
 
-    private static void addPriceSectionSpacer(List<Text> tooltip) {
+    private static void addPriceSectionSpacer(List<Component> tooltip) {
         if (tooltip.isEmpty()) return;
-        Text last = tooltip.get(tooltip.size() - 1);
+        Component last = tooltip.get(tooltip.size() - 1);
         if (last.getString().isEmpty()) return;
-        tooltip.add(Text.literal(""));
+        tooltip.add(Component.literal(""));
     }
 }

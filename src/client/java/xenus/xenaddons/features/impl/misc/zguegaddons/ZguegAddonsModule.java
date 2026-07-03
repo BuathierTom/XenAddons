@@ -2,7 +2,7 @@ package xenus.xenaddons.features.impl.misc.zguegaddons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.BooleanSetting;
@@ -73,7 +73,7 @@ public class ZguegAddonsModule extends Module {
              if (classNotify.getValue()) {
                  if (msg.contains("You have selected the") && msg.contains("Dungeon Class!") && !msg.contains(":")) {
                       if (mc.player != null) {
-                         mc.player.networkHandler.sendChatCommand("pc " + msg);
+                         mc.player.connection.sendCommand("pc " + msg);
                       }
                  }
              }
@@ -84,7 +84,7 @@ public class ZguegAddonsModule extends Module {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!this.isEnabled() || !cryptsNotify.getValue() || mc.world == null) return;
+            if (!this.isEnabled() || !cryptsNotify.getValue() || mc.level == null) return;
             
             if (!DungeonUtils.inDungeon()) {
                 lastCryptsCount = 0;
@@ -94,11 +94,11 @@ public class ZguegAddonsModule extends Module {
             int count = DungeonUtils.crypts;
 
             // Debug (optional)
-            // if (seconds % 10 == 0) mc.player.sendMessage(Text.of("§7[Debug] Crypts: " + count + ", Secs: " + seconds), false);
+            // if (seconds % 10 == 0) mc.player.sendMessage(Component.literal("§7[Debug] Crypts: " + count + ", Secs: " + seconds), false);
 
             if (count == 5 && lastCryptsCount < 5) {
                 if (mc.player != null) {
-                    mc.player.networkHandler.sendChatCommand("pc [ZguegAddons] 5 crypts reached!");
+                    mc.player.connection.sendCommand("pc [ZguegAddons] 5 crypts reached!");
                 }
             }
             lastCryptsCount = count;
@@ -106,7 +106,7 @@ public class ZguegAddonsModule extends Module {
         });
     }
     
-    private boolean handleChatHide(Text message) {
+    private boolean handleChatHide(Component message) {
         String msg = message.getString();
         if (hasAnyCommandEnabled()) {
             processPartyMessage(msg);
@@ -123,7 +123,7 @@ public class ZguegAddonsModule extends Module {
             boolean modified = false;
             for (String line : lines) {
                 if (!line.contains(DISCORD_WARNING)) {
-                     if (mc.player != null) mc.player.sendMessage(Text.literal(line), false);
+                     if (mc.player != null) mc.player.sendSystemMessage(Component.literal(line));
                 } else modified = true;
             }
             if (modified) return false;
@@ -174,37 +174,37 @@ public class ZguegAddonsModule extends Module {
         if (cleanMsg.startsWith("!boom") && cmdBoom.getValue()) {
              String[] SOURATES = { "Inna ma'al usri yusra.", "Hasbuna Allahu wa ni'mal wakeel.", "Rabbana atina fid-dunya hasanatan wa fil-akhirati hasanatan waqina 'adhab an-nar.", "La ilaha illa huwa al-hayyul qayyum.", "Wa qul rabbi zidni 'ilma.", "Innallaha la yughayyiru ma biqawmin hatta yughayyiru ma bianfusihim.", "Ya ayyuhalladhina amanu ista'inu bis-sabri was-salat, innallaha ma'as-sabirin.", "Wa 'ibadur-Rahmanilladhina yamshuna 'alal-ard hawna wa idha khatabahum al-jahiluna qalu salama.", "Wa 'asa an takrahu shay'an wahuwa khayrun lakum, wa 'asa an tuhibbu shay'an wahuwa sharrun lakum, wallahu ya'lamu wa antum la ta'lamun.", "Allahu la ilaha illa huwa al-hayyul qayyum.", "Qul huwa Allahu ahad, Allahu assamad, lam yalid wa lam yulad, wa lam yakun lahu kufuwan ahad.", "Bismillahir rahmanir rahim. Alhamdu lillahi rabbil 'alamin. Ar-rahmanir rahim. Maliki yawmid-din. Iyyaka na'budu wa iyyaka nasta'in. Ihdinas siratal mustaqim. Siratal ladhina an'amta 'alayhim, ghayril maghdubi 'alayhim walad dallin." };
              int random = (int) (Math.random() * SOURATES.length);
-             mc.player.networkHandler.sendChatCommand("pc " + SOURATES[random]);
+             mc.player.connection.sendCommand("pc " + SOURATES[random]);
         }
         else if (cleanMsg.startsWith("!rng") && cmdRng.getValue()) {
             String target = sender; String[] args = message.trim().split(" "); if (args.length > 1) target = args[1];
-            int roll = (int) (Math.random() * 101); mc.player.networkHandler.sendChatCommand("pc " + target + " got " + roll + "% of rng this run!");
+            int roll = (int) (Math.random() * 101); mc.player.connection.sendCommand("pc " + target + " got " + roll + "% of rng this run!");
         } 
         else if (cleanMsg.startsWith("!gay") && cmdGay.getValue()) {
              String target = sender; String[] args = message.trim().split(" "); if (args.length > 1) target = args[1];
-             if (xenus.xenaddons.config.GoatedPlayersManager.isGoated(target.toLowerCase())) { mc.player.networkHandler.sendChatCommand("pc " + target + " is not gay"); return; }
-             boolean isGay = Math.random() < 0.5; String response = isGay ? target + " is gay" : target + " is not gay"; mc.player.networkHandler.sendChatCommand("pc " + response);
+             if (xenus.xenaddons.config.GoatedPlayersManager.isGoated(target.toLowerCase())) { mc.player.connection.sendCommand("pc " + target + " is not gay"); return; }
+             boolean isGay = Math.random() < 0.5; String response = isGay ? target + " is gay" : target + " is not gay"; mc.player.connection.sendCommand("pc " + response);
         }
         else if (cleanMsg.startsWith("!racist") && cmdRacist.getValue()) {
              String target = sender; String[] args = message.trim().split(" "); if (args.length > 1) target = args[1];
              int percent = xenus.xenaddons.config.GoatedPlayersManager.isGoated(target.toLowerCase()) ? (int) (Math.random() * 21) + 180 : (int) (Math.random() * 101);
-             mc.player.networkHandler.sendChatCommand("pc " + target + " is racist at " + percent + "% !");
+             mc.player.connection.sendCommand("pc " + target + " is racist at " + percent + "% !");
         }
         else if (cleanMsg.startsWith("!py") && cmdPy.getValue()) {
              String target = "Casseur2Metheque"; String[] args = message.trim().split(" "); if (args.length > 1) target = args[1];
-             mc.player.networkHandler.sendChatCommand("pc " + target + " can't py big gwer");
+             mc.player.connection.sendCommand("pc " + target + " can't py big gwer");
         }
         else if (cleanMsg.startsWith("!gwer") && cmdGwer.getValue()) {
              String[] GWERLIST = { "{pseudo} failed blaze.", "{pseudo} died and became a ghost.", "{pseudo} is a gwer and dropped his hype.", "Look at this gwer : {pseudo} was crushed and became a ghost." };
              String target = "Casseur2Metheque"; String[] args = message.trim().split(" "); if (args.length > 1) target = args[1];
              int random = (int) (Math.random() * GWERLIST.length); String text = GWERLIST[random].replace("{pseudo}", target);
-             mc.player.networkHandler.sendChatCommand("pc " + text);
+             mc.player.connection.sendCommand("pc " + text);
         }
         else if (cleanMsg.startsWith("!size") && cmdSize.getValue()) {
             String target = sender; String[] args = message.trim().split(" "); if (args.length > 1) target = args[1];
             int size = xenus.xenaddons.config.GoatedPlayersManager.isGoated(target.toLowerCase()) ? (int) (Math.random() * 10) + 15 : (int) (Math.random() * 8) + 1;
             String sizeBar = "8" + "=".repeat(size) + "D";
-            mc.player.networkHandler.sendChatCommand("pc " + target + "'s size: " + sizeBar);
+            mc.player.connection.sendCommand("pc " + target + "'s size: " + sizeBar);
         }
     }
 }

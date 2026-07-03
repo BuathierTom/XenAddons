@@ -1,7 +1,7 @@
 package xenus.xenaddons.features.impl.misc;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
@@ -32,15 +32,15 @@ public class PeekChatModule extends Module {
         PeekChatController.stop(mc);
     }
 
-    private boolean shouldPeek(MinecraftClient client) {
+    private boolean shouldPeek(Minecraft client) {
         if (client == null || !this.isEnabled()) return false;
-        if (client.player == null || client.inGameHud == null || client.currentScreen != null) return false;
+        if (client.player == null || client.gui == null || client.screen != null) return false;
         return isKeyPressed(peekKey.getKey());
     }
 
     private boolean isKeyPressed(int key) {
         if (key == -1 || mc == null || mc.getWindow() == null) return false;
-        long handle = mc.getWindow().getHandle();
+        long handle = mc.getWindow().handle();
         try {
             if (key < 0) {
                 int button = -100 - key;

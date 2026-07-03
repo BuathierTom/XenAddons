@@ -3,24 +3,24 @@ package xenus.xenaddons.gui;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import xenus.xenaddons.XenAddons;
-import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.components.EditBox;
 import xenus.xenaddons.utils.HypixelItemManager;
 import xenus.xenaddons.utils.RenderUtils;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import xenus.xenaddons.compat.XenDrawContextCompat;
 
@@ -30,9 +30,9 @@ import java.util.*;
 
 public class GuiInvButtonEditor extends Screen {
 
-    private static final Identifier INVENTORY_TEXTURE = Identifier.of("minecraft", "textures/gui/container/inventory.png");
-    private static final Identifier BUTTONS_TEXTURE = Identifier.of("xenaddons", "textures/gui/buttons.png");
-    private static final Identifier INFO_ICON_TEXTURE = Identifier.of("xenaddons", "textures/gui/icons/info.png");
+    private static final Identifier INVENTORY_TEXTURE = Identifier.fromNamespaceAndPath("minecraft", "textures/gui/container/inventory.png");
+    private static final Identifier BUTTONS_TEXTURE = Identifier.fromNamespaceAndPath("xenaddons", "textures/gui/buttons.png");
+    private static final Identifier INFO_ICON_TEXTURE = Identifier.fromNamespaceAndPath("xenaddons", "textures/gui/icons/info.png");
 
     private static final int TEXTURE_WIDTH = 90;
     private static final int TEXTURE_HEIGHT = 36;
@@ -110,31 +110,31 @@ public class GuiInvButtonEditor extends Screen {
     private FilterMode currentMode = FilterMode.ALL;
 
     private interface IconResult {
-        void render(DrawContext context, int x, int y);
+        void render(GuiGraphicsExtractor context, int x, int y);
         String getDisplayName();
         String getConfigId();
     }
 
     private record ItemStackResult(ItemStack stack) implements IconResult {
         @Override
-        public void render(DrawContext context, int x, int y) {
-            context.drawItem(stack, x, y);
+        public void render(GuiGraphicsExtractor context, int x, int y) {
+            XenDrawContextCompat.item(context, stack, x, y);
         }
         @Override
-        public String getDisplayName() { return stack.getName().getString(); }
+        public String getDisplayName() { return stack.getHoverName().getString(); }
         @Override
         public String getConfigId() {
-            if (stack.getItem() == net.minecraft.item.Items.PLAYER_HEAD) {
-                String name = stack.getName().getString();
+            if (stack.getItem() == net.minecraft.world.item.Items.PLAYER_HEAD) {
+                String name = stack.getHoverName().getString();
                 if (SKULL_ICONS.containsKey(name)) return SKULL_ICONS.get(name);
             }
-            return Registries.ITEM.getId(stack.getItem()).toString();
+            return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
         }
     }
 
     private record TextureResult(String name, Identifier textureId) implements IconResult {
         @Override
-        public void render(DrawContext context, int x, int y) {
+        public void render(GuiGraphicsExtractor context, int x, int y) {
             XenDrawContextCompat.drawTexture(context, textureId, x, y, 0, 0, 16, 16, 16, 16);
         }
         @Override
@@ -145,8 +145,8 @@ public class GuiInvButtonEditor extends Screen {
 
     private record HypixelResult(HypixelItemManager.HypixelItem item) implements IconResult {
         @Override
-        public void render(DrawContext context, int x, int y) {
-            context.drawItem(item.iconStack(), x, y);
+        public void render(GuiGraphicsExtractor context, int x, int y) {
+            XenDrawContextCompat.item(context, item.iconStack(), x, y);
         }
         @Override
         public String getDisplayName() { return item.name(); }
@@ -166,7 +166,7 @@ public class GuiInvButtonEditor extends Screen {
     private boolean isInfoPanelOpen = false;
 
     private boolean isSavePanelOpen = false;
-    private TextFieldWidget saveProfileField;
+    private EditBox saveProfileField;
 
 
     private final int editorWidth = 150;
@@ -174,9 +174,9 @@ public class GuiInvButtonEditor extends Screen {
     private int editorLeft;
     private int editorTop;
 
-    private TextFieldWidget commandTextField;
-    private TextFieldWidget iconTextField;
-    private TextFieldWidget addSkullField;
+    private EditBox commandTextField;
+    private EditBox iconTextField;
+    private EditBox addSkullField;
 
     private XenAddons.CustomButtonData editingButton = null;
 
@@ -190,7 +190,7 @@ public class GuiInvButtonEditor extends Screen {
     private boolean localGridSnap;
 
     public GuiInvButtonEditor(Screen parent) {
-        super(Text.literal("NEU Button Editor Port"));
+        super(Component.literal("NEU Button Editor Port"));
         this.parent = parent;
         // Initialize local state from global default
         this.localGridSnap = XenAddons.instance.gridSnap;
@@ -207,37 +207,37 @@ public class GuiInvButtonEditor extends Screen {
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        this.commandTextField = new TextFieldWidget(this.textRenderer, 0, 0, fieldWidth, 20, Text.literal("Command"));
+        this.commandTextField = new EditBox(this.font, 0, 0, fieldWidth, 20, Component.literal("Command"));
         this.commandTextField.setMaxLength(256);
-        this.commandTextField.setChangedListener(s -> {
+        this.commandTextField.setResponder(s -> {
             if (editingButton != null) {
                 String text = s;
                 if (text.isEmpty()) {
                     text = "/";
-                    commandTextField.setText(text);
-                    commandTextField.setCursor(1, false);
+                    commandTextField.setValue(text);
+                    commandTextField.moveCursorTo(1, false);
                 } else if (!text.startsWith("/")) {
                     text = "/" + text.replace("/", "");
-                    commandTextField.setText(text);
-                    commandTextField.setCursor(text.length(), false);
+                    commandTextField.setValue(text);
+                    commandTextField.moveCursorTo(text.length(), false);
                 }
                 editingButton.command = text;
             }
         });
 
-        this.iconTextField = new TextFieldWidget(this.textRenderer, 0, 0, fieldWidth, 20, Text.literal("Icon ID"));
+        this.iconTextField = new EditBox(this.font, 0, 0, fieldWidth, 20, Component.literal("Icon ID"));
         this.iconTextField.setMaxLength(256);
-        this.iconTextField.setChangedListener(this::search);
+        this.iconTextField.setResponder(this::search);
 
-        this.addSkullField = new TextFieldWidget(this.textRenderer, 0, 0, fieldWidth - 45, 20, Text.literal("Skull Name"));
+        this.addSkullField = new EditBox(this.font, 0, 0, fieldWidth - 45, 20, Component.literal("Skull Name"));
         this.addSkullField.setMaxLength(512);
-        this.addSkullField.setChangedListener(s -> {
+        this.addSkullField.setResponder(s -> {
             if (editingButton != null && !s.isEmpty()) {
                 editingButton.itemId = s;
             }
         });
 
-        this.saveProfileField = new TextFieldWidget(this.textRenderer, panelX + 10, panelY + 25, panelW - 20, 20, Text.literal("Profile Name"));
+        this.saveProfileField = new EditBox(this.font, panelX + 10, panelY + 25, panelW - 20, 20, Component.literal("Profile Name"));
         this.saveProfileField.setMaxLength(32);
 
         search("");
@@ -269,8 +269,8 @@ public class GuiInvButtonEditor extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderInGameBackground(context);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         guiLeft = (this.width - xSize) / 2;
         guiTop = (this.height - ySize) / 2;
@@ -291,45 +291,39 @@ public class GuiInvButtonEditor extends Screen {
                         (float)(button.backgroundIndex * 18), 18.0F, 18, 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
             }
 
+            context.guiRenderState.up();
             if (button.itemId != null && !button.itemId.isEmpty()) {
-                Identifier customTex = null;
-                for(Map.Entry<String, Identifier> entry : XenAddons.CUSTOM_TEXTURES.entrySet()) {
-                    if (entry.getValue().toString().equals(button.itemId)) {
-                        customTex = entry.getValue();
-                        break;
-                    }
-                }
-
+                Identifier customTex = XenAddons.findCustomTexture(button.itemId);
                 if (customTex != null) {
                     XenDrawContextCompat.drawTexture(context, customTex, x + 1, y + 1, 0, 0, 16, 16, 16, 16);
                 } else {
                     ItemStack stack = button.getItemStack();
                     if (!stack.isEmpty()) {
-                        context.drawItem(stack, x + 1, y + 1);
+                        XenDrawContextCompat.item(context, stack, x + 1, y + 1);
                     }
                 }
             } else {
-                context.drawCenteredTextWithShadow(textRenderer, "?", x + 9, y + 5, 0xFFFFFFFF);
+                context.centeredText(font, "?", x + 9, y + 5, 0xFFFFFFFF);
             }
         }
 
         if (editingButton != null && isEditorOpen) {
             updateEditorCoordinates();
-            context.getMatrices().pushMatrix();
+            context.pose().pushMatrix();
             renderEditorPanel(context, mouseX, mouseY, delta);
-            context.getMatrices().popMatrix();
+            context.pose().popMatrix();
         }
 
         if (editingButton == null) {
-            context.drawCenteredTextWithShadow(textRenderer, "Click to select/drag, Click again to edit", width / 2, 10, 0xFFFFFFFF);
-            context.drawCenteredTextWithShadow(textRenderer, "Backspace while selected to delete", width / 2, 22, 0xFFAAAAAA);
-            context.drawCenteredTextWithShadow(textRenderer, "Right Click empty space to add new", width / 2, 34, 0xFFAAAAAA);
+            context.centeredText(font, "MouseButtonEvent to select/drag, MouseButtonEvent again to edit", width / 2, 10, 0xFFFFFFFF);
+            context.centeredText(font, "Backspace while selected to delete", width / 2, 22, 0xFFAAAAAA);
+            context.centeredText(font, "Right MouseButtonEvent empty space to add new", width / 2, 34, 0xFFAAAAAA);
         }
 
         // localGridSnap
         String snapText = "Grid Snap (S): " + (this.localGridSnap ? "ON" : "OFF");
         int snapColor = this.localGridSnap ? 0xFF55FF55 : 0xFFAAAAAA;
-        context.drawTextWithShadow(textRenderer, snapText, 5, height - 15, snapColor);
+        context.text(font, snapText, 5, height - 15, snapColor);
 
         renderIOButtons(context, mouseX, mouseY);
 
@@ -338,13 +332,13 @@ public class GuiInvButtonEditor extends Screen {
         }
 
         if (isSavePanelOpen) {
-            context.getMatrices().pushMatrix();
+            context.pose().pushMatrix();
             renderSaveProfilePanel(context, mouseX, mouseY, delta);
-            context.getMatrices().popMatrix();
+            context.pose().popMatrix();
         }
     }
 
-    private void renderIOButtons(DrawContext context, int mouseX, int mouseY) {
+    private void renderIOButtons(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         int btnH = 20;
         int spacing = 5;
         int startX = 10;
@@ -356,27 +350,27 @@ public class GuiInvButtonEditor extends Screen {
         boolean hoverSave = mouseX >= startX && mouseX <= startX + saveW && mouseY >= saveY && mouseY <= saveY + btnH;
         context.fill(startX, saveY, startX + saveW, saveY + btnH, hoverSave ? themeColor : 0xDD000000);
         RenderUtils.drawBorder(context, startX, saveY, saveW, btnH, themeColor);
-        context.drawCenteredTextWithShadow(textRenderer, "Save as Profile", startX + saveW / 2, saveY + 6, 0xFFFFFFFF);
+        context.centeredText(font, "Save as Profile", startX + saveW / 2, saveY + 6, 0xFFFFFFFF);
 
         int exportW = 50;
         int exportY = saveY + btnH + spacing;
         boolean hoverExport = mouseX >= startX && mouseX <= startX + exportW && mouseY >= exportY && mouseY <= exportY + btnH;
         context.fill(startX, exportY, startX + exportW, exportY + btnH, hoverExport ? themeColor : 0xDD000000);
         RenderUtils.drawBorder(context, startX, exportY, exportW, btnH, themeColor);
-        context.drawCenteredTextWithShadow(textRenderer, "Export", startX + exportW / 2, exportY + 6, 0xFFFFFFFF);
+        context.centeredText(font, "Export", startX + exportW / 2, exportY + 6, 0xFFFFFFFF);
 
         int importW = 50;
         int importY = exportY + btnH + spacing;
         boolean hoverImport = mouseX >= startX && mouseX <= startX + importW && mouseY >= importY && mouseY <= importY + btnH;
         context.fill(startX, importY, startX + importW, importY + btnH, hoverImport ? themeColor : 0xDD000000);
         RenderUtils.drawBorder(context, startX, importY, importW, btnH, themeColor);
-        context.drawCenteredTextWithShadow(textRenderer, "Import", startX + importW / 2, importY + 6, 0xFFFFFFFF);
+        context.centeredText(font, "Import", startX + importW / 2, importY + 6, 0xFFFFFFFF);
         if (System.currentTimeMillis() < actionStatusEndTime) {
-            context.drawTextWithShadow(textRenderer, actionStatusText, startX + saveW + 5, startY + 6, 0xFF55FF55);
+            context.text(font, actionStatusText, startX + saveW + 5, startY + 6, 0xFF55FF55);
         }
     }
 
-    private void renderSaveProfilePanel(DrawContext context, int mouseX, int mouseY, float delta) {
+    private void renderSaveProfilePanel(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         context.fillGradient(0, 0, this.width, this.height, 0xAA000000, 0xAA000000);
 
         int panelW = 200;
@@ -388,18 +382,18 @@ public class GuiInvButtonEditor extends Screen {
         context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xDD000000);
         RenderUtils.drawBorder(context, panelX, panelY, panelW, panelH, themeColor);
 
-        context.drawCenteredTextWithShadow(textRenderer, "Profile Name", panelX + panelW / 2, panelY + 10, 0xFFFFFFFF);
+        context.centeredText(font, "Profile Name", panelX + panelW / 2, panelY + 10, 0xFFFFFFFF);
 
         int closeSize = 12;
         int closeX = panelX + panelW - closeSize - 5;
         int closeY = panelY + 5;
         boolean hoverClose = mouseX >= closeX && mouseX <= closeX + closeSize && mouseY >= closeY && mouseY <= closeY + closeSize;
         context.fill(closeX, closeY, closeX + closeSize, closeY + closeSize, hoverClose ? 0xFFFF0000 : 0xFFCC0000);
-        context.drawCenteredTextWithShadow(textRenderer, "x", closeX + closeSize / 2, closeY + 2, 0xFFFFFFFF);
+        context.centeredText(font, "x", closeX + closeSize / 2, closeY + 2, 0xFFFFFFFF);
 
         saveProfileField.setX(panelX + 30);
         saveProfileField.setY(panelY + 35);
-        saveProfileField.render(context, mouseX, mouseY, delta);
+        saveProfileField.extractWidgetRenderState(context, mouseX, mouseY, delta);
 
         int btnW = 60;
         int btnH = 20;
@@ -408,7 +402,7 @@ public class GuiInvButtonEditor extends Screen {
         boolean hoverConfirm = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
         context.fill(btnX, btnY, btnX + btnW, btnY + btnH, hoverConfirm ? 0xFF408040 : 0xFF206020);
         RenderUtils.drawBorder(context, btnX, btnY, btnW, btnH, 0xFFFFFFFF);
-        context.drawCenteredTextWithShadow(textRenderer, "Save", btnX + btnW / 2, btnY + 6, 0xFFFFFFFF);
+        context.centeredText(font, "Save", btnX + btnW / 2, btnY + 6, 0xFFFFFFFF);
     }
 
     private void handleExport() {
@@ -416,8 +410,8 @@ public class GuiInvButtonEditor extends Screen {
             Gson gson = new Gson();
             String json = gson.toJson(XenAddons.instance.buttons);
             String encoded = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
-            if (this.client != null) {
-                this.client.keyboard.setClipboard(encoded);
+            if (this.minecraft != null) {
+                this.minecraft.keyboardHandler.setClipboard(encoded);
                 actionStatusText = "Exported to Clipboard!";
                 actionStatusEndTime = System.currentTimeMillis() + 3000;
             }
@@ -430,8 +424,8 @@ public class GuiInvButtonEditor extends Screen {
 
     private void handleImport() {
         try {
-            if (this.client != null) {
-                String clipboard = this.client.keyboard.getClipboard();
+            if (this.minecraft != null) {
+                String clipboard = this.minecraft.keyboardHandler.getClipboard();
                 if (clipboard == null || clipboard.isEmpty()) return;
 
                 String json = new String(Base64.getDecoder().decode(clipboard), StandardCharsets.UTF_8);
@@ -452,15 +446,15 @@ public class GuiInvButtonEditor extends Screen {
         }
     }
 
-    private void renderEditorPanel(DrawContext context, int mouseX, int mouseY, float delta) {
+    private void renderEditorPanel(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
         context.fill(editorLeft, editorTop, editorLeft + editorWidth, editorTop + editorHeight, 0xDD000000);
         RenderUtils.drawBorder(context, editorLeft, editorTop, editorWidth, editorHeight, themeColor);
 
-        context.drawText(textRenderer, "Command", editorLeft + 7, editorTop + 7, 0xFFA0A0A0, false);
-        commandTextField.render(context, mouseX, mouseY, delta);
+        context.text(font, "Command", editorLeft + 7, editorTop + 7, 0xFFA0A0A0, false);
+        commandTextField.extractWidgetRenderState(context, mouseX, mouseY, delta);
 
-        context.drawText(textRenderer, "Background Style", editorLeft + 7, editorTop + 40, 0xFFA0A0A0, false);
+        context.text(font, "Background Style", editorLeft + 7, editorTop + 40, 0xFFA0A0A0, false);
         for (int i = 0; i < 5; i++) {
             int bx = editorLeft + 7 + (i * 20);
             int by = editorTop + 52;
@@ -492,13 +486,13 @@ public class GuiInvButtonEditor extends Screen {
             RenderUtils.drawBorder(context, bx, filterY, btnWidth, btnHeight, borderColor);
 
             // Draw Item Icon centered
-            context.drawItem(mode.icon, bx + (btnWidth - 16) / 2, filterY + (btnHeight - 16) / 2);
+            XenDrawContextCompat.item(context, mode.icon, bx + (btnWidth - 16) / 2, filterY + (btnHeight - 16) / 2);
         }
 
-        context.drawText(textRenderer, "Search Icon", editorLeft + 7, editorTop + 100, 0xFFA0A0A0, false);
+        context.text(font, "Search Icon", editorLeft + 7, editorTop + 100, 0xFFA0A0A0, false);
         iconTextField.setX(editorLeft + 7);
         iconTextField.setY(editorTop + 112);
-        iconTextField.render(context, mouseX, mouseY, delta);
+        iconTextField.extractWidgetRenderState(context, mouseX, mouseY, delta);
 
         // --- DYNAMIC LAYOUT FOR SKULL MODE ---
         int listY = editorTop + 135;
@@ -509,11 +503,11 @@ public class GuiInvButtonEditor extends Screen {
             String infoText = "Add Skull by ID";
             int titleX = editorLeft + 7;
             int titleY = editorTop + 135;
-            context.drawText(textRenderer, infoText, titleX, titleY, 0xFFA0A0A0, false);
+            context.text(font, infoText, titleX, titleY, 0xFFA0A0A0, false);
 
             // Draw Info Icon next to the text
             int iconSize = 10;
-            int infoIconX = titleX + textRenderer.getWidth(infoText) + 5;
+            int infoIconX = titleX + font.width(infoText) + 5;
             int infoIconY = titleY - 1;
 
             XenDrawContextCompat.drawTexture(context, INFO_ICON_TEXTURE, infoIconX, infoIconY, 0.0f, 0.0f, iconSize, iconSize, iconSize, iconSize);
@@ -525,7 +519,7 @@ public class GuiInvButtonEditor extends Screen {
 
             addSkullField.setX(editorLeft + 7);
             addSkullField.setY(editorTop + 147);
-            addSkullField.render(context, mouseX, mouseY, delta);
+            addSkullField.extractWidgetRenderState(context, mouseX, mouseY, delta);
 
             // Shift List Down and Shrink
             listY = editorTop + 170;
@@ -536,7 +530,7 @@ public class GuiInvButtonEditor extends Screen {
     }
 
     // --- Info Panel with X button ---
-    private void renderSkullInfoPanel(DrawContext context, int mouseX, int mouseY) {
+    private void renderSkullInfoPanel(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
         int panelW = 150;
         int panelH = 190; // Increased height
@@ -557,12 +551,12 @@ public class GuiInvButtonEditor extends Screen {
         } else {
             context.fill(closeX, closeY, closeX + closeSize, closeY + closeSize, 0xFFCC0000);
         }
-        context.drawCenteredTextWithShadow(textRenderer, "x", closeX + closeSize / 2, closeY + 1, 0xFFFFFFFF);
+        context.centeredText(font, "x", closeX + closeSize / 2, closeY + 1, 0xFFFFFFFF);
 
         int textX = panelX + 8;
         int textY = panelY + 8;
 
-        context.drawTextWithShadow(textRenderer, Text.literal("How to find Skull IDs").formatted(Formatting.YELLOW, Formatting.BOLD), textX, textY, 0xFFFFFFFF);
+        context.text(font, Component.literal("How to find Skull IDs").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD), textX, textY, 0xFFFFFFFF);
         textY += 18;
 
         String[] steps = {
@@ -575,16 +569,16 @@ public class GuiInvButtonEditor extends Screen {
         };
 
         for (String step : steps) {
-            List<OrderedText> lines = textRenderer.wrapLines(Text.literal(step), panelW - 16);
-            for (OrderedText line : lines) {
-                context.drawText(textRenderer, line, textX, textY, 0xFFA0A0A0, false);
-                textY += textRenderer.fontHeight + 2;
+            List<FormattedCharSequence> lines = font.split(Component.literal(step), panelW - 16);
+            for (FormattedCharSequence line : lines) {
+                context.text(font, line, textX, textY, 0xFFA0A0A0, false);
+                textY += font.lineHeight + 2;
             }
             textY += 4;
         }
     }
 
-    private void renderIconList(DrawContext context, int mouseX, int mouseY, int listY, int listH) {
+    private void renderIconList(GuiGraphicsExtractor context, int mouseX, int mouseY, int listY, int listH) {
         int listX = editorLeft + 7;
         int listW = editorWidth - 14;
 
@@ -618,7 +612,7 @@ public class GuiInvButtonEditor extends Screen {
         context.disableScissor();
 
         if (resultToTooltip != null) {
-            context.drawTooltip(textRenderer, Text.literal(resultToTooltip.getDisplayName()), mouseX, mouseY);
+            context.setTooltipForNextFrame(font, Component.literal(resultToTooltip.getDisplayName()), mouseX, mouseY);
         }
 
         int totalRows = (int) Math.ceil((double) searchedIcons.size() / cols);
@@ -642,7 +636,7 @@ public class GuiInvButtonEditor extends Screen {
             for (Map.Entry<String, String> entry : SKULL_ICONS.entrySet()) {
                 if (entry.getKey().toLowerCase().contains(lower)) {
                     ItemStack skullStack = XenAddons.CustomButtonData.getSkullStack(entry.getValue());
-                    skullStack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(entry.getKey()));
+                    skullStack.set(DataComponents.CUSTOM_NAME, Component.literal(entry.getKey()));
                     searchedIcons.add(new ItemStackResult(skullStack));
                 }
             }
@@ -667,13 +661,13 @@ public class GuiInvButtonEditor extends Screen {
 
         // Vanilla Items
         if (currentMode == FilterMode.ALL || currentMode == FilterMode.ITEMS || currentMode == FilterMode.BLOCKS) {
-            for (Item item : Registries.ITEM) {
+            for (Item item : BuiltInRegistries.ITEM) {
                 boolean isBlock = item instanceof BlockItem;
                 if (currentMode == FilterMode.BLOCKS && !isBlock) continue;
                 if (currentMode == FilterMode.ITEMS && isBlock) continue;
 
-                Identifier id = Registries.ITEM.getId(item);
-                if (id.toString().contains(lower) || item.getName().getString().toLowerCase().contains(lower)) {
+                Identifier id = BuiltInRegistries.ITEM.getKey(item);
+                if (id.toString().contains(lower) || new ItemStack(item).getHoverName().getString().toLowerCase().contains(lower)) {
                     searchedIcons.add(new ItemStackResult(new ItemStack(item)));
                     if (searchedIcons.size() > 500 && !lower.isEmpty()) break;
                 }
@@ -693,7 +687,7 @@ public class GuiInvButtonEditor extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
@@ -722,13 +716,13 @@ public class GuiInvButtonEditor extends Screen {
             int btnY = panelY + 65;
 
             if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
-                String name = saveProfileField.getText().trim();
+                String name = saveProfileField.getValue().trim();
                 if (!name.isEmpty()) {
                     XenAddons.saveProfile(name);
                     actionStatusText = "Saved: " + name;
                     actionStatusEndTime = System.currentTimeMillis() + 3000;
                     isSavePanelOpen = false;
-                    saveProfileField.setText("");
+                    saveProfileField.setValue("");
                 }
                 return true;
             }
@@ -811,7 +805,7 @@ public class GuiInvButtonEditor extends Screen {
                             mouseY >= skullFieldY && mouseY <= skullFieldY + addSkullField.getHeight());
 
                     int iconSize = 10;
-                    int infoIconX = editorLeft + 7 + textRenderer.getWidth("Add Skull by ID") + 5;
+                    int infoIconX = editorLeft + 7 + font.width("Add Skull by ID") + 5;
                     int infoIconY = skullTitleY - 1;
                     if (mouseX >= infoIconX && mouseX < infoIconX + iconSize && mouseY >= infoIconY && mouseY < infoIconY + iconSize) {
                         isInfoPanelOpen = !isInfoPanelOpen;
@@ -844,7 +838,7 @@ public class GuiInvButtonEditor extends Screen {
                     int index = (int)((mouseX - (editorLeft + 7)) / btnWidth);
                     if (index >= 0 && index < FilterMode.values().length) {
                         currentMode = FilterMode.values()[index];
-                        search(iconTextField.getText());
+                        search(iconTextField.getValue());
                         itemScroll.setTarget(0);
                         return true;
                     }
@@ -881,18 +875,18 @@ public class GuiInvButtonEditor extends Screen {
                         if (!btn.command.startsWith("/")) {
                             btn.command = "/" + btn.command;
                         }
-                        commandTextField.setText(btn.command);
-                        commandTextField.setCursor(btn.command.length(), false);
+                        commandTextField.setValue(btn.command);
+                        commandTextField.moveCursorTo(btn.command.length(), false);
                         commandTextField.setFocused(true);
                         iconTextField.setFocused(false);
                         addSkullField.setFocused(false);
                         if (btn.itemId.startsWith("skull:")) {
-                            addSkullField.setText(btn.itemId);
+                            addSkullField.setValue(btn.itemId);
                         } else {
-                            addSkullField.setText("");
+                            addSkullField.setValue("");
                         }
                         currentMode = FilterMode.ALL;
-                        search(iconTextField.getText());
+                        search(iconTextField.getValue());
                     }
                 }
                 isDragging = true;
@@ -909,7 +903,7 @@ public class GuiInvButtonEditor extends Screen {
             XenAddons.instance.buttons.add(newBtn);
             editingButton = newBtn;
             isEditorOpen = true;
-            commandTextField.setText(newBtn.command);
+            commandTextField.setValue(newBtn.command);
             commandTextField.setFocused(true);
             isDragging = true;
             dragOffsetX = 9;
@@ -947,14 +941,14 @@ public class GuiInvButtonEditor extends Screen {
                 String id = searchedIcons.get(index).getConfigId();
                 editingButton.itemId = id;
                 if (id.startsWith("skull:")) {
-                    addSkullField.setText(id);
+                    addSkullField.setValue(id);
                 }
             }
         }
     }
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         isDragging = false;
         return super.mouseReleased(click);
     }
@@ -974,7 +968,7 @@ public class GuiInvButtonEditor extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(Click click, double deltaX, double deltaY) {
+    public boolean mouseDragged(MouseButtonEvent click, double deltaX, double deltaY) {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
@@ -1122,7 +1116,7 @@ public class GuiInvButtonEditor extends Screen {
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         int keyCode = input.key();
         int scanCode = input.scancode();
         int modifiers = input.modifiers();
@@ -1141,13 +1135,13 @@ public class GuiInvButtonEditor extends Screen {
                 return true;
             }
             if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-                String name = saveProfileField.getText().trim();
+                String name = saveProfileField.getValue().trim();
                 if (!name.isEmpty()) {
                     XenAddons.saveProfile(name);
                     actionStatusText = "Saved: " + name;
                     actionStatusEndTime = System.currentTimeMillis() + 3000;
                     isSavePanelOpen = false;
-                    saveProfileField.setText("");
+                    saveProfileField.setValue("");
                 }
                 return true;
             }
@@ -1159,9 +1153,9 @@ public class GuiInvButtonEditor extends Screen {
             if (isEditorOpen) {
                 if (commandTextField.isFocused()) {
                     if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
-                        String txt = commandTextField.getText();
-                        int cursor = commandTextField.getCursor();
-                        if (txt.equals("/") || (cursor <= 1 && commandTextField.getSelectedText().isEmpty())) {
+                        String txt = commandTextField.getValue();
+                        int cursor = commandTextField.getCursorPosition();
+                        if (txt.equals("/") || (cursor <= 1 && commandTextField.getHighlighted().isEmpty())) {
                             return true;
                         }
                     }
@@ -1198,7 +1192,7 @@ public class GuiInvButtonEditor extends Screen {
     }
 
     @Override
-    public boolean charTyped(CharInput input) {
+    public boolean charTyped(CharacterEvent input) {
         if (isSavePanelOpen) {
             if (saveProfileField.charTyped(input)) return true;
             return super.charTyped(input);
@@ -1208,7 +1202,7 @@ public class GuiInvButtonEditor extends Screen {
                 return true;
             }
             if (iconTextField.isFocused() && iconTextField.charTyped(input)) {
-                search(iconTextField.getText());
+                search(iconTextField.getValue());
                 return true;
             }
             if (addSkullField.isFocused() && addSkullField.charTyped(input)) {
@@ -1219,10 +1213,10 @@ public class GuiInvButtonEditor extends Screen {
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         XenAddons.save();
-        if (parent != null) client.setScreen(parent);
-        else super.close();
+        if (parent != null) minecraft.setScreen(parent);
+        else super.onClose();
     }
 
     private static class LerpingInteger {

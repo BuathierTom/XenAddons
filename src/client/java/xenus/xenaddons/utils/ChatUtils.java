@@ -1,7 +1,7 @@
 package xenus.xenaddons.utils;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 public class ChatUtils {
     public static final String PREFIX = "§8[§6XenAddons§8] ";
@@ -24,18 +24,18 @@ public class ChatUtils {
     }
 
     public static void sendMessage(String message, MessageType type) {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             String formatted = PREFIX + type.getColor() + message;
-            mc.player.sendMessage(Text.of(formatted), false);
+            mc.player.sendSystemMessage(Component.literal(formatted));
         }
     }
 
     public static void sendActionBar(String message, MessageType type) {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             String formatted = PREFIX + type.getColor() + message;
-            mc.player.sendMessage(Text.of(formatted), true);
+            mc.player.sendOverlayMessage(Component.literal(formatted));
         }
     }
 

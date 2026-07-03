@@ -1,8 +1,8 @@
 package xenus.xenaddons.features.impl.misc;
 
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.ChatFormatting;
 import xenus.xenaddons.features.ModuleManager;
 
 import java.util.Map;
@@ -50,7 +50,7 @@ public final class CompactPotionMessageProcessor {
     private CompactPotionMessageProcessor() {
     }
 
-    public static Text compact(Text original) {
+    public static Component compact(Component original) {
         if (original == null || !isEnabled()) return original;
 
         String legacy = toLegacyString(original);
@@ -69,7 +69,7 @@ public final class CompactPotionMessageProcessor {
         return original;
     }
 
-    private static Text toCompactMessage(Matcher matcher, boolean preserveEffectFormatting) {
+    private static Component toCompactMessage(Matcher matcher, boolean preserveEffectFormatting) {
         String effectName = matcher.group("effectName");
         String playerName = null;
         try {
@@ -81,7 +81,7 @@ public final class CompactPotionMessageProcessor {
         effectName = sanitizeEffect(effectName);
         String effectPart = preserveEffectFormatting ? effectName : "§f" + effectName;
         String byPlayer = (playerName != null && !playerName.isBlank()) ? " §aby " + playerName.trim() : "";
-        return Text.of("§a§lPotion Effect! §r" + effectPart + byPlayer);
+        return Component.literal("§a§lPotion Effect! §r" + effectPart + byPlayer);
     }
 
     private static String sanitizeEffect(String effectName) {
@@ -92,7 +92,7 @@ public final class CompactPotionMessageProcessor {
         return out;
     }
 
-    private static String toLegacyString(Text text) {
+    private static String toLegacyString(Component text) {
         StringBuilder out = new StringBuilder();
         text.visit((style, string) -> {
             if (!string.isEmpty()) {
@@ -100,11 +100,11 @@ public final class CompactPotionMessageProcessor {
                 out.append(string);
             }
             return Optional.empty();
-        }, net.minecraft.text.Style.EMPTY);
+        }, net.minecraft.network.chat.Style.EMPTY);
         return out.toString();
     }
 
-    private static String styleToLegacyPrefix(net.minecraft.text.Style style) {
+    private static String styleToLegacyPrefix(net.minecraft.network.chat.Style style) {
         if (style == null) return "";
         StringBuilder out = new StringBuilder();
 
@@ -121,7 +121,7 @@ public final class CompactPotionMessageProcessor {
         }
 
         if (color != null) {
-            int rgb = color.getRgb() & 0xFFFFFF;
+            int rgb = color.getValue() & 0xFFFFFF;
             Character code = LEGACY_COLOR_CODES.get(rgb);
             if (code != null) {
                 out.append('§').append(code);
@@ -129,11 +129,11 @@ public final class CompactPotionMessageProcessor {
                 out.append(toLegacyHex(rgb));
             }
         }
-        if (Boolean.TRUE.equals(style.isBold())) out.append('§').append(Formatting.BOLD.getCode());
-        if (Boolean.TRUE.equals(style.isItalic())) out.append('§').append(Formatting.ITALIC.getCode());
-        if (Boolean.TRUE.equals(style.isUnderlined())) out.append('§').append(Formatting.UNDERLINE.getCode());
-        if (Boolean.TRUE.equals(style.isStrikethrough())) out.append('§').append(Formatting.STRIKETHROUGH.getCode());
-        if (Boolean.TRUE.equals(style.isObfuscated())) out.append('§').append(Formatting.OBFUSCATED.getCode());
+        if (Boolean.TRUE.equals(style.isBold())) out.append('§').append(ChatFormatting.BOLD.getChar());
+        if (Boolean.TRUE.equals(style.isItalic())) out.append('§').append(ChatFormatting.ITALIC.getChar());
+        if (Boolean.TRUE.equals(style.isUnderlined())) out.append('§').append(ChatFormatting.UNDERLINE.getChar());
+        if (Boolean.TRUE.equals(style.isStrikethrough())) out.append('§').append(ChatFormatting.STRIKETHROUGH.getChar());
+        if (Boolean.TRUE.equals(style.isObfuscated())) out.append('§').append(ChatFormatting.OBFUSCATED.getChar());
         return out.toString();
     }
 

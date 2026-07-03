@@ -7,10 +7,10 @@ import xenus.xenaddons.utils.KotlinGuiBridge;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.SpecialGuiElementRegistry;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import net.fabricmc.fabric.api.client.rendering.v1.PictureInPictureRendererRegistry;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public class XenAddonsClient implements ClientModInitializer {
 
@@ -28,7 +28,7 @@ public class XenAddonsClient implements ClientModInitializer {
 		// Initialize Modules
 		xenus.xenaddons.features.ModuleManager.init();
 
-		SpecialGuiElementRegistry.register(context -> new XenNvgSpecialElementRenderer(context.vertexConsumers()));
+		PictureInPictureRendererRegistry.register(context -> new XenNvgSpecialElementRenderer(context.bufferSource()));
 
         // Initialize Utilities
         xenus.xenaddons.utils.DungeonUtils.init();
@@ -59,9 +59,9 @@ public class XenAddonsClient implements ClientModInitializer {
 			// Command: /pcc -> /chat party
 			var pccNode = dispatcher.register(literal("pcc")
 					.executes(context -> {
-						net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
-						if (mc.player == null || mc.player.networkHandler == null) return 0;
-						mc.player.networkHandler.sendChatCommand("chat party");
+						net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+						if (mc.player == null || mc.player.connection == null) return 0;
+						mc.player.connection.sendCommand("chat party");
 						return 1;
 					})
 			);
@@ -89,7 +89,7 @@ public class XenAddonsClient implements ClientModInitializer {
                         xenus.xenaddons.features.impl.dungeons.DungeonsStatsPFModule.debugTrigger("dtXenus");
                         xenus.xenaddons.utils.ChatUtils.info("PF debug launched for dtXenus");
                         return 1;
-                    }).then(ClientCommandManager.argument("player", StringArgumentType.word()).executes(context -> {
+                    }).then(ClientCommands.argument("player", StringArgumentType.word()).executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug =
                                 xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
                         if (debug == null || !debug.isEnabled() || !debug.enablePfStatsTest.getValue()) {
@@ -132,17 +132,17 @@ public class XenAddonsClient implements ClientModInitializer {
                             return 0;
                         }
 
-                        net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
-                        if (mc.getNetworkHandler() != null) {
+                        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                        if (mc.getConnection() != null) {
                             xenus.xenaddons.utils.ChatUtils.info("§aScanning player classes (Debug Mode)...");
                             
                             // Force update to ensure latest data
                             xenus.xenaddons.utils.DungeonUtils.updateClasses(); 
                             xenus.xenaddons.utils.ChatUtils.info("In Dungeon: " + xenus.xenaddons.utils.DungeonUtils.inDungeon());
 
-                            for (net.minecraft.client.network.PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
+                            for (net.minecraft.client.multiplayer.PlayerInfo entry : mc.getConnection().getListedOnlinePlayers()) {
                                 String name = entry.getProfile().name();
-                                net.minecraft.text.Text display = entry.getDisplayName();
+                                net.minecraft.network.chat.Component display = entry.getTabListDisplayName();
                                 String rawDisplay = (display != null) ? display.getString() : "null";
                                 
                                 String clazz = xenus.xenaddons.utils.DungeonUtils.getPlayerClass(name);
@@ -186,7 +186,7 @@ public class XenAddonsClient implements ClientModInitializer {
                                 return 0;
                             }
                             
-                            net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
+                            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                             if (mc.player == null) return 0;
                             
                             int px = (int) mc.player.getX();
@@ -216,7 +216,7 @@ public class XenAddonsClient implements ClientModInitializer {
 
                         module.debugTriggerProcAlert();
                         return 1;
-                    }).then(ClientCommandManager.argument("type", StringArgumentType.word()).executes(context -> {
+                    }).then(ClientCommands.argument("type", StringArgumentType.word()).executes(context -> {
                         xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule module =
                                 xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule.class);
                         if (module == null) return 0;
@@ -320,7 +320,7 @@ public class XenAddonsClient implements ClientModInitializer {
 			}
 			if (openEditorNextTick) {
 				openEditorNextTick = false;
-				var hudEditor = KotlinGuiBridge.createHudEditorScreen(client.currentScreen);
+				var hudEditor = KotlinGuiBridge.createHudEditorScreen(client.screen);
 				if (hudEditor != null) {
 					client.setScreen(hudEditor);
 				}

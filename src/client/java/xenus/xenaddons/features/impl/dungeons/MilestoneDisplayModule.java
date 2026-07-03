@@ -1,12 +1,12 @@
 package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.ActionSetting;
@@ -23,21 +23,21 @@ public class MilestoneDisplayModule extends Module {
     private static final int MIN_SAFE_MILESTONE = 3;
     private static final int REMINDER_TITLE_TICKS = 40;
     private static final SoundEvent INVISIBILITY_TIMER_SOUND =
-            SoundEvent.of(Identifier.of("minecraft", "entity.experience_orb.pickup"));
+            SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("minecraft", "entity.experience_orb.pickup"));
     private static final Identifier[] RANDOM_SOUND_POOL = new Identifier[]{
-            Identifier.of("xenaddons", "reminder_gate.fah"),
-            Identifier.of("xenaddons", "reminder_gate.nuke_bomb"),
-            Identifier.of("xenaddons", "reminder_gate.android_meme"),
-            Identifier.of("xenaddons", "reminder_gate.pump_shotgun"),
-            Identifier.of("xenaddons", "reminder_gate.knocked"),
-            Identifier.of("xenaddons", "reminder_gate.hog_rider"),
-            Identifier.of("xenaddons", "reminder_gate.airhorn")
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.fah"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.nuke_bomb"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.android_meme"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.pump_shotgun"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.knocked"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.hog_rider"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.airhorn")
     };
 
     private final BooleanSetting showNotification = new BooleanSetting("Show Notification", true);
     private final BooleanSetting showHud = new BooleanSetting("Show HUD", true);
     private final BooleanSetting enableCustomSound = new BooleanSetting("Enable Custom Sound", false);
-    private final StringSetting reminderText = new StringSetting("Reminder Text", "&cMilestone low!", 64);
+    private final StringSetting reminderText = new StringSetting("Reminder Component", "&cMilestone low!", 64);
     private final ModeSetting sound = new ModeSetting(
             "Sound",
             "FAHHHHHHHHHHHHHH",
@@ -103,7 +103,7 @@ public class MilestoneDisplayModule extends Module {
             updateRuntime();
         });
 
-        HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "milestone_display_hud"), (drawContext, tickDelta) -> {
             if (!this.isEnabled()) return;
             renderInGameHud(drawContext);
             renderReminderAlert(drawContext);
@@ -111,7 +111,7 @@ public class MilestoneDisplayModule extends Module {
     }
 
     private void updateRuntime() {
-        if (mc.world == null || mc.player == null || !DungeonUtils.inDungeon()) {
+        if (mc.level == null || mc.player == null || !DungeonUtils.inDungeon()) {
             resetRuntime();
             return;
         }
@@ -149,14 +149,14 @@ public class MilestoneDisplayModule extends Module {
         playReminderSound();
     }
 
-    public void renderInGameHud(DrawContext drawContext) {
+    public void renderInGameHud(GuiGraphicsExtractor drawContext) {
         if (!this.isEnabled()) return;
         if (!showHud.getValue()) return;
-        if (mc.world == null || mc.player == null || !DungeonUtils.inDungeon()) return;
+        if (mc.level == null || mc.player == null || !DungeonUtils.inDungeon()) return;
         renderLine(drawContext, getDisplayText(), getDisplayColor());
     }
 
-    public void renderPreview(DrawContext drawContext) {
+    public void renderPreview(GuiGraphicsExtractor drawContext) {
         renderLine(drawContext, getPreviewText(), getPreviewColor());
     }
 
@@ -169,7 +169,7 @@ public class MilestoneDisplayModule extends Module {
         playReminderSound();
     }
 
-    private void renderReminderAlert(DrawContext drawContext) {
+    private void renderReminderAlert(GuiGraphicsExtractor drawContext) {
         if (debugAlertTicks > 0 && debugAlertText != null && !debugAlertText.isBlank()) {
             renderAlertLine(drawContext, debugAlertText, 0xFFFF5555);
             return;
@@ -215,13 +215,13 @@ public class MilestoneDisplayModule extends Module {
         return "§a";
     }
 
-    private void renderLine(DrawContext drawContext, String line, int color) {
+    private void renderLine(GuiGraphicsExtractor drawContext, String line, int color) {
         if (line == null || line.isBlank()) return;
 
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-        int textWidth = mc.textRenderer.getWidth(line);
-        int textHeight = mc.textRenderer.fontHeight;
+        int width = mc.getWindow().getGuiScaledWidth();
+        int height = mc.getWindow().getGuiScaledHeight();
+        int textWidth = mc.font.width(line);
+        int textHeight = mc.font.lineHeight;
         float scale = (float) hudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
         int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
@@ -229,25 +229,25 @@ public class MilestoneDisplayModule extends Module {
 
         int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
         int maxCenterX = width - minCenterX;
-        int centerX = MathHelper.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
+        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
 
         int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
 
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
         int x = (int) ((centerX * inv) - (textWidth / 2f));
         int drawY = (int) (y * inv);
-        drawContext.drawTextWithShadow(mc.textRenderer, line, x, drawY, color);
-        drawContext.getMatrices().popMatrix();
+        drawContext.text(mc.font, line, x, drawY, color);
+        drawContext.pose().popMatrix();
     }
 
-    private void renderAlertLine(DrawContext drawContext, String line, int color) {
+    private void renderAlertLine(GuiGraphicsExtractor drawContext, String line, int color) {
         if (line == null || line.isBlank()) return;
 
-        int width = mc.getWindow().getScaledWidth();
-        int textWidth = mc.textRenderer.getWidth(line);
-        int textHeight = mc.textRenderer.fontHeight;
+        int width = mc.getWindow().getGuiScaledWidth();
+        int textWidth = mc.font.width(line);
+        int textHeight = mc.font.lineHeight;
 
         float scale = (float) alertHudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
@@ -256,17 +256,17 @@ public class MilestoneDisplayModule extends Module {
 
         int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
         int maxCenterX = width - minCenterX;
-        int centerX = MathHelper.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
+        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
 
-        int maxY = mc.getWindow().getScaledHeight() - (int) Math.ceil(textHeight * scale) - 2;
-        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+        int maxY = mc.getWindow().getGuiScaledHeight() - (int) Math.ceil(textHeight * scale) - 2;
+        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
 
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
         int x = (int) ((centerX * inv) - (textWidth / 2f));
         int drawY = (int) (y * inv);
-        drawContext.drawTextWithShadow(mc.textRenderer, line, x, drawY, color);
-        drawContext.getMatrices().popMatrix();
+        drawContext.text(mc.font, line, x, drawY, color);
+        drawContext.pose().popMatrix();
     }
 
     private void resetRuntime() {
@@ -305,19 +305,19 @@ public class MilestoneDisplayModule extends Module {
                 int idx = ThreadLocalRandom.current().nextInt(RANDOM_SOUND_POOL.length);
                 yield RANDOM_SOUND_POOL[idx];
             }
-            case "Nuke Bomb" -> Identifier.of("xenaddons", "reminder_gate.nuke_bomb");
-            case "Android Meme" -> Identifier.of("xenaddons", "reminder_gate.android_meme");
-            case "Pump Shotgun" -> Identifier.of("xenaddons", "reminder_gate.pump_shotgun");
-            case "Knocked" -> Identifier.of("xenaddons", "reminder_gate.knocked");
-            case "Hog Rider" -> Identifier.of("xenaddons", "reminder_gate.hog_rider");
-            case "Airhorn" -> Identifier.of("xenaddons", "reminder_gate.airhorn");
-            case "FAHHHHHHHHHHHHHH" -> Identifier.of("xenaddons", "reminder_gate.fah");
+            case "Nuke Bomb" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.nuke_bomb");
+            case "Android Meme" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.android_meme");
+            case "Pump Shotgun" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.pump_shotgun");
+            case "Knocked" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.knocked");
+            case "Hog Rider" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.hog_rider");
+            case "Airhorn" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.airhorn");
+            case "FAHHHHHHHHHHHHHH" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.fah");
             default -> {
                 Identifier parsed = Identifier.tryParse(sound.getValue());
-                yield parsed != null ? parsed : Identifier.of("xenaddons", "reminder_gate.fah");
+                yield parsed != null ? parsed : Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.fah");
             }
         };
-        return SoundEvent.of(id);
+        return SoundEvent.createVariableRangeEvent(id);
     }
 
     @Override

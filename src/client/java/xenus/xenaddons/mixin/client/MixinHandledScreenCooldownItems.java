@@ -1,9 +1,9 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -11,12 +11,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xenus.xenaddons.compat.XenCooldownCompat;
 
-@Mixin(HandledScreen.class)
+@Mixin(AbstractContainerScreen.class)
 public class MixinHandledScreenCooldownItems {
 
     @Redirect(
-        method = "drawSlot",
-        at = @At(value = "INVOKE", target = "Lnet/minecraft/screen/slot/Slot;getStack()Lnet/minecraft/item/ItemStack;"),
+        method = "extractSlot",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/Slot;getItem()Lnet/minecraft/world/item/ItemStack;"),
         require = 0
     )
     private ItemStack xenaddons$replaceSuperpairsUnknownStack(Slot slot) {
@@ -24,11 +24,11 @@ public class MixinHandledScreenCooldownItems {
     }
 
     @Inject(
-        method = "drawSlot",
+        method = "extractSlot",
         at = @At("TAIL"),
         require = 0
     )
-    private void xenaddons$renderCooldownInInventory(DrawContext context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+    private void xenaddons$renderCooldownInInventory(GuiGraphicsExtractor context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
         XenCooldownCompat.renderInventorySlot(context, slot);
     }
 }

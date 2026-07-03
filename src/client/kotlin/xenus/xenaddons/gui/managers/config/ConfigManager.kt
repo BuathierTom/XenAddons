@@ -2,7 +2,7 @@
 
 package xenus.xenaddons.gui.managers.config
 
-import net.minecraft.client.MinecraftClient
+import net.minecraft.client.Minecraft
 import xenus.xenaddons.features.Category
 import xenus.xenaddons.features.ModuleManager
 import xenus.xenaddons.gui.config.ui.ClickGUI
@@ -257,6 +257,6 @@ object ConfigManager {
     @JvmStatic
     fun openConfig() {
         rebuildFromXenModules()
-        MinecraftClient.getInstance().setScreen(ClickGUI)
+        Minecraft.getInstance().setScreen(ClickGUI)
     }
 }

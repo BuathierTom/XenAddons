@@ -2,12 +2,13 @@ package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.NumberSetting;
@@ -57,33 +58,33 @@ public class PosTitlesModule extends Module {
         });
 
         // Use HudRenderCallback for TOP-MIDDLE position
-        HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "pos_titles_hud"), (drawContext, tickDelta) -> {
             if (currentTitle == null || titleTimer <= 0) return;
             renderTopTitle(drawContext);
         });
     }
 
-    private void renderTopTitle(DrawContext drawContext) {
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-        int textWidth = mc.textRenderer.getWidth(currentTitle);
-        int textHeight = mc.textRenderer.fontHeight;
+    private void renderTopTitle(GuiGraphicsExtractor drawContext) {
+        int width = mc.getWindow().getGuiScaledWidth();
+        int height = mc.getWindow().getGuiScaledHeight();
+        int textWidth = mc.font.width(currentTitle);
+        int textHeight = mc.font.lineHeight;
         float scale = (float) hudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
         int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
         int yRaw = hudY.getValue().intValue();
         int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
         int maxCenterX = width - minCenterX;
-        int centerX = MathHelper.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
+        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
         int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
 
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
         int x = (int) ((centerX * inv) - (textWidth / 2f));
         int drawY = (int) (y * inv);
-        drawContext.drawTextWithShadow(mc.textRenderer, currentTitle, x, drawY, 0xFFFFFFFF);
-        drawContext.getMatrices().popMatrix();
+        drawContext.text(mc.font, currentTitle, x, drawY, 0xFFFFFFFF);
+        drawContext.pose().popMatrix();
 
     }
 
@@ -92,10 +93,10 @@ public class PosTitlesModule extends Module {
             if (!lastLocations.isEmpty()) lastLocations.clear();
             return;
         }
-        if (mc.world == null || mc.player == null) return;
+        if (mc.level == null || mc.player == null) return;
 
-        for (AbstractClientPlayerEntity entity : mc.world.getPlayers()) {
-            if (entity.getUuid().equals(mc.player.getUuid())) continue;
+        for (AbstractClientPlayer entity : mc.level.players()) {
+            if (entity.getUUID().equals(mc.player.getUUID())) continue;
             if (entity.isInvisible()) continue;
 
             String playerName = entity.getName().getString();
@@ -191,7 +192,7 @@ public class PosTitlesModule extends Module {
             final float pitch = 1.6f;
             scheduler.schedule(() -> {
                 if (mc.player != null) {
-                    mc.execute(() -> mc.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP.value(), 0.7f, pitch));
+                    mc.execute(() -> mc.player.playSound(SoundEvents.NOTE_BLOCK_HARP.value(), 0.7f, pitch));
                 }
             }, i * 50, TimeUnit.MILLISECONDS);
         }

@@ -1,6 +1,6 @@
 package xenus.xenaddons.features.impl.misc.cooldown;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import xenus.xenaddons.utils.DungeonUtils;
 
 import java.util.Arrays;
@@ -139,7 +139,7 @@ public enum ItemAbility {
     public double getMultiplier() {
         if (ignoreMageCooldownReduction) return 1.0;
         if (!DungeonUtils.inDungeon()) return 1.0;
-        var mc = net.minecraft.client.MinecraftClient.getInstance();
+        var mc = net.minecraft.client.Minecraft.getInstance();
         if (mc == null || mc.player == null) return 1.0;
         String playerClass = DungeonUtils.getPlayerClass(mc.player);
         if (playerClass == null) {

@@ -1,8 +1,8 @@
 package xenus.xenaddons.compat;
 
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.Text;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.config.GoatedPlayersManager;
 
 import java.util.ArrayList;
@@ -20,27 +20,27 @@ public final class XenTextCompat {
         return GoatedPlayersManager.applyVisualWords(text);
     }
 
-    public static StringVisitable replaceStringVisitable(StringVisitable text) {
-        if (text instanceof Text t) return GoatedPlayersManager.applyVisualWords(t);
+    public static FormattedText replaceStringVisitable(FormattedText text) {
+        if (text instanceof Component t) return GoatedPlayersManager.applyVisualWords(t);
         return text;
     }
 
-    public static OrderedText replaceOrderedText(OrderedText text) {
+    public static FormattedCharSequence replaceOrderedText(FormattedCharSequence text) {
         return GoatedPlayersManager.applyVisualWords(text);
     }
 
-    public static Text replaceText(Text text) {
+    public static Component replaceText(Component text) {
         return GoatedPlayersManager.applyVisualWords(text);
     }
 
-    public static Text replaceTooltip(Text text) {
+    public static Component replaceTooltip(Component text) {
         return GoatedPlayersManager.applyVisualWordsForTooltip(text);
     }
 
-    public static List<Text> replaceTooltipList(List<Text> lines) {
+    public static List<Component> replaceTooltipList(List<Component> lines) {
         if (lines == null || lines.isEmpty()) return lines;
-        List<Text> replaced = new ArrayList<>(lines.size());
-        for (Text line : lines) {
+        List<Component> replaced = new ArrayList<>(lines.size());
+        for (Component line : lines) {
             replaced.add(replaceTooltip(line));
         }
         return replaced;

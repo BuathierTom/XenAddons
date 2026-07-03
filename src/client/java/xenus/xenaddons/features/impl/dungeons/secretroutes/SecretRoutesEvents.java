@@ -4,16 +4,16 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import xenus.xenaddons.features.impl.dungeons.SecretRoutesModule;
 
 import java.util.HashMap;
@@ -46,16 +46,16 @@ public class SecretRoutesEvents {
         });
     }
 
-    public static ActionResult onUseBlock(net.minecraft.entity.player.PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
-        if (!SecretRoutesModule.INSTANCE.isEnabled()) return ActionResult.PASS;
-        if (!LocationUtils.isInDungeons()) return ActionResult.PASS;
-        if (hand != Hand.MAIN_HAND) return ActionResult.PASS;
+    public static InteractionResult onUseBlock(net.minecraft.world.entity.player.Player player, Level world, InteractionHand hand, BlockHitResult hitResult) {
+        if (!SecretRoutesModule.INSTANCE.isEnabled()) return InteractionResult.PASS;
+        if (!LocationUtils.isInDungeons()) return InteractionResult.PASS;
+        if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
 
         long currentTime = System.currentTimeMillis();
         BlockPos pos = hitResult.getBlockPos();
 
         if (lastInteractPos != null && lastInteractPos.equals(pos) && (currentTime - lastInteractTime) < INTERACT_COOLDOWN) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
         lastInteractTime = currentTime;
@@ -66,7 +66,7 @@ public class SecretRoutesEvents {
 
         // Check if interactable block
         if (block != Blocks.CHEST && block != Blocks.TRAPPED_CHEST && block != Blocks.LEVER && block != Blocks.PLAYER_HEAD && block != Blocks.SKELETON_SKULL) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
         Room currentRoom = OnEnterNewRoom.currentRoom;
@@ -89,7 +89,7 @@ public class SecretRoutesEvents {
             }
         }
 
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
     private static void handleLockedChestMessage(String message) {
@@ -132,9 +132,9 @@ public class SecretRoutesEvents {
         }
     }
 
-    public static void onTick(MinecraftClient client) {
+    public static void onTick(Minecraft client) {
         if (!SecretRoutesModule.INSTANCE.isEnabled()) return;
-        ClientPlayerEntity player = client.player;
+        LocalPlayer player = client.player;
         if (player == null) return;
 
         if (!LocationUtils.isInDungeons()) {
@@ -148,7 +148,7 @@ public class SecretRoutesEvents {
             BlockPos secretPos = currentRoom.getSecretLocation();
             
             if (secretPos != null) {
-                BlockPos pPos = player.getBlockPos();
+                BlockPos pPos = player.blockPosition();
                 
                 // BAT proximity check (slightly wider so high/offset bats don't get stuck)
                 if (secretType == Room.SECRET_TYPES.BAT) {
@@ -226,12 +226,12 @@ public class SecretRoutesEvents {
         }
     }
 
-    private static void checkItemPickup(ClientPlayerEntity player) {
+    private static void checkItemPickup(LocalPlayer player) {
         Map<String, Integer> currentInventory = new HashMap<>();
-        for (int i = 0; i < player.getInventory().size(); i++) {
-            ItemStack stack = player.getInventory().getStack(i);
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
             if (!stack.isEmpty()) {
-                String itemName = stack.getName().getString();
+                String itemName = stack.getHoverName().getString();
                 currentInventory.put(itemName, currentInventory.getOrDefault(itemName, 0) + stack.getCount());
             }
         }
@@ -246,8 +246,8 @@ public class SecretRoutesEvents {
                 if (currentRoom != null && currentRoom.getSecretType() == Room.SECRET_TYPES.ITEM) {
                     BlockPos itemPos = currentRoom.getSecretLocation();
                     if (itemPos != null) {
-                        BlockPos pPos = player.getBlockPos();
-                        if (pPos.getSquaredDistance(itemPos) <= 100) { // dentro de 10 blocks
+                        BlockPos pPos = player.blockPosition();
+                        if (pPos.distSqr(itemPos) <= 100) { // dentro de 10 blocks
                             System.out.println("[SecretRoutes] Picked up secret item: " + itemName);
                             currentRoom.nextSecret();
                         }

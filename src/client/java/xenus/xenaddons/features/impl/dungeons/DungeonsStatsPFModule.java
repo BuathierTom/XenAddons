@@ -5,16 +5,16 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtSizeTracker;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
@@ -84,7 +84,7 @@ public class DungeonsStatsPFModule extends Module {
         }
     }
 
-    private static boolean handleIncomingMessage(Text message) {
+    private static boolean handleIncomingMessage(Component message) {
         DungeonsStatsPFModule module = ModuleManager.getModule(DungeonsStatsPFModule.class);
         if (module == null || !module.isEnabled() || message == null) return true;
         String rawMessage = message.getString();
@@ -121,16 +121,16 @@ public class DungeonsStatsPFModule extends Module {
                 String player = classChange.group(1);
                 String clazz = classChange.group(2);
                 String level = classChange.group(3);
-                postChat(Text.literal("§d§lPF > §r" + player + " §echanged to §b" + clazz + " " + level + "§e!"));
+                postChat(Component.literal("§d§lPF > §r" + player + " §echanged to §b" + clazz + " " + level + "§e!"));
                 return false;
             }
 
             if ("Party Finder > Your party has been queued in the dungeon finder!".equals(clean)) {
-                postChat(Text.literal("§d§lPF > §aParty Queued."));
+                postChat(Component.literal("§d§lPF > §aParty Queued."));
                 return false;
             }
             if ("Party Finder > Your group has been de-listed!".equals(clean)) {
-                postChat(Text.literal("§d§lPF > §aParty Delisted.."));
+                postChat(Component.literal("§d§lPF > §aParty Delisted.."));
                 return false;
             }
         }
@@ -145,8 +145,8 @@ public class DungeonsStatsPFModule extends Module {
         });
     }
 
-    private static Text buildBetterJoinMessage(String playerFormatted, String clazz, String level, String playerName) {
-        MutableText msg = Text.literal("§d§lPF > §r" + playerFormatted + " §8| §b" + clazz + " " + level);
+    private static Component buildBetterJoinMessage(String playerFormatted, String clazz, String level, String playerName) {
+        MutableComponent msg = Component.literal("§d§lPF > §r" + playerFormatted + " §8| §b" + clazz + " " + level);
         String self = mcRef() != null && mcRef().player != null ? mcRef().player.getGameProfile().name() : "";
         if (playerName == null || playerName.isBlank() || playerName.equalsIgnoreCase(self)) {
             return msg;
@@ -157,11 +157,11 @@ public class DungeonsStatsPFModule extends Module {
         return msg;
     }
 
-    private static Text clickableSegment(String label, String command, String hover) {
-        MutableText out = Text.literal(label);
+    private static Component clickableSegment(String label, String command, String hover) {
+        MutableComponent out = Component.literal(label);
         out.setStyle(out.getStyle()
                 .withClickEvent(new ClickEvent.RunCommand(command))
-                .withHoverEvent(new HoverEvent.ShowText(Text.literal(hover))));
+                .withHoverEvent(new HoverEvent.ShowText(Component.literal(hover))));
         return out;
     }
 
@@ -502,37 +502,37 @@ public class DungeonsStatsPFModule extends Module {
     }
 
     private static void sendLine(String line) {
-        net.minecraft.client.MinecraftClient mc = mcRef();
+        net.minecraft.client.Minecraft mc = mcRef();
         if (mc == null || line == null) return;
         mc.execute(() -> {
             if (mc.player != null) {
-                mc.player.sendMessage(Text.literal(line), false);
+                mc.player.sendSystemMessage(Component.literal(line));
             }
         });
     }
 
-    private static void sendText(Text text) {
-        net.minecraft.client.MinecraftClient mc = mcRef();
+    private static void sendText(Component text) {
+        net.minecraft.client.Minecraft mc = mcRef();
         if (mc == null || text == null) return;
         mc.execute(() -> {
             if (mc.player != null) {
-                mc.player.sendMessage(text, false);
+                mc.player.sendSystemMessage(text);
             }
         });
     }
 
-    private static void postChat(Text text) {
-        net.minecraft.client.MinecraftClient mc = mcRef();
+    private static void postChat(Component text) {
+        net.minecraft.client.Minecraft mc = mcRef();
         if (mc == null || text == null) return;
         mc.execute(() -> {
-            if (mc.inGameHud != null) {
-                mc.inGameHud.getChatHud().addMessage(text);
+            if (mc.gui != null) {
+                mc.gui.getChat().addClientSystemMessage(text);
             }
         });
     }
 
-    private static net.minecraft.client.MinecraftClient mcRef() {
-        return net.minecraft.client.MinecraftClient.getInstance();
+    private static net.minecraft.client.Minecraft mcRef() {
+        return net.minecraft.client.Minecraft.getInstance();
     }
 
     private static JsonObject getObj(JsonObject parent, String key) {
@@ -682,7 +682,7 @@ public class DungeonsStatsPFModule extends Module {
     private static void sendArmorLine(DecodedItem armor) {
         if (armor == null) return;
         String name = armor.name == null || armor.name.isBlank() ? "Unknown Armor Piece" : armor.name;
-        MutableText line = Text.literal("  " + name);
+        MutableComponent line = Component.literal("  " + name);
         if (!armor.lore.isEmpty() || (armor.name != null && !armor.name.isBlank())) {
             List<String> hoverLines = new ArrayList<>();
             hoverLines.add(name);
@@ -691,17 +691,17 @@ public class DungeonsStatsPFModule extends Module {
                 hoverLines.addAll(armor.lore);
             }
             String hover = String.join("\n", hoverLines);
-            line.setStyle(line.getStyle().withHoverEvent(new HoverEvent.ShowText(Text.literal(hover))));
+            line.setStyle(line.getStyle().withHoverEvent(new HoverEvent.ShowText(Component.literal(hover))));
         }
         sendText(line);
     }
 
     private static void sendKickPrompt(String playerName) {
         if (playerName == null || playerName.isBlank()) return;
-        MutableText text = Text.literal("§8[§6XenAddons§8] §ePress to kick §b" + playerName);
+        MutableComponent text = Component.literal("§8[§6XenAddons§8] §ePress to kick §b" + playerName);
         Style style = text.getStyle()
                 .withClickEvent(new ClickEvent.RunCommand("/p kick " + playerName))
-                .withHoverEvent(new HoverEvent.ShowText(Text.literal("§e/p kick " + playerName)));
+                .withHoverEvent(new HoverEvent.ShowText(Component.literal("§e/p kick " + playerName)));
         text.setStyle(style);
         sendText(text);
     }
@@ -751,28 +751,28 @@ public class DungeonsStatsPFModule extends Module {
         if (base64Data == null || base64Data.isBlank()) return out;
         try {
             byte[] bytes = Base64.getDecoder().decode(base64Data);
-            NbtCompound root = NbtIo.readCompressed(new java.io.ByteArrayInputStream(bytes), NbtSizeTracker.ofUnlimitedBytes());
+            CompoundTag root = NbtIo.readCompressed(new java.io.ByteArrayInputStream(bytes), NbtAccounter.unlimitedHeap());
             if (root == null) return out;
-            NbtList items = root.getList("i").orElse(null);
+            ListTag items = root.getList("i").orElse(null);
             if (items == null || items.isEmpty()) return out;
 
-            for (NbtElement entry : items) {
-                NbtCompound stackCompound = entry.asCompound().orElse(null);
+            for (Tag entry : items) {
+                CompoundTag stackCompound = entry.asCompound().orElse(null);
                 if (stackCompound == null) continue;
-                NbtCompound tag = stackCompound.getCompound("tag").orElse(null);
+                CompoundTag tag = stackCompound.getCompound("tag").orElse(null);
                 if (tag == null) continue;
 
-                NbtCompound extra = tag.getCompound("ExtraAttributes").orElse(null);
-                String id = extra == null ? "" : extra.getString("id", "");
-                if (id == null || id.isBlank()) id = extra == null ? "" : extra.getString("ID", "");
+                CompoundTag extra = tag.getCompound("ExtraAttributes").orElse(null);
+                String id = extra == null ? "" : extra.getStringOr("id", "");
+                if (id == null || id.isBlank()) id = extra == null ? "" : extra.getStringOr("ID", "");
 
-                NbtCompound display = tag.getCompound("display").orElse(null);
+                CompoundTag display = tag.getCompound("display").orElse(null);
                 if (display == null) continue;
-                String name = display.getString("Name", "");
-                NbtList loreList = display.getList("Lore").orElse(null);
+                String name = display.getStringOr("Name", "");
+                ListTag loreList = display.getList("Lore").orElse(null);
                 List<String> lore = new ArrayList<>();
                 if (loreList != null) {
-                    for (NbtElement line : loreList) {
+                    for (Tag line : loreList) {
                         String s = line.asString().orElse("");
                         if (s != null) lore.add(s);
                     }
@@ -792,7 +792,7 @@ public class DungeonsStatsPFModule extends Module {
         String mpText = magicalPower >= 0 ? "§e" + magicalPower : (inventoryApi ? "§7N/A" : "§cAPI off");
         String clazz = selectedClass == null ? "None" : selectedClass;
 
-        MutableText line = Text.literal(
+        MutableComponent line = Component.literal(
                 "  §4Cata Level: §b" + cataLevel
                         + " §f| §dClass Avg: §b" + String.format("%.1f", classAvg)
                         + " §f| §bClass: §e" + clazz
@@ -806,7 +806,7 @@ public class DungeonsStatsPFModule extends Module {
                         .append(": §f")
                         .append(entry.getValue());
             }
-            line.setStyle(line.getStyle().withHoverEvent(new HoverEvent.ShowText(Text.literal(hover.toString()))));
+            line.setStyle(line.getStyle().withHoverEvent(new HoverEvent.ShowText(Component.literal(hover.toString()))));
         }
         sendText(line);
     }
@@ -825,7 +825,7 @@ public class DungeonsStatsPFModule extends Module {
     }
 
     private static void sendCompletionComponents(JsonObject catacombs, JsonObject masterCatacombs, String f7Pb, String m7Pb) {
-        Text floorComp = buildCompletionComponent(
+        Component floorComp = buildCompletionComponent(
                 "  §aFloor Completions §7(F7): " + f7Pb,
                 getObj(catacombs, "tier_completions"),
                 getObj(catacombs, "fastest_time_s_plus"),
@@ -834,7 +834,7 @@ public class DungeonsStatsPFModule extends Module {
         );
         if (floorComp != null) sendText(floorComp);
 
-        Text masterComp = buildCompletionComponent(
+        Component masterComp = buildCompletionComponent(
                 "  §l§4Master Completions §7(M7): " + m7Pb,
                 getObj(masterCatacombs, "tier_completions"),
                 getObj(masterCatacombs, "fastest_time_s_plus"),
@@ -844,7 +844,7 @@ public class DungeonsStatsPFModule extends Module {
         if (masterComp != null) sendText(masterComp);
     }
 
-    private static Text buildCompletionComponent(String title, JsonObject completionObj, JsonObject pbObj, int minFloor, String bulletStyle) {
+    private static Component buildCompletionComponent(String title, JsonObject completionObj, JsonObject pbObj, int minFloor, String bulletStyle) {
         if (completionObj == null || completionObj.entrySet().isEmpty()) return null;
         int maxFloor = minFloor;
         for (Map.Entry<String, JsonElement> entry : completionObj.entrySet()) {
@@ -868,8 +868,8 @@ public class DungeonsStatsPFModule extends Module {
             }
         }
 
-        MutableText line = Text.literal(title);
-        Style style = line.getStyle().withHoverEvent(new HoverEvent.ShowText(Text.literal(hover.toString())));
+        MutableComponent line = Component.literal(title);
+        Style style = line.getStyle().withHoverEvent(new HoverEvent.ShowText(Component.literal(hover.toString())));
         line.setStyle(style);
         return line;
     }

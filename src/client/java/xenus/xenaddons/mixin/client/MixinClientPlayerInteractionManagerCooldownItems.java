@@ -1,13 +1,13 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.Hand;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,26 +15,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xenus.xenaddons.compat.XenInteractionCompat;
 
-@Mixin(ClientPlayerInteractionManager.class)
+@Mixin(MultiPlayerGameMode.class)
 public class MixinClientPlayerInteractionManagerCooldownItems {
 
-    @Inject(method = "interactItem", at = @At("HEAD"))
-    private void xenaddons$trackItemClick(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+    @Inject(method = "useItem", at = @At("HEAD"))
+    private void xenaddons$trackItemClick(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         if (player == null || hand == null) return;
-        ItemStack stack = player.getStackInHand(hand);
+        ItemStack stack = player.getItemInHand(hand);
         XenInteractionCompat.onItemRightClick(stack);
     }
 
-    @Inject(method = "attackEntity", at = @At("HEAD"))
-    private void xenaddons$trackLeftClickEntity(PlayerEntity player, Entity target, CallbackInfo ci) {
+    @Inject(method = "attack", at = @At("HEAD"))
+    private void xenaddons$trackLeftClickEntity(Player player, Entity target, CallbackInfo ci) {
         if (player == null) return;
-        XenInteractionCompat.onItemLeftClick(player.getMainHandStack());
+        XenInteractionCompat.onItemLeftClick(player.getMainHandItem());
     }
 
-    @Inject(method = "attackBlock", at = @At("HEAD"))
+    @Inject(method = "startDestroyBlock", at = @At("HEAD"))
     private void xenaddons$trackLeftClickBlock(BlockPos pos, Direction direction, CallbackInfoReturnable<Boolean> cir) {
-        PlayerEntity player = net.minecraft.client.MinecraftClient.getInstance().player;
+        Player player = net.minecraft.client.Minecraft.getInstance().player;
         if (player == null) return;
-        XenInteractionCompat.onItemLeftClick(player.getMainHandStack());
+        XenInteractionCompat.onItemLeftClick(player.getMainHandItem());
     }
 }

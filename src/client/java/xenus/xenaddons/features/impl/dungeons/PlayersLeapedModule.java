@@ -1,34 +1,35 @@
 package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.utils.DungeonUtils;
 
 public class PlayersLeapedModule extends Module {
-    private static final Box[] REGIONS = {
-            new Box(90, 106, 50, 111, 145, 123),
-            new Box(17, 106, 121, 108, 145, 143),
-            new Box(-2, 106, 51, 20, 145, 142),
-            new Box(-1, 26, 29, 191, 145, 58),
-            new Box(3, 5, 0, 128, 48, 140)
+    private static final AABB[] REGIONS = {
+            new AABB(90, 106, 50, 111, 145, 123),
+            new AABB(17, 106, 121, 108, 145, 143),
+            new AABB(-2, 106, 51, 20, 145, 142),
+            new AABB(-1, 26, 29, 191, 145, 58),
+            new AABB(3, 5, 0, 128, 48, 140)
     };
 
     // Match the same coordinate ranges used by DungeonUtils position definitions.
-    private static final Box EE2_BOX = new Box(49, 108, 129, 58, 115, 133);
-    private static final Box HEE2_BOX = new Box(59, 132, 138, 62, 135, 143);
-    private static final Box EE3_BOX = new Box(0, 108, 98, 4, 115, 107);
-    private static final Box CORE_BOX = new Box(52, 113, 49, 57, 117, 53);
-    private static final Box GOLDOR_TUNNEL_BOX = new Box(41, 110, 59, 68, 150, 117);
-    private static final Box P5_BOX = new Box(3, 5, 0, 128, 48, 140);
+    private static final AABB EE2_BOX = new AABB(49, 108, 129, 58, 115, 133);
+    private static final AABB HEE2_BOX = new AABB(59, 132, 138, 62, 135, 143);
+    private static final AABB EE3_BOX = new AABB(0, 108, 98, 4, 115, 107);
+    private static final AABB CORE_BOX = new AABB(52, 113, 49, 57, 117, 53);
+    private static final AABB GOLDOR_TUNNEL_BOX = new AABB(41, 110, 59, 68, 150, 117);
+    private static final AABB P5_BOX = new AABB(3, 5, 0, 128, 48, 140);
 
     private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
     private final NumberSetting hudY = new NumberSetting("HUD Y", 68, -1000, 1000, 1);
@@ -58,7 +59,7 @@ public class PlayersLeapedModule extends Module {
             tick();
         });
 
-        HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "players_leaped_hud"), (drawContext, tickDelta) -> {
             if (!this.isEnabled() || !shouldDisplay()) return;
             renderHud(drawContext);
         });
@@ -72,8 +73,8 @@ public class PlayersLeapedModule extends Module {
             return;
         }
 
-        ClientPlayerEntity player = mc.player;
-        ClientWorld world = mc.world;
+        LocalPlayer player = mc.player;
+        ClientLevel world = mc.level;
         if (player == null || world == null) return;
 
         currentSpot = getSpot(player);
@@ -84,14 +85,14 @@ public class PlayersLeapedModule extends Module {
         }
         inBounds = true;
 
-        Box box = getCountRegion(currentSpot);
+        AABB box = getCountRegion(currentSpot);
         if (box == null) {
             leapedCount = 0;
             inBounds = false;
             return;
         }
         int currentCount = 0;
-        for (PlayerEntity other : world.getPlayers()) {
+        for (Player other : world.players()) {
             if (other == null || other == player) continue;
             if (other.isSpectator()) continue;
             if (!isInBox(box, other.getBoundingBox())) continue;
@@ -103,8 +104,8 @@ public class PlayersLeapedModule extends Module {
         }
     }
 
-    private int getSpot(ClientPlayerEntity player) {
-        Box playerBox = player.getBoundingBox();
+    private int getSpot(LocalPlayer player) {
+        AABB playerBox = player.getBoundingBox();
         String playerClass = DungeonUtils.getPlayerClass(player);
         if (playerClass == null && player.getGameProfile() != null) {
             playerClass = DungeonUtils.getPlayerClass(player.getGameProfile().name());
@@ -123,7 +124,7 @@ public class PlayersLeapedModule extends Module {
         return 0;
     }
 
-    private Box getCountRegion(int spot) {
+    private AABB getCountRegion(int spot) {
         return switch (spot) {
             case 2 -> REGIONS[1];
             case 3 -> REGIONS[2];
@@ -133,7 +134,7 @@ public class PlayersLeapedModule extends Module {
         };
     }
 
-    private static boolean isInBox(Box box, Box target) {
+    private static boolean isInBox(AABB box, AABB target) {
         return target.maxX >= Math.min(box.minX, box.maxX) && target.minX <= Math.max(box.minX, box.maxX)
             && target.maxY >= Math.min(box.minY, box.maxY) && target.minY <= Math.max(box.minY, box.maxY)
             && target.maxZ >= Math.min(box.minZ, box.maxZ) && target.minZ <= Math.max(box.minZ, box.maxZ);
@@ -146,7 +147,7 @@ public class PlayersLeapedModule extends Module {
         return inBounds && DungeonUtils.inDungeon();
     }
 
-    private void renderHud(DrawContext drawContext) {
+    private void renderHud(GuiGraphicsExtractor drawContext) {
         String startColor;
         if (currentSpot == 3) {
             startColor = leapedCount > 2 ? "§9" : "§4";
@@ -155,26 +156,26 @@ public class PlayersLeapedModule extends Module {
         }
 
         String text = startColor + leapedCount + "§9/4 Players Leaped";
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-        int textWidth = mc.textRenderer.getWidth(text);
-        int textHeight = mc.textRenderer.fontHeight;
+        int width = mc.getWindow().getGuiScaledWidth();
+        int height = mc.getWindow().getGuiScaledHeight();
+        int textWidth = mc.font.width(text);
+        int textHeight = mc.font.lineHeight;
         float scale = (float) hudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
         int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
         int yRaw = hudY.getValue().intValue();
         int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
         int maxCenterX = width - minCenterX;
-        int centerX = MathHelper.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
+        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
         int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
 
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
         int x = (int) ((centerX * inv) - (textWidth / 2f));
         int drawY = (int) (y * inv);
-        drawContext.drawTextWithShadow(mc.textRenderer, text, x, drawY, 0xFFFFFFFF);
-        drawContext.getMatrices().popMatrix();
+        drawContext.text(mc.font, text, x, drawY, 0xFFFFFFFF);
+        drawContext.pose().popMatrix();
     }
 
     @Override

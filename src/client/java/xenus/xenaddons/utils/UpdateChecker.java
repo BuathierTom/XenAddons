@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import xenus.xenaddons.XenAddons;
 
 import java.net.URI;
@@ -243,7 +243,7 @@ public final class UpdateChecker {
     }
 
     private static void runOnClientThread(Runnable runnable) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client != null) client.execute(runnable);
     }
 

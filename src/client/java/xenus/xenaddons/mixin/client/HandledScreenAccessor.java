@@ -1,27 +1,24 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(HandledScreen.class)
+@Mixin(AbstractContainerScreen.class)
 public interface HandledScreenAccessor {
-    // This tells Fabric: "Find the field named 'x' and let me read it with this method"
-    @Accessor("x")
+    @Accessor("leftPos")
     int getXPosition();
 
-    // Find 'y'
-    @Accessor("y")
+    @Accessor("topPos")
     int getYPosition();
 
-    // Accessors for dynamic GUI sizing
-    @Accessor("backgroundWidth")
+    @Accessor("imageWidth")
     int getBackgroundWidth();
 
-    @Accessor("backgroundHeight")
+    @Accessor("imageHeight")
     int getBackgroundHeight();
 
-    @Accessor("focusedSlot")
+    @Accessor("hoveredSlot")
     Slot getFocusedSlot();
 }

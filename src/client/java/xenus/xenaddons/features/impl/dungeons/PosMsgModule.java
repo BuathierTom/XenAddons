@@ -1,14 +1,14 @@
 package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.BufferAllocator;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.minecraft.client.Camera;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.BooleanSetting;
@@ -35,7 +35,7 @@ public class PosMsgModule extends Module {
             if (this.isEnabled()) onTick();
         });
 
-        WorldRenderEvents.END_MAIN.register(this::onWorldRender);
+        LevelRenderEvents.END_MAIN.register(this::onWorldRender);
     }
 
     private void onTick() {
@@ -44,7 +44,7 @@ public class PosMsgModule extends Module {
             return;
         }
         
-        ClientPlayerEntity player = mc.player;
+        LocalPlayer player = mc.player;
         if (player == null || player.isInvisible()) return;
 
         String playerClass = DungeonUtils.getPlayerClass(player);
@@ -64,8 +64,8 @@ public class PosMsgModule extends Module {
                 
                 // Send Party Chat
                 String cmd = "pc " + pos.messageText;
-                if (mc.getNetworkHandler() != null) {
-                    mc.getNetworkHandler().sendChatCommand(cmd);
+                if (mc.getConnection() != null) {
+                    mc.getConnection().sendCommand(cmd);
                 }
                 
                 // Client side confirmation
@@ -79,46 +79,46 @@ public class PosMsgModule extends Module {
         lastLocation.clear();
     }
 
-    private void onWorldRender(WorldRenderContext context) {
+    private void onWorldRender(LevelRenderContext context) {
         if (!this.isEnabled() || !showZones.getValue()) return;
         if (!DungeonUtils.inDungeon()) return;
-        if (mc.player == null || mc.world == null || mc.gameRenderer == null) return;
+        if (mc.player == null || mc.level == null || mc.gameRenderer == null) return;
 
-        Camera camera = mc.gameRenderer.getCamera();
+        Camera camera = mc.gameRenderer.getMainCamera();
         if (camera == null) return;
-        Vec3d cameraPos = XenCameraCompat.getPos(camera);
+        Vec3 cameraPos = XenCameraCompat.getPos(camera);
 
-        try (BufferAllocator allocator = new BufferAllocator(131072)) {
-            VertexConsumerProvider.Immediate consumers = VertexConsumerProvider.immediate(allocator);
-            Box playerBox = mc.player.getBoundingBox();
+        try (ByteBufferBuilder allocator = new ByteBufferBuilder(131072)) {
+            MultiBufferSource.BufferSource consumers = MultiBufferSource.immediate(allocator);
+            AABB playerBox = mc.player.getBoundingBox();
 
-            for (Box zone : ZONE_BOXES) {
+            for (AABB zone : ZONE_BOXES) {
                 int color = intersects(zone, playerBox) ? ZONE_COLOR_ACTIVE : ZONE_COLOR_IDLE;
-                RenderUtils.drawBox(context.matrices(), consumers, cameraPos, zone, color, false);
+                RenderUtils.drawBox(context.poseStack(), consumers, cameraPos, zone, color, false);
             }
 
-            consumers.draw();
+            consumers.endBatch();
         }
     }
 
-    private static boolean intersects(Box a, Box b) {
+    private static boolean intersects(AABB a, AABB b) {
         return b.maxX >= a.minX && b.minX <= a.maxX
             && b.maxY >= a.minY && b.minY <= a.maxY
             && b.maxZ >= a.minZ && b.minZ <= a.maxZ;
     }
 
-    private static Box box(double x1, double y1, double z1, double x2, double y2, double z2) {
-        return new Box(
+    private static AABB box(double x1, double y1, double z1, double x2, double y2, double z2) {
+        return new AABB(
             Math.min(x1, x2), Math.min(y1, y2), Math.min(z1, z2),
             Math.max(x1, x2), Math.max(y1, y2), Math.max(z1, z2)
         );
     }
 
-    private static Box sphereBox(double cx, double cy, double cz, double r) {
+    private static AABB sphereBox(double cx, double cy, double cz, double r) {
         return box(cx - r, cy - r, cz - r, cx + r, cy + r, cz + r);
     }
 
-    private static final Box[] ZONE_BOXES = {
+    private static final AABB[] ZONE_BOXES = {
         box(106, 118, 92, 110, 122, 96), // SS
         box(49, 108, 129, 58, 115, 133), // EE2
         box(59, 132, 138, 62, 135, 143), // EE2 High

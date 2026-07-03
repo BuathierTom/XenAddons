@@ -5,9 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import xenus.xenaddons.XenAddons;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Component;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -25,7 +24,42 @@ public class HypixelItemManager {
 
     private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("%%.*?%%");
 
-    public record HypixelItem(String name, String id, ItemStack iconStack, String configId) {}
+    public static final class HypixelItem {
+        private final String name;
+        private final String id;
+        private final String configId;
+        private volatile ItemStack iconStack;
+
+        public HypixelItem(String name, String id, String configId) {
+            this.name = name;
+            this.id = id;
+            this.configId = configId;
+        }
+
+        public String name() {
+            return name;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public String configId() {
+            return configId;
+        }
+
+        public ItemStack iconStack() {
+            ItemStack cached = iconStack;
+            if (cached != null && !cached.isEmpty()) return cached;
+
+            ItemStack stack = XenAddons.CustomButtonData.getSkullStack(configId);
+            if (!stack.isEmpty()) {
+                stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(name));
+                iconStack = stack;
+            }
+            return stack;
+        }
+    }
 
     public static void loadAsync() {
         if (loaded) return;
@@ -88,11 +122,8 @@ public class HypixelItemManager {
                             String hash = extractHash(skinBase64);
                             if (hash != null) {
                                 String configId = "skull:" + hash;
-                                ItemStack stack = XenAddons.CustomButtonData.getSkullStack(configId);
-                                stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(name));
-
                                 synchronized (SKULL_ITEMS) {
-                                    SKULL_ITEMS.add(new HypixelItem(name, id, stack, configId));
+                                    SKULL_ITEMS.add(new HypixelItem(name, id, configId));
                                 }
                             }
                         }

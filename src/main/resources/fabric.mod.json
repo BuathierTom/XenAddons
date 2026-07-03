@@ -3,7 +3,7 @@
 	"id": "xenaddons",
 	"version": "${version}",
 	"name": "XenAddons",
-	"description": "XenusAddons is a Fabric mod for Minecraft 1.21.11, mostly designed to get features forgotten in 1.8.9",
+	"description": "XenusAddons is a Fabric mod for Minecraft 26.1.2, mostly designed to get features forgotten in 1.8.9",
 	"authors": [
 		"Xenus"
 	],
@@ -34,9 +34,9 @@
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.18.4",
-		"minecraft": "~1.21.11",
-		"java": ">=21",
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
 		"fabric-api": "*",
 		"fabric-language-kotlin": "*"
 	},

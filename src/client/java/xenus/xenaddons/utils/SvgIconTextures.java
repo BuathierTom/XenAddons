@@ -1,9 +1,9 @@
 package xenus.xenaddons.utils;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.nanovg.NSVGImage;
 import org.lwjgl.system.MemoryUtil;
 import xenus.xenaddons.XenAddons;
@@ -55,13 +55,13 @@ public final class SvgIconTextures {
                 MemoryUtil.memFree(buffer);
             }
 
-            Identifier id = Identifier.of(
+            Identifier id = Identifier.fromNamespaceAndPath(
                 "xenaddons",
                 "spotify/icon_" + Integer.toUnsignedString(keyHash(resourcePath, size, argb), 16)
             );
-            NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> "XenAddons Spotify icon", nativeImage);
+            DynamicTexture texture = new DynamicTexture(() -> "XenAddons Spotify icon", nativeImage);
             nativeImage = null;
-            MinecraftClient.getInstance().getTextureManager().registerTexture(id, texture);
+            Minecraft.getInstance().getTextureManager().register(id, texture);
             return id;
         } catch (Exception e) {
             if (nativeImage != null) nativeImage.close();
@@ -78,7 +78,7 @@ public final class SvgIconTextures {
                 int i = ((y * size) + x) * 4;
                 int alpha = buffer.get(i + 3) & 0xFF;
                 alpha = (alpha * colorAlpha) / 255;
-                nativeImage.setColorArgb(x, y, (alpha << 24) | rgb);
+                nativeImage.setPixel(x, y, (alpha << 24) | rgb);
             }
         }
     }

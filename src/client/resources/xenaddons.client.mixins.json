@@ -1,7 +1,7 @@
 {
 	"required": true,
 	"package": "xenus.xenaddons.mixin.client",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_25",
 	"client": [
 		"MixinHandledScreen",
 		"MixinHandledScreenCooldownItems",
@@ -22,7 +22,6 @@
 		"MixinInventoryScreen",
 		"MixinCraftingScreen",
 		"AccessorInGameHud",
-		"AccessorDrawContext",
 		"AccessorPlayerListHud",
 		"MixinInGameHudRenderPetNotif",
 		"MixinInGameHudPeekChat",

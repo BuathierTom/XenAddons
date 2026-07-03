@@ -2,13 +2,14 @@ package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.registry.Registries;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.ActionSetting;
@@ -108,7 +109,7 @@ public class InvisibilityTimerModule extends Module {
             return true;
         });
 
-        HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "invisibility_timer_hud"), (drawContext, tickDelta) -> {
             if (!this.isEnabled()) return;
             if (activeTicks > 0 && activeType != null) {
                 renderLine(drawContext, getDisplayText(false));
@@ -182,17 +183,17 @@ public class InvisibilityTimerModule extends Module {
         return "Ticks".equals(displayMode.getValue());
     }
 
-    private void renderLine(DrawContext drawContext, String line) {
+    private void renderLine(GuiGraphicsExtractor drawContext, String line) {
         renderLine(drawContext, line, getDisplayColor(false));
     }
 
-    private void renderLine(DrawContext drawContext, String line, int color) {
+    private void renderLine(GuiGraphicsExtractor drawContext, String line, int color) {
         if (line == null || line.isBlank()) return;
 
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-        int textWidth = mc.textRenderer.getWidth(line);
-        int textHeight = mc.textRenderer.fontHeight;
+        int width = mc.getWindow().getGuiScaledWidth();
+        int height = mc.getWindow().getGuiScaledHeight();
+        int textWidth = mc.font.width(line);
+        int textHeight = mc.font.lineHeight;
 
         float scale = (float) hudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
@@ -201,36 +202,36 @@ public class InvisibilityTimerModule extends Module {
 
         int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
         int maxCenterX = width - minCenterX;
-        int centerX = MathHelper.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
+        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
 
         int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
 
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
         int x = (int) ((centerX * inv) - (textWidth / 2f));
         int drawY = (int) (y * inv);
-        drawContext.drawTextWithShadow(mc.textRenderer, line, x, drawY, color);
-        drawContext.getMatrices().popMatrix();
+        drawContext.text(mc.font, line, x, drawY, color);
+        drawContext.pose().popMatrix();
     }
 
-    public void renderPreview(DrawContext drawContext) {
+    public void renderPreview(GuiGraphicsExtractor drawContext) {
         renderLine(drawContext, getDisplayText(true), getDisplayColor(true));
     }
 
-    public void renderAlertPreview(DrawContext drawContext) {
+    public void renderAlertPreview(GuiGraphicsExtractor drawContext) {
         renderProcAlertText(drawContext, "Bonzo");
     }
 
-    private void renderProcAlert(DrawContext drawContext) {
+    private void renderProcAlert(GuiGraphicsExtractor drawContext) {
         if (!maskProcsAlert.getValue()) return;
         if (alertTicks <= 0 || alertText == null || alertText.isBlank()) return;
         renderProcAlertText(drawContext, alertText);
     }
 
-    private void renderProcAlertText(DrawContext drawContext, String text) {
-        int width = mc.getWindow().getScaledWidth();
-        int textWidth = mc.textRenderer.getWidth(text);
+    private void renderProcAlertText(GuiGraphicsExtractor drawContext, String text) {
+        int width = mc.getWindow().getGuiScaledWidth();
+        int textWidth = mc.font.width(text);
         float scale = (float) alertHudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
         int centerX = (width / 2) + alertHudOffsetX.getValue().intValue();
@@ -238,10 +239,10 @@ public class InvisibilityTimerModule extends Module {
         int x = (int) ((centerX * inv) - (textWidth / 2f));
         int y = (int) (yRaw * inv);
 
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
-        drawContext.drawTextWithShadow(mc.textRenderer, text, x, y, 0xFFFF2B2B);
-        drawContext.getMatrices().popMatrix();
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
+        drawContext.text(mc.font, text, x, y, 0xFFFF2B2B);
+        drawContext.pose().popMatrix();
     }
 
     public void debugTriggerProcAlert() {
@@ -299,19 +300,21 @@ public class InvisibilityTimerModule extends Module {
 
     private SoundEvent resolveProcSound(String selected) {
         Identifier id = switch (selected == null ? "" : selected) {
-            case "Blaze Hurt" -> Identifier.of("minecraft", "entity.blaze.hurt");
-            case "Vault Break" -> Identifier.of("minecraft", "block.vault.break");
-            case "Elder Hurt" -> Identifier.of("minecraft", "entity.elder_guardian.hurt_land");
-            case "Totem Use" -> Identifier.of("minecraft", "item.totem.use");
-            case "Sculk Hit" -> Identifier.of("minecraft", "block.sculk_catalyst.hit");
-            case "Ender Chest" -> Identifier.of("minecraft", "block.ender_chest.close");
-            case "Iron Xylophone" -> Identifier.of("minecraft", "block.note_block.iron_xylophone");
-            case "Bell" -> Identifier.of("minecraft", "block.note_block.bell");
-            case "Pling" -> Identifier.of("minecraft", "block.note_block.pling");
-            case "Default XP Pickup" -> Identifier.of("minecraft", "entity.experience_orb.pickup");
-            default -> Identifier.of("minecraft", "entity.experience_orb.pickup");
+            case "Blaze Hurt" -> Identifier.fromNamespaceAndPath("minecraft", "entity.blaze.hurt");
+            case "Vault Break" -> Identifier.fromNamespaceAndPath("minecraft", "block.vault.break");
+            case "Elder Hurt" -> Identifier.fromNamespaceAndPath("minecraft", "entity.elder_guardian.hurt_land");
+            case "Totem Use" -> Identifier.fromNamespaceAndPath("minecraft", "item.totem.use");
+            case "Sculk Hit" -> Identifier.fromNamespaceAndPath("minecraft", "block.sculk_catalyst.hit");
+            case "Ender Chest" -> Identifier.fromNamespaceAndPath("minecraft", "block.ender_chest.close");
+            case "Iron Xylophone" -> Identifier.fromNamespaceAndPath("minecraft", "block.note_block.iron_xylophone");
+            case "Bell" -> Identifier.fromNamespaceAndPath("minecraft", "block.note_block.bell");
+            case "Pling" -> Identifier.fromNamespaceAndPath("minecraft", "block.note_block.pling");
+            case "Default XP Pickup" -> Identifier.fromNamespaceAndPath("minecraft", "entity.experience_orb.pickup");
+            default -> Identifier.fromNamespaceAndPath("minecraft", "entity.experience_orb.pickup");
         };
-        return Registries.SOUND_EVENT.get(id);
+        return BuiltInRegistries.SOUND_EVENT.get(id)
+                .map(holder -> holder.value())
+                .orElse(SoundEvent.createVariableRangeEvent(id));
     }
 
     public int getHudOffsetX() {

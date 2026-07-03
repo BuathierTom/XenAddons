@@ -268,7 +268,7 @@ public final class SpotifyNowPlaying {
     private static String getWindowsSpotifyWindowTitle() {
         Process process = null;
         try {
-            String script = "$enc=New-Object System.Text.UTF8Encoding $false;"
+            String script = "$enc=New-Object System.Component.UTF8Encoding $false;"
                 + "[Console]::OutputEncoding=$enc;"
                 + "$OutputEncoding=$enc;"
                 + "Get-Process -Name Spotify -ErrorAction SilentlyContinue | "

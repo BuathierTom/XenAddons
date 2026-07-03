@@ -1,25 +1,25 @@
 package xenus.xenaddons.render.vanilla
 
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.font.TextRenderer
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.item.ItemStack
-import net.minecraft.util.Identifier
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.Font
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.resources.Identifier
+import net.minecraft.world.item.ItemStack
 import xenus.xenaddons.compat.XenDrawContextCompat
 import kotlin.math.max
 
 object XenRender2D {
-    private val mc: MinecraftClient
-        get() = MinecraftClient.getInstance()
+    private val mc: Minecraft
+        get() = Minecraft.getInstance()
 
-    fun rect(context: DrawContext, x: Number, y: Number, width: Number, height: Number, color: Int) {
+    fun rect(context: GuiGraphicsExtractor, x: Number, y: Number, width: Number, height: Number, color: Int) {
         val ix = x.toInt()
         val iy = y.toInt()
         context.fill(ix, iy, ix + width.toInt(), iy + height.toInt(), color)
     }
 
     fun border(
-        context: DrawContext,
+        context: GuiGraphicsExtractor,
         x: Number,
         y: Number,
         width: Number,
@@ -35,35 +35,31 @@ object XenRender2D {
     }
 
     fun text(
-        context: DrawContext,
+        context: GuiGraphicsExtractor,
         text: String,
         x: Number,
         y: Number,
         color: Int = 0xFFFFFFFF.toInt(),
         shadow: Boolean = true,
-        textRenderer: TextRenderer = mc.textRenderer
+        textRenderer: Font = mc.font
     ) {
-        if (shadow) {
-            context.drawTextWithShadow(textRenderer, text, x.toInt(), y.toInt(), color)
-        } else {
-            context.drawText(textRenderer, text, x.toInt(), y.toInt(), color, false)
-        }
+        context.text(textRenderer, text, x.toInt(), y.toInt(), color, shadow)
     }
 
     fun centeredText(
-        context: DrawContext,
+        context: GuiGraphicsExtractor,
         text: String,
         centerX: Number,
         y: Number,
         color: Int = 0xFFFFFFFF.toInt(),
         shadow: Boolean = true,
-        textRenderer: TextRenderer = mc.textRenderer
+        textRenderer: Font = mc.font
     ) {
-        text(context, text, centerX.toInt() - textRenderer.getWidth(text) / 2, y, color, shadow, textRenderer)
+        text(context, text, centerX.toInt() - textRenderer.width(text) / 2, y, color, shadow, textRenderer)
     }
 
     fun texture(
-        context: DrawContext,
+        context: GuiGraphicsExtractor,
         texture: Identifier,
         x: Number,
         y: Number,
@@ -86,19 +82,19 @@ object XenRender2D {
         )
     }
 
-    fun item(context: DrawContext, item: ItemStack, x: Number, y: Number, scale: Float = 1f) {
+    fun item(context: GuiGraphicsExtractor, item: ItemStack, x: Number, y: Number, scale: Float = 1f) {
         if (item.isEmpty) return
 
-        val matrices = context.matrices
+        val matrices = context.pose()
         matrices.pushMatrix()
         matrices.translate(x.toFloat(), y.toFloat())
         if (scale != 1f) matrices.scale(scale, scale)
-        context.drawItem(item, 0, 0)
+        context.item(item, 0, 0)
         matrices.popMatrix()
     }
 
     fun verticalGradient(
-        context: DrawContext,
+        context: GuiGraphicsExtractor,
         x: Number,
         y: Number,
         width: Number,
@@ -111,9 +107,9 @@ object XenRender2D {
         context.fillGradient(ix, iy, ix + width.toInt(), iy + height.toInt(), topColor, bottomColor)
     }
 
-    fun width(text: String, textRenderer: TextRenderer = mc.textRenderer): Int =
-        text.lines().maxOfOrNull(textRenderer::getWidth) ?: 0
+    fun width(text: String, textRenderer: Font = mc.font): Int =
+        text.lines().maxOfOrNull(textRenderer::width) ?: 0
 
-    fun height(text: String, textRenderer: TextRenderer = mc.textRenderer): Int =
-        max(1, text.count { it == '\n' } + 1) * textRenderer.fontHeight
+    fun height(text: String, textRenderer: Font = mc.font): Int =
+        max(1, text.count { it == '\n' } + 1) * textRenderer.lineHeight
 }

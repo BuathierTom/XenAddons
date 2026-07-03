@@ -2,12 +2,12 @@ package xenus.xenaddons.mixin.client;
 
 import xenus.xenaddons.XenAddons;
 import xenus.xenaddons.features.impl.misc.Cursor189Module;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,17 +16,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(InventoryScreen.class)
 public abstract class MixinInventoryScreen extends Screen {
 
-    protected MixinInventoryScreen(Text title) {
+    protected MixinInventoryScreen(Component title) {
         super(title);
     }
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        Cursor189Module.applyRememberedOnInventoryInit(this.client);
+        Cursor189Module.applyRememberedOnInventoryInit(this.minecraft);
 
         if (XenAddons.instance.hideRecipeBook) {
-            for (Element element : this.children()) {
-                if (element instanceof ClickableWidget widget) {
+            for (GuiEventListener element : this.children()) {
+                if (element instanceof AbstractWidget widget) {
                     // Standard recipe button is 20x18. 
                     // We check dimensions to find it among other potential buttons.
                     if (widget.getWidth() == 20 && widget.getHeight() == 18) {
@@ -38,8 +38,8 @@ public abstract class MixinInventoryScreen extends Screen {
         }
     }
 
-    @Inject(method = "render", at = @At("TAIL"))
-    private void onRender(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        Cursor189Module.captureCurrentCursorInInventory(this.client);
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    private void onExtractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        Cursor189Module.captureCurrentCursorInInventory(this.minecraft);
     }
 }

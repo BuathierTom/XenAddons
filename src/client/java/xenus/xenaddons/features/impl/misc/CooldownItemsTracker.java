@@ -3,14 +3,14 @@ package xenus.xenaddons.features.impl.misc;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import xenus.xenaddons.features.impl.misc.cooldown.AbilityColor;
 import xenus.xenaddons.features.impl.misc.cooldown.ItemAbility;
 
@@ -37,7 +37,7 @@ public final class CooldownItemsTracker {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!CooldownItemsModule.isActive()) return;
-            if (client.player == null || client.world == null) return;
+            if (client.player == null || client.level == null) return;
             tick(client);
         });
 
@@ -120,7 +120,7 @@ public final class CooldownItemsTracker {
         return out;
     }
 
-    public static void renderBackground(DrawContext context, ItemStack stack, int x, int y, boolean guiOpen) {
+    public static void renderBackground(GuiGraphicsExtractor context, ItemStack stack, int x, int y, boolean guiOpen) {
         if (!CooldownItemsModule.isActive()) return;
         CooldownItemsModule module = CooldownItemsModule.get();
         if (module == null || !module.cooldownBackground.getValue()) return;
@@ -137,14 +137,14 @@ public final class CooldownItemsTracker {
         context.fill(x, y, x + 16, y + 16, argb);
     }
 
-    public static void renderText(DrawContext context, TextRenderer textRenderer, ItemStack stack, int x, int y, boolean guiOpen) {
+    public static void renderText(GuiGraphicsExtractor context, Font textRenderer, ItemStack stack, int x, int y, boolean guiOpen) {
         if (!CooldownItemsModule.isActive()) return;
         ItemText itemText = findRenderableText(stack, guiOpen);
         if (itemText == null) return;
-        int w = textRenderer.getWidth(itemText.text);
+        int w = textRenderer.width(itemText.text);
         int drawX = x + 19 - 2 - w + (itemText.alternativePosition ? -8 : 0);
         int drawY = y + 9 + (itemText.alternativePosition ? -10 : 0);
-        context.drawTextWithShadow(textRenderer, itemText.text, drawX, drawY, 0xFF000000 | itemText.color.rgb);
+        context.text(textRenderer, itemText.text, drawX, drawY, 0xFF000000 | itemText.color.rgb);
     }
 
     public static java.util.List<OverlayText> getOverlayTexts(ItemStack stack, boolean guiOpen) {
@@ -165,20 +165,20 @@ public final class CooldownItemsTracker {
         return out;
     }
 
-    private static void tick(MinecraftClient client) {
+    private static void tick(Minecraft client) {
         ticks++;
         refreshItems(client, ticks % 10 == 0 || abilityItems.isEmpty());
     }
 
-    private static void refreshItems(MinecraftClient client, boolean rescanInventory) {
-        PlayerEntity player = client.player;
+    private static void refreshItems(Minecraft client, boolean rescanInventory) {
+        Player player = client.player;
         if (player == null) return;
 
         if (rescanInventory) {
             abilityItems.clear();
             var inventory = player.getInventory();
-            for (int i = 0; i < inventory.size(); i++) {
-                putItemAbility(inventory.getStack(i));
+            for (int i = 0; i < inventory.getContainerSize(); i++) {
+                putItemAbility(inventory.getItem(i));
             }
         }
 
@@ -202,7 +202,7 @@ public final class CooldownItemsTracker {
     }
 
     private static List<ItemAbility> hasAbility(ItemStack stack) {
-        String itemName = stripFormatting(stack.getName().getString());
+        String itemName = stripFormatting(stack.getHoverName().getString());
         String internalName = getItemId(stack);
         Set<ItemAbility> scrolls = ItemAbility.getAllAbilityScrolls(stack);
 
@@ -329,35 +329,35 @@ public final class CooldownItemsTracker {
 
     private static String getItemId(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return null;
-        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) return null;
-        NbtCompound root = customData.copyNbt();
+        CompoundTag root = customData.copyTag();
         if (root == null) return null;
-        NbtCompound extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
+        CompoundTag extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
         if (extra != null) {
-            String id = extra.getString("id", "");
+            String id = extra.getStringOr("id", "");
             if (id != null && !id.isBlank()) return id;
-            id = extra.getString("ID", "");
+            id = extra.getStringOr("ID", "");
             if (id != null && !id.isBlank()) return id;
         }
-        String direct = root.getString("id", "");
+        String direct = root.getStringOr("id", "");
         if (direct != null && !direct.isBlank()) return direct;
-        direct = root.getString("ID", "");
+        direct = root.getStringOr("ID", "");
         if (direct != null && !direct.isBlank()) return direct;
         return null;
     }
 
     private static String getItemUuid(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return null;
-        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) return null;
-        NbtCompound root = customData.copyNbt();
+        CompoundTag root = customData.copyTag();
         if (root == null) return null;
-        NbtCompound extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
+        CompoundTag extra = root.getCompound("ExtraAttributes").orElse(root.getCompound("extra_attributes").orElse(null));
         if (extra == null) return null;
-        String uuid = extra.getString("uuid", "");
+        String uuid = extra.getStringOr("uuid", "");
         if (uuid != null && !uuid.isBlank()) return uuid;
-        uuid = extra.getString("UUID", "");
+        uuid = extra.getStringOr("UUID", "");
         return (uuid == null || uuid.isBlank()) ? null : uuid;
     }
 

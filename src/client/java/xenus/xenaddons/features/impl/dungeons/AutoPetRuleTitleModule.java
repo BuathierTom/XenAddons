@@ -3,7 +3,7 @@ package xenus.xenaddons.features.impl.dungeons;
 import xenus.xenaddons.hud.HudState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
@@ -106,14 +106,14 @@ public class AutoPetRuleTitleModule extends Module {
 
         if (!inDungeonsOnly.getValue() || DungeonUtils.inDungeon()) {
             HudState.PET_NOTIFICATION.show(
-                Text.of(colorCode + petName),
-                Text.of("§cAutopet§r"),
+                Component.literal(colorCode + petName),
+                Component.literal("§cAutopet§r"),
                 duration
             );
         }
 
         if (mc.player != null) {
-            mc.player.sendMessage(Text.of("§cAutopet §7> " + colorCode + petName), false);
+            mc.player.sendSystemMessage(Component.literal("§cAutopet §7> " + colorCode + petName));
         }
     }
 

@@ -1,13 +1,13 @@
 package xenus.xenaddons.gui.config.ui
 
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.Click
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.screen.Screen
-import net.minecraft.client.input.CharInput
-import net.minecraft.client.input.KeyInput
-import net.minecraft.client.util.InputUtil
-import net.minecraft.text.Text
+import com.mojang.blaze3d.platform.InputConstants
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.input.CharacterEvent
+import net.minecraft.client.input.KeyEvent
+import net.minecraft.client.input.MouseButtonEvent
+import net.minecraft.network.chat.Component
 import org.lwjgl.glfw.GLFW
 import xenus.xenaddons.gui.HudEditorScreen
 import xenus.xenaddons.gui.config.ui.elements.MCColorCode
@@ -36,7 +36,7 @@ import kotlin.math.sign
 
 typealias ConfigData = Map<String, Any>
 
-object ClickGUI : Screen(Text.literal("Click GUI")) {
+object ClickGUI : Screen(Component.literal("MouseButtonEvent GUI")) {
     private const val PANEL_WIDTH = 240f
     private const val PANEL_SPACING = 18f
     private const val PANEL_HEADER_HEIGHT = 32f
@@ -54,9 +54,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
     private const val BOTTOM_MARGIN = 28f
     private const val SIDE_MARGIN = 36f
     private const val PANEL_TOP_OFFSET = 36f
-    private const val BASE_LAYOUT_HEIGHT = 640f
-    private const val MAX_UI_SCALE = 0.82f
-    private const val UI_SCALE_MULTIPLIER = 0.6f
+    private const val MAX_UI_SCALE = 1f
     private const val PANEL_RADIUS = 15f
     private const val FIELD_CUT = 6f
     private const val CHOICE_ROW_HEIGHT = 22f
@@ -80,6 +78,8 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
     private var uiScale = 1f
     private var layoutWidth = 0f
     private var layoutHeight = 0f
+    private var renderWidth = 0
+    private var renderHeight = 0
 
     override fun init() {
         updateResponsiveMetrics()
@@ -88,14 +88,16 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         super.init()
     }
 
-    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        updateResponsiveMetrics()
-        lastMouseX = toLayoutCoordinate(mouseX.toFloat())
-        lastMouseY = toLayoutCoordinate(mouseY.toFloat())
+    override fun extractRenderState(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, delta: Float) {
+        val canvasWidth = currentGuiWidth()
+        val canvasHeight = currentGuiHeight()
+        updateResponsiveMetrics(canvasWidth, canvasHeight)
+        lastMouseX = toLayoutCoordinate(toCanvasX(mouseX.toDouble()))
+        lastMouseY = toLayoutCoordinate(toCanvasY(mouseY.toDouble()))
         tooltip = Tooltip("", lastMouseX + 14f, lastMouseY + 14f, HoverHandler(150))
 
-        XenNvgGuiRenderer.draw(context, 0, 0, width, height) {
-            XenRenderer.rect(0f, 0f, width.toFloat(), height.toFloat(), 0xB0000000.toInt())
+        XenNvgGuiRenderer.draw(context, 0, 0, canvasWidth, canvasHeight) {
+            XenRenderer.rect(0f, 0f, canvasWidth.toFloat(), canvasHeight.toFloat(), 0xB0000000.toInt())
             XenRenderer.push()
             XenRenderer.scale(uiScale, uiScale)
 
@@ -123,12 +125,13 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             }
             XenRenderer.pop()
         }
+        super.extractRenderState(context, mouseX, mouseY, delta)
     }
 
-    override fun mouseClicked(click: Click, doubled: Boolean): Boolean {
+    override fun mouseClicked(click: MouseButtonEvent, doubled: Boolean): Boolean {
         updateResponsiveMetrics()
-        val mouseX = toLayoutCoordinate(click.x().toFloat())
-        val mouseY = toLayoutCoordinate(click.y().toFloat())
+        val mouseX = toLayoutCoordinate(toCanvasX(click.x))
+        val mouseY = toLayoutCoordinate(toCanvasY(click.y))
         panels.forEach { it.globalClick(mouseX, mouseY, click.button()) }
         searchBar.globalClick(mouseX, mouseY, click.button())
 
@@ -148,21 +151,21 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         return super.mouseClicked(click, doubled)
     }
 
-    override fun mouseReleased(click: Click): Boolean {
+    override fun mouseReleased(click: MouseButtonEvent): Boolean {
         searchBar.mouseReleased()
         panels.forEach { it.mouseReleased(click.button()) }
         return super.mouseReleased(click)
     }
 
-    override fun mouseDragged(click: Click, deltaX: Double, deltaY: Double): Boolean {
+    override fun mouseDragged(click: MouseButtonEvent, deltaX: Double, deltaY: Double): Boolean {
         return panels.any { it.dragging || it.hasDraggingWidget() } || super.mouseDragged(click, deltaX, deltaY)
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
         updateResponsiveMetrics()
         val actualAmount = (verticalAmount.sign * 16.0).toFloat()
-        val scaledMouseX = toLayoutCoordinate(mouseX.toFloat())
-        val scaledMouseY = toLayoutCoordinate(mouseY.toFloat())
+        val scaledMouseX = toLayoutCoordinate(toCanvasX(mouseX))
+        val scaledMouseY = toLayoutCoordinate(toCanvasY(mouseY))
         if (searchBar.mouseScrolled(scaledMouseX, scaledMouseY, actualAmount)) {
             return true
         }
@@ -175,22 +178,22 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 
-    override fun keyPressed(input: KeyInput): Boolean {
+    override fun keyPressed(input: KeyEvent): Boolean {
         if (searchBar.keyPressed(input)) return true
 
         for (i in panels.size - 1 downTo 0) {
             if (panels[i].keyPressed(input)) return true
         }
 
-        if (input.key() == GLFW.GLFW_KEY_ESCAPE) {
-            close()
+        if (input.key == GLFW.GLFW_KEY_ESCAPE) {
+            onClose()
             return true
         }
 
         return super.keyPressed(input)
     }
 
-    override fun charTyped(input: CharInput): Boolean {
+    override fun charTyped(input: CharacterEvent): Boolean {
         if (searchBar.charTyped(input)) return true
 
         for (i in panels.size - 1 downTo 0) {
@@ -200,12 +203,12 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         return super.charTyped(input)
     }
 
-    override fun shouldPause(): Boolean = false
+    override fun isPauseScreen(): Boolean = false
 
-    override fun close() {
+    override fun onClose() {
         ConfigManager.saveConfig(true)
         closeListeners.forEach { it() }
-        client?.setScreen(null)
+        Minecraft.getInstance().setScreen(null)
     }
 
     fun updateTooltip(description: String) {
@@ -249,17 +252,42 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         return ConfigManager.getConfigValue(configKey)?.let(::resolveValue)
     }
 
-    private fun updateResponsiveMetrics() {
+    private fun updateResponsiveMetrics(
+        availableWidth: Int = lastKnownGuiWidth(),
+        availableHeight: Int = lastKnownGuiHeight()
+    ) {
+        renderWidth = availableWidth.coerceAtLeast(1)
+        renderHeight = availableHeight.coerceAtLeast(1)
+
         val categoryCount = panels.size.takeIf { it > 0 } ?: max(ConfigManager.configTree.size, 1)
         val panelRowWidth = categoryCount * PANEL_WIDTH + max(categoryCount - 1, 0) * PANEL_SPACING
         val designWidth = max(panelRowWidth + SIDE_MARGIN * 2f, SEARCH_WIDTH + 96f)
-        val widthScale = width.toFloat() / designWidth
-        val heightScale = height.toFloat() / BASE_LAYOUT_HEIGHT
-        val candidate = min(MAX_UI_SCALE, min(widthScale, heightScale)) * UI_SCALE_MULTIPLIER
+        val widthScale = renderWidth.toFloat() / designWidth
+        val candidate = min(MAX_UI_SCALE, widthScale)
 
         uiScale = if (candidate.isFinite() && candidate > 0f) candidate else 1f
-        layoutWidth = width.toFloat() / uiScale
-        layoutHeight = height.toFloat() / uiScale
+        layoutWidth = renderWidth.toFloat() / uiScale
+        layoutHeight = renderHeight.toFloat() / uiScale
+    }
+
+    private fun lastKnownGuiWidth(): Int = renderWidth.takeIf { it > 0 } ?: currentGuiWidth()
+
+    private fun lastKnownGuiHeight(): Int = renderHeight.takeIf { it > 0 } ?: currentGuiHeight()
+
+    private fun currentGuiWidth(): Int = Minecraft.getInstance().window.screenWidth.coerceAtLeast(width)
+
+    private fun currentGuiHeight(): Int = Minecraft.getInstance().window.screenHeight.coerceAtLeast(height)
+
+    private fun toCanvasX(mouseX: Double): Float {
+        val window = Minecraft.getInstance().window
+        val scaledWidth = window.guiScaledWidth.takeIf { it > 0 } ?: width.coerceAtLeast(1)
+        return (mouseX * currentGuiWidth() / scaledWidth).toFloat()
+    }
+
+    private fun toCanvasY(mouseY: Double): Float {
+        val window = Minecraft.getInstance().window
+        val scaledHeight = window.guiScaledHeight.takeIf { it > 0 } ?: height.coerceAtLeast(1)
+        return (mouseY * currentGuiHeight() / scaledHeight).toFloat()
     }
 
     private fun toLayoutCoordinate(value: Float): Float = value / uiScale
@@ -296,7 +324,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
         XenRenderer.rect(x, y, width, height, Theme.BgLight.color, FIELD_CUT)
         XenRenderer.hollowRect(x, y, width, height, 1.25f, Theme.Primary.color, FIELD_CUT)
-        XenRenderer.drawWrappedString(tooltip.text, x + 8f, y + 8f, 300f, 15f, Theme.Text.color)
+        XenRenderer.drawWrappedString(tooltip.text, x + 8f, y + 8f, 300f, 15f, Theme.Component.color)
     }
 
     private fun setTooltip(text: String, x: Float, y: Float, hover: HoverHandler) {
@@ -392,7 +420,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             inputHandler.y = y + 9f
             inputHandler.width = hudButtonX - searchInputX - 14f
             inputHandler.height = 22f
-            inputHandler.draw(mouseX, mouseY, Theme.Primary.withAlpha(0.28f), Theme.Text.color, Theme.Text.color)
+            inputHandler.draw(mouseX, mouseY, Theme.Primary.withAlpha(0.28f), Theme.Component.color, Theme.Component.color)
         }
 
         fun globalClick(mouseX: Float, mouseY: Float, button: Int) {
@@ -404,8 +432,8 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
         fun mouseClicked(mouseX: Float, mouseY: Float, button: Int): Boolean {
             if (isHoveringHudButton(mouseX, mouseY)) {
                 if (button == 0) {
-                    val mc = MinecraftClient.getInstance()
-                    mc.setScreen(HudEditorScreen(mc.currentScreen))
+                    val mc = Minecraft.getInstance()
+                    mc.setScreen(HudEditorScreen(mc.screen))
                     return true
                 }
                 return false
@@ -419,9 +447,9 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
         fun mouseScrolled(mouseX: Float, mouseY: Float, amount: Float): Boolean = false
 
-        fun keyPressed(input: KeyInput): Boolean = inputHandler.keyPressed(input)
+        fun keyPressed(input: KeyEvent): Boolean = inputHandler.keyPressed(input)
 
-        fun charTyped(input: CharInput): Boolean = inputHandler.charTyped(input)
+        fun charTyped(input: CharacterEvent): Boolean = inputHandler.charTyped(input)
 
         private fun isHoveringHudButton(mouseX: Float, mouseY: Float): Boolean {
             val hudButtonX = x + SEARCH_WIDTH - SEARCH_HEIGHT
@@ -491,7 +519,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
                 x + PANEL_WIDTH / 2f - categoryTitleWidth / 2f,
                 y + PANEL_HEADER_HEIGHT / 2f - 8f,
                 16f,
-                Theme.Text.color
+                Theme.Component.color
             )
 
             if (!expanded || bodyHeight <= 0f) return
@@ -561,7 +589,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             return false
         }
 
-        fun keyPressed(input: KeyInput): Boolean {
+        fun keyPressed(input: KeyEvent): Boolean {
             if (!expanded) return false
             for (feature in features) {
                 if (!feature.matchesSearch(ClickGUI.searchBar.currentSearch)) continue
@@ -570,7 +598,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             return false
         }
 
-        fun charTyped(input: CharInput): Boolean {
+        fun charTyped(input: CharacterEvent): Boolean {
             if (!expanded) return false
             for (feature in features) {
                 if (!feature.matchesSearch(ClickGUI.searchBar.currentSearch)) continue
@@ -648,7 +676,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
                 rowX + rowWidth / 2f - titleWidth / 2f,
                 y + FEATURE_ROW_HEIGHT / 2f - 8f,
                 16f,
-                if (enabled) Theme.Text.color else Theme.TextMuted.color
+                if (enabled) Theme.Component.color else Theme.TextMuted.color
             )
             XenRenderer.popScissor()
 
@@ -739,7 +767,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             return false
         }
 
-        fun keyPressed(input: KeyInput): Boolean {
+        fun keyPressed(input: KeyEvent): Boolean {
             if (!expanded) return false
             for (widget in sections.flatMap { it.widgets }.asReversed()) {
                 if (!widget.isVisible()) continue
@@ -748,7 +776,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             return false
         }
 
-        fun charTyped(input: CharInput): Boolean {
+        fun charTyped(input: CharacterEvent): Boolean {
             if (!expanded) return false
             for (widget in sections.flatMap { it.widgets }.asReversed()) {
                 if (!widget.isVisible()) continue
@@ -841,9 +869,9 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
         open fun mouseScrolled(mouseX: Float, mouseY: Float, amount: Float): Boolean = false
 
-        open fun keyPressed(input: KeyInput): Boolean = false
+        open fun keyPressed(input: KeyEvent): Boolean = false
 
-        open fun charTyped(input: CharInput): Boolean = false
+        open fun charTyped(input: CharacterEvent): Boolean = false
 
         open fun isDragging(): Boolean = false
 
@@ -877,13 +905,13 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             this.boundsHeight = 34f
 
             val enabled = currentValue() as? Boolean ?: (option.configElement.type as ElementType.Switch).default
-            XenRenderer.text(option.optionName, x + 2f, y + 9f, 16f, Theme.Text.color)
+            XenRenderer.text(option.optionName, x + 2f, y + 9f, 16f, Theme.Component.color)
 
             val trackX = x + width - 46f
             val trackY = y + 7f
             XenRenderer.rect(trackX, trackY, 38f, 20f, if (enabled) Theme.Primary.withAlpha(0.82f) else Theme.BgLight.color, 10f)
             XenRenderer.hollowRect(trackX, trackY, 38f, 20f, 1f, if (enabled) Theme.Primary.color else Theme.Primary.withAlpha(0.65f), 10f)
-            XenRenderer.circle(if (enabled) trackX + 28f else trackX + 10f, trackY + 10f, 6.5f, Theme.Text.color)
+            XenRenderer.circle(if (enabled) trackX + 28f else trackX + 10f, trackY + 10f, 6.5f, Theme.Component.color)
             return boundsHeight
         }
 
@@ -917,13 +945,13 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             }
 
             val normalized = ((value - type.min) / (type.max - type.min)).toFloat().coerceIn(0f, 1f)
-            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
+            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Component.color)
             XenRenderer.text(formatSliderValue(value, type.showDouble), x + width - 48f, y + 2f, 16f, Theme.TextMuted.color)
 
             val trackY = y + 27f
             XenRenderer.rect(trackX, trackY, trackWidth, 8f, Theme.BgLight.color, 4f)
             XenRenderer.rect(trackX, trackY, max(8f, trackWidth * normalized), 8f, Theme.Primary.color, 4f)
-            XenRenderer.circle(trackX + trackWidth * normalized, trackY + 4f, 6.5f, Theme.Text.color)
+            XenRenderer.circle(trackX + trackWidth * normalized, trackY + 4f, 6.5f, Theme.Component.color)
             return boundsHeight
         }
 
@@ -957,9 +985,9 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
             val selectedIndex = resolveDropdownIndex(type)
             val boxY = y + STACKED_FIELD_OFFSET_Y
-            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
+            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Component.color)
             accentField(x + 2f, boxY, width - 4f, 22f, expanded)
-            XenRenderer.text(type.options[selectedIndex], x + 10f, boxY + 4f, 15f, Theme.Text.color)
+            XenRenderer.text(type.options[selectedIndex], x + 10f, boxY + 4f, 15f, Theme.Component.color)
 
             XenRenderer.push()
             XenRenderer.translate(x + width - 14f, boxY + 11f)
@@ -992,7 +1020,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
                             Theme.BorderMuted.color
                         )
                     }
-                    XenRenderer.text(value, x + 10f, optionY + 4f, 15f, if (index == selectedIndex) Theme.Primary.color else Theme.Text.color)
+                    XenRenderer.text(value, x + 10f, optionY + 4f, 15f, if (index == selectedIndex) Theme.Primary.color else Theme.Component.color)
                 }
             }
 
@@ -1052,13 +1080,13 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             this.width = width
             this.boundsHeight = getHeight()
 
-            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
+            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Component.color)
             accentField(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, input.listening)
             input.x = x + 6f
             input.y = y + STACKED_FIELD_OFFSET_Y + 1f
             input.width = width - 12f
             input.height = 20f
-            input.draw(mouseX, mouseY, Theme.Primary.withAlpha(0.28f), Theme.Text.color, Theme.Text.color)
+            input.draw(mouseX, mouseY, Theme.Primary.withAlpha(0.28f), Theme.Component.color, Theme.Component.color)
 
             if (((currentValue() as? String) ?: "").isEmpty()) {
                 XenRenderer.text(type.placeholder, x + 8f, y + STACKED_FIELD_OFFSET_Y + 4f, 14f, Theme.TextMuted.color)
@@ -1080,9 +1108,9 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             input.mouseReleased()
         }
 
-        override fun keyPressed(input: KeyInput): Boolean = this.input.keyPressed(input)
+        override fun keyPressed(input: KeyEvent): Boolean = this.input.keyPressed(input)
 
-        override fun charTyped(input: CharInput): Boolean = this.input.charTyped(input)
+        override fun charTyped(input: CharacterEvent): Boolean = this.input.charTyped(input)
     }
 
     private class ColorWidget(option: OptionElement) : SettingWidget(option) {
@@ -1118,7 +1146,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
                 }
             }
 
-            XenRenderer.text(option.optionName, x + 2f, y + 11f, 16f, Theme.Text.color)
+            XenRenderer.text(option.optionName, x + 2f, y + 11f, 16f, Theme.Component.color)
             field(previewX, previewY, 48f, 22f, expanded)
             XenRenderer.rect(previewX + 20f, previewY + 4f, 22f, 14f, currentColor.rgb, 4f)
             XenRenderer.text(if (expanded) "Hide" else "Edit", previewX + 4f, previewY + 4f, 12f, Theme.TextMuted.color)
@@ -1153,7 +1181,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
                 XenRenderer.rect(infoX + 6f, pickerY + 24f, infoWidth - 12f, 18f, currentColor.rgb, 4f)
 
                 XenRenderer.text("Hex", infoX, pickerY + 58f, 12f, Theme.TextMuted.color)
-                XenRenderer.text(colorHex(currentColor), infoX, pickerY + 72f, 14f, Theme.Text.color)
+                XenRenderer.text(colorHex(currentColor), infoX, pickerY + 72f, 14f, Theme.Component.color)
                 XenRenderer.text("Alpha ${alphaPercent()}%", infoX, pickerY + 92f, 12f, Theme.TextMuted.color)
             }
 
@@ -1286,9 +1314,9 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             val text = if (listening) "..." else getKeyName(value)
             val buttonWidth = max(62f, XenRenderer.textWidth(text, 15f) + 16f)
 
-            XenRenderer.text(option.optionName, x + 2f, y + 9f, 16f, Theme.Text.color)
+            XenRenderer.text(option.optionName, x + 2f, y + 9f, 16f, Theme.Component.color)
             field(x + width - buttonWidth, y + 6f, buttonWidth, 22f, listening)
-            XenRenderer.text(text, x + width - buttonWidth + 8f, y + 10f, 15f, Theme.Text.color)
+            XenRenderer.text(text, x + width - buttonWidth + 8f, y + 10f, 15f, Theme.Component.color)
             return boundsHeight
         }
 
@@ -1312,15 +1340,15 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             return false
         }
 
-        override fun keyPressed(input: KeyInput): Boolean {
+        override fun keyPressed(input: KeyEvent): Boolean {
             if (!listening) return false
-            val value = when (input.key()) {
+            val value = when (input.key) {
                 GLFW.GLFW_KEY_ESCAPE, GLFW.GLFW_KEY_BACKSPACE -> -1
                 GLFW.GLFW_KEY_ENTER -> {
                     listening = false
                     return true
                 }
-                else -> input.key()
+                else -> input.key
             }
             update(value)
             listening = false
@@ -1329,8 +1357,8 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
 
         private fun getKeyName(keyCode: Int): String = when (keyCode) {
             0, -1 -> "Not Bound"
-            in -100..-1 -> "Mouse ${keyCode + 100}"
-            else -> InputUtil.fromKeyCode(KeyInput(keyCode, 0, 0)).localizedText.string
+            in -100..-1 -> "MouseHandler ${keyCode + 100}"
+            else -> InputConstants.Type.KEYSYM.getOrCreate(keyCode).displayName.string
         }
     }
 
@@ -1349,7 +1377,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             accentField(x + 2f, y + 6f, width - 4f, 24f, active = true, hovered = hovered)
 
             val textWidth = XenRenderer.textWidth(type.text, 16f)
-            XenRenderer.text(type.text, x + width / 2f - textWidth / 2f, y + 10f, 16f, Theme.Text.color)
+            XenRenderer.text(type.text, x + width / 2f - textWidth / 2f, y + 10f, 16f, Theme.Component.color)
             return boundsHeight
         }
 
@@ -1394,9 +1422,9 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             this.boundsHeight = getHeight()
 
             val selected = (currentValue() as? Set<*>)?.mapNotNull { (it as? Number)?.toInt() }?.toSet() ?: type.default
-            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
+            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Component.color)
             accentField(x + 2f, y + STACKED_FIELD_OFFSET_Y, width - 4f, 22f, expanded)
-            XenRenderer.text("${selected.size} selected", x + 10f, y + STACKED_FIELD_OFFSET_Y + 4f, 15f, Theme.Text.color)
+            XenRenderer.text("${selected.size} selected", x + 10f, y + STACKED_FIELD_OFFSET_Y + 4f, 15f, Theme.Component.color)
 
             if (expanded) {
                 val listX = x + 2f
@@ -1425,7 +1453,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
                         )
                     }
                     XenRenderer.rect(x + 8f, optionY + 4f, 12f, 12f, if (selectedOption) Theme.Primary.color else Theme.Bg.color, 3f)
-                    XenRenderer.text(value, x + 26f, optionY + 3f, 14f, Theme.Text.color)
+                    XenRenderer.text(value, x + 26f, optionY + 3f, 14f, Theme.Component.color)
                 }
             }
 
@@ -1471,7 +1499,7 @@ object ClickGUI : Screen(Text.literal("Click GUI")) {
             this.boundsHeight = getHeight()
 
             val selected = currentValue() as? MCColorCode ?: (option.configElement.type as ElementType.MCColorPicker).default
-            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Text.color)
+            XenRenderer.text(option.optionName, x + 2f, y + 2f, 16f, Theme.Component.color)
 
             var colorX = x + 2f
             var colorY = y + 24f

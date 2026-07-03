@@ -1,20 +1,20 @@
 package xenus.xenaddons.compat;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.PlayerListHud;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.PlayerTabOverlay;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.mixin.client.AccessorPlayerListHud;
 
 public final class XenPlayerListCompat {
     private XenPlayerListCompat() {}
 
-    public static Text getHeader(MinecraftClient client) {
-        PlayerListHud playerListHud = client.inGameHud.getPlayerListHud();
+    public static Component getHeader(Minecraft client) {
+        PlayerTabOverlay playerListHud = client.gui.getTabList();
         return ((AccessorPlayerListHud) playerListHud).getHeader();
     }
 
-    public static Text getFooter(MinecraftClient client) {
-        PlayerListHud playerListHud = client.inGameHud.getPlayerListHud();
+    public static Component getFooter(Minecraft client) {
+        PlayerTabOverlay playerListHud = client.gui.getTabList();
         return ((AccessorPlayerListHud) playerListHud).getFooter();
     }
 }

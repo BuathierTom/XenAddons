@@ -12,8 +12,8 @@ public class EditHudModule extends Module {
 
     @Override
     public void onClick() {
-        if (mc.currentScreen == null) return;
-        var hudEditor = KotlinGuiBridge.createHudEditorScreen(mc.currentScreen);
+        if (mc.screen == null) return;
+        var hudEditor = KotlinGuiBridge.createHudEditorScreen(mc.screen);
         if (hudEditor != null) mc.setScreen(hudEditor);
     }
 }

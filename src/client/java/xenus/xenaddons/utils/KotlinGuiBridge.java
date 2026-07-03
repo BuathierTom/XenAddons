@@ -1,6 +1,6 @@
 package xenus.xenaddons.utils;
 
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screens.Screen;
 import xenus.xenaddons.XenAddons;
 
 import java.lang.reflect.Constructor;

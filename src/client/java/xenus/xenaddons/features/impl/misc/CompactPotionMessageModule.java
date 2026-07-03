@@ -1,8 +1,8 @@
 package xenus.xenaddons.features.impl.misc;
 
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
@@ -19,12 +19,12 @@ public class CompactPotionMessageModule extends Module {
                 CompactPotionMessageModule module = ModuleManager.getModule(CompactPotionMessageModule.class);
                 if (module == null || !module.isEnabled()) return true;
 
-                Text compacted = CompactPotionMessageProcessor.compact(message);
+                Component compacted = CompactPotionMessageProcessor.compact(message);
                 if (compacted == message) return true;
 
-                MinecraftClient client = MinecraftClient.getInstance();
-                if (client.inGameHud != null) {
-                    client.inGameHud.getChatHud().addMessage(compacted);
+                Minecraft client = Minecraft.getInstance();
+                if (client.gui != null) {
+                    client.gui.getChat().addClientSystemMessage(compacted);
                 }
                 return false;
             });
@@ -33,12 +33,12 @@ public class CompactPotionMessageModule extends Module {
                 CompactPotionMessageModule module = ModuleManager.getModule(CompactPotionMessageModule.class);
                 if (module == null || !module.isEnabled()) return true;
 
-                Text compacted = CompactPotionMessageProcessor.compact(message);
+                Component compacted = CompactPotionMessageProcessor.compact(message);
                 if (compacted == message) return true;
 
-                MinecraftClient client = MinecraftClient.getInstance();
-                if (client.inGameHud != null) {
-                    client.inGameHud.getChatHud().addMessage(compacted);
+                Minecraft client = Minecraft.getInstance();
+                if (client.gui != null) {
+                    client.gui.getChat().addClientSystemMessage(compacted);
                 }
                 return false;
             });

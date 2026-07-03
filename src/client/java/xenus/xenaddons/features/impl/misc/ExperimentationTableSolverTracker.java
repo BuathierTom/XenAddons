@@ -2,13 +2,13 @@ package xenus.xenaddons.features.impl.misc;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import xenus.xenaddons.compat.XenHandledScreenCompat;
 
 import java.util.HashMap;
@@ -42,10 +42,10 @@ public final class ExperimentationTableSolverTracker {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> reset());
     }
 
-    private static void onTick(MinecraftClient client) {
+    private static void onTick(Minecraft client) {
         if (!ExperimentationTableSolverModule.isActive()) return;
         if (client == null || client.player == null) return;
-        if (!(client.currentScreen instanceof HandledScreen<?> screen)) {
+        if (!(client.screen instanceof AbstractContainerScreen<?> screen)) {
             reset();
             return;
         }
@@ -55,18 +55,18 @@ public final class ExperimentationTableSolverTracker {
             return;
         }
 
-        ScreenHandler handler = screen.getScreenHandler();
+        AbstractContainerMenu handler = screen.getMenu();
         if (handler == null) return;
-        if (handler.syncId != lastSyncId) {
+        if (handler.containerId != lastSyncId) {
             reset();
-            lastSyncId = handler.syncId;
+            lastSyncId = handler.containerId;
         }
 
         superpairsActive = true;
         readSuperpairsSlots(handler);
     }
 
-    public static boolean onHandledScreenMouseClicked(HandledScreen<?> screen, int button) {
+    public static boolean onHandledScreenMouseClicked(AbstractContainerScreen<?> screen, int button) {
         if (!ExperimentationTableSolverModule.isActive()) return false;
         ExperimentationTableSolverModule module = ExperimentationTableSolverModule.get();
         if (module == null || !module.keepItemsVisible.getValue()) return false;
@@ -74,7 +74,7 @@ public final class ExperimentationTableSolverTracker {
         if (screen == null || !isSuperpairsScreen(screen)) return false;
 
         Slot slot = XenHandledScreenCompat.getFocusedSlot(screen);
-        if (slot != null && slot.hasStack()) {
+        if (slot != null && slot.hasItem()) {
             handleSuperpairsClick(slot);
         }
         return false;
@@ -85,10 +85,10 @@ public final class ExperimentationTableSolverTracker {
         ExperimentationTableSolverModule module = ExperimentationTableSolverModule.get();
         if (module == null || !module.keepItemsVisible.getValue()) return null;
         if (!superpairsActive) return null;
-        if (slot == null || !slot.hasStack()) return null;
-        if (!isUnknownSuperpairsItem(slot.getStack())) return null;
+        if (slot == null || !slot.hasItem()) return null;
+        if (!isUnknownSuperpairsItem(slot.getItem())) return null;
 
-        ItemStack replacement = superpairsSlotMap.get(slot.id);
+        ItemStack replacement = superpairsSlotMap.get(slot.index);
         return replacement == null ? null : replacement.copy();
     }
 
@@ -99,13 +99,13 @@ public final class ExperimentationTableSolverTracker {
         if (!superpairsActive) return null;
         if (slot == null) return null;
 
-        ItemStack stack = superpairsSlotMap.get(slot.id);
+        ItemStack stack = superpairsSlotMap.get(slot.index);
         if (stack == null || stack.isEmpty()) return null;
 
-        String fromName = extractEnchantingXpText(stack.getName().getString());
+        String fromName = extractEnchantingXpText(stack.getHoverName().getString());
         if (fromName != null) return fromName;
 
-        LoreComponent lore = stack.get(DataComponentTypes.LORE);
+        ItemLore lore = stack.get(DataComponents.LORE);
         if (lore == null || lore.lines().isEmpty()) return null;
         for (var line : lore.lines()) {
             String fromLore = extractEnchantingXpText(line.getString());
@@ -115,10 +115,10 @@ public final class ExperimentationTableSolverTracker {
     }
 
     private static void handleSuperpairsClick(Slot slot) {
-        int slotId = slot.id;
+        int slotId = slot.index;
         if (superpairsSlotMap.containsKey(slotId)) return;
 
-        ItemStack clicked = slot.getStack();
+        ItemStack clicked = slot.getItem();
         if (isUnknownSuperpairsItem(clicked)) {
             superpairsSlotsToRead.add(slotId);
         } else {
@@ -127,11 +127,11 @@ public final class ExperimentationTableSolverTracker {
         }
     }
 
-    private static void readSuperpairsSlots(ScreenHandler handler) {
+    private static void readSuperpairsSlots(AbstractContainerMenu handler) {
         for (Slot slot : handler.slots) {
-            if (slot == null || !slot.hasStack()) continue;
-            int slotId = slot.id;
-            ItemStack stack = slot.getStack();
+            if (slot == null || !slot.hasItem()) continue;
+            int slotId = slot.index;
+            ItemStack stack = slot.getItem();
             if (!isUnknownSuperpairsItem(stack) && isSuperpairsRewardLike(stack)) {
                 superpairsSlotMap.put(slotId, stack.copy());
                 superpairsSlotsToRead.remove(slotId);
@@ -143,9 +143,9 @@ public final class ExperimentationTableSolverTracker {
         while (it.hasNext()) {
             int slotId = it.next();
             Slot slot = findSlotById(handler, slotId);
-            if (slot == null || !slot.hasStack()) continue;
+            if (slot == null || !slot.hasItem()) continue;
 
-            ItemStack stack = slot.getStack();
+            ItemStack stack = slot.getItem();
             if (!isUnknownSuperpairsItem(stack) && isSuperpairsRewardLike(stack)) {
                 superpairsSlotMap.put(slotId, stack.copy());
                 it.remove();
@@ -153,14 +153,14 @@ public final class ExperimentationTableSolverTracker {
         }
     }
 
-    private static boolean isSuperpairsScreen(HandledScreen<?> screen) {
+    private static boolean isSuperpairsScreen(AbstractContainerScreen<?> screen) {
         String title = stripFormatting(screen.getTitle().getString());
         return title != null && title.toLowerCase(Locale.ROOT).startsWith("superpairs");
     }
 
     private static boolean isUnknownSuperpairsItem(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
-        String s = stripFormatting(stack.getName().getString());
+        String s = stripFormatting(stack.getHoverName().getString());
         if (s == null) return false;
         String low = s.trim().toLowerCase(Locale.ROOT);
         if (low.isEmpty()) return false;
@@ -174,7 +174,7 @@ public final class ExperimentationTableSolverTracker {
 
     private static boolean isSuperpairsRewardLike(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
-        String name = stripFormatting(stack.getName().getString());
+        String name = stripFormatting(stack.getHoverName().getString());
         if (name == null || name.isBlank()) return false;
 
         String low = name.toLowerCase(Locale.ROOT);
@@ -203,10 +203,10 @@ public final class ExperimentationTableSolverTracker {
         return matcher.group(1);
     }
 
-    private static Slot findSlotById(ScreenHandler handler, int slotId) {
+    private static Slot findSlotById(AbstractContainerMenu handler, int slotId) {
         if (handler == null) return null;
         for (Slot slot : handler.slots) {
-            if (slot != null && slot.id == slotId) return slot;
+            if (slot != null && slot.index == slotId) return slot;
         }
         return null;
     }

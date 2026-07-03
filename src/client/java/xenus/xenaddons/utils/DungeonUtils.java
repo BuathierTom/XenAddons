@@ -2,15 +2,15 @@ package xenus.xenaddons.utils;
 
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardObjective;
-import net.minecraft.scoreboard.ScoreboardEntry;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.PlayerScoreEntry;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.compat.XenPlayerListCompat;
 
 import java.util.HashMap;
@@ -74,7 +74,7 @@ public class DungeonUtils {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.world == null) return;
+            if (client.level == null) return;
             tickCounter++;
             updateBossState();
             updateHealerMidSeenState();
@@ -95,16 +95,16 @@ public class DungeonUtils {
     }
 
     private static void updateFromScoreboard() {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.world == null || mc.player == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) return;
         
-        Scoreboard scoreboard = mc.world.getScoreboard();
-        ScoreboardObjective objective = scoreboard.getObjectiveForSlot(ScoreboardDisplaySlot.SIDEBAR);
+        Scoreboard scoreboard = mc.level.getScoreboard();
+        Objective objective = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
         if (objective == null) return;
 
-        Collection<ScoreboardEntry> entries = scoreboard.getScoreboardEntries(objective);
-        for (ScoreboardEntry entry : entries) {
-            String line = entry.name().getString().replaceAll("§[0-9a-fk-or]", "");
+        Collection<PlayerScoreEntry> entries = scoreboard.listPlayerScores(objective);
+        for (PlayerScoreEntry entry : entries) {
+            String line = entry.ownerName().getString().replaceAll("§[0-9a-fk-or]", "");
             
             if (line.contains("The Catacombs (F7)") || line.contains("Floor VII")) {
                 floorNumber = 7;
@@ -124,16 +124,16 @@ public class DungeonUtils {
     }
 
     private static void updateFromTab() {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.getNetworkHandler() == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.getConnection() == null) return;
         
         boolean foundDungeon = false;
         int foundCrypts = crypts;
         int foundMilestone = milestone;
 
         // Process List Entries
-        for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
-            Text displayName = entry.getDisplayName();
+        for (PlayerInfo entry : mc.getConnection().getListedOnlinePlayers()) {
+            Component displayName = entry.getTabListDisplayName();
             String nameString = (displayName != null) ? displayName.getString() : entry.getProfile().name();
             if (checkTabLine(nameString)) foundDungeon = true;
             
@@ -146,8 +146,8 @@ public class DungeonUtils {
         
         // Process Header and Footer (Accessor required)
         try {
-            Text header = XenPlayerListCompat.getHeader(mc);
-            Text footer = XenPlayerListCompat.getFooter(mc);
+            Component header = XenPlayerListCompat.getHeader(mc);
+            Component footer = XenPlayerListCompat.getFooter(mc);
             
             if (header != null) {
                 String h = header.getString();
@@ -280,12 +280,12 @@ public class DungeonUtils {
     }
 
     public static void updateClasses() {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.getNetworkHandler() == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.getConnection() == null) return;
         
         // 1. Identify real players (ignore Hypixel sorting entries starting with !)
         Map<String, java.util.UUID> realPlayers = new HashMap<>();
-        for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
+        for (PlayerInfo entry : mc.getConnection().getListedOnlinePlayers()) {
             String name = entry.getProfile().name();
             if (name != null && !name.startsWith("!")) {
                  realPlayers.put(name, entry.getProfile().id());
@@ -293,8 +293,8 @@ public class DungeonUtils {
         }
 
         // 2. Scan tab list for class tokens and match with real players
-        for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
-            Text displayName = entry.getDisplayName();
+        for (PlayerInfo entry : mc.getConnection().getListedOnlinePlayers()) {
+            Component displayName = entry.getTabListDisplayName();
             if (displayName == null) continue;
             
             String text = displayName.getString();
@@ -339,9 +339,9 @@ public class DungeonUtils {
         return null;
     }
 
-    public static String getPlayerClass(net.minecraft.entity.player.PlayerEntity player) {
+    public static String getPlayerClass(net.minecraft.world.entity.player.Player player) {
         if (player == null) return null;
-        return getPlayerClass(player.getUuid());
+        return getPlayerClass(player.getUUID());
     }
 
     public static int getPlayerClassLevel(java.util.UUID uuid) {
@@ -349,9 +349,9 @@ public class DungeonUtils {
         return PLAYER_CLASS_LEVELS_UUID.getOrDefault(uuid, -1);
     }
 
-    public static int getPlayerClassLevel(net.minecraft.entity.player.PlayerEntity player) {
+    public static int getPlayerClassLevel(net.minecraft.world.entity.player.Player player) {
         if (player == null) return -1;
-        return getPlayerClassLevel(player.getUuid());
+        return getPlayerClassLevel(player.getUUID());
     }
 
     public static boolean isUniqueClass() {
@@ -369,7 +369,7 @@ public class DungeonUtils {
     }
 
     private static void updateBossState() {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || !inDungeon()) {
             inBoss = false;
             return;
@@ -414,10 +414,10 @@ public class DungeonUtils {
     }
 
     public static boolean isHealerAtMidDetected() {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc == null || mc.world == null || !inDungeon()) return false;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.level == null || !inDungeon()) return false;
 
-        for (PlayerEntity player : mc.world.getPlayers()) {
+        for (Player player : mc.level.players()) {
             if (player == null || player.isInvisible() || player.isSpectator()) continue;
             String clazz = getPlayerClass(player);
             if (clazz == null) clazz = getPlayerClass(player.getGameProfile().name());
@@ -454,11 +454,11 @@ public class DungeonUtils {
     }
 
     public static int getDungeonPartyCountFromTab() {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.getNetworkHandler() == null) return 0;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.getConnection() == null) return 0;
 
         Map<String, java.util.UUID> realPlayers = new HashMap<>();
-        for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
+        for (PlayerInfo entry : mc.getConnection().getListedOnlinePlayers()) {
             String name = entry.getProfile().name();
             if (name != null && !name.startsWith("!")) {
                 realPlayers.put(name, entry.getProfile().id());
@@ -469,8 +469,8 @@ public class DungeonUtils {
         Set<String> foundPlayers = new HashSet<>();
         int classEntryCount = 0;
 
-        for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
-            Text displayName = entry.getDisplayName();
+        for (PlayerInfo entry : mc.getConnection().getListedOnlinePlayers()) {
+            Component displayName = entry.getTabListDisplayName();
             if (displayName == null) continue;
 
             String cleanText = displayName.getString().replaceAll("§[0-9a-fk-or]", "");
@@ -592,25 +592,25 @@ public class DungeonUtils {
         positionDefinitions.add(new PositionDefinition("AtEE2High", "At Pre Enter 2 (High)!", (clazz) -> true, (entity) -> isInBox(62, 59, 132, 135, 143, 138, entity), "high pre enter 2", "high ee2", "ee2 high", "early enter high", "high early enter 2", "pre enter 2 (high)"));
         positionDefinitions.add(new PositionDefinition("AtSafespot2", "At Early Enter 2 Safe Spot!", (clazz) -> true, (entity) -> {
             double radiusSq = 0.4999 * 0.4999;
-            return entity.squaredDistanceTo(69.5, 109.0, 121.5) <= radiusSq
-                    || entity.squaredDistanceTo(67.5, 109.0, 121.5) <= radiusSq
-                    || entity.squaredDistanceTo(48.5, 109.0, 121.5) <= radiusSq
-                    || entity.squaredDistanceTo(46.5, 109.0, 121.5) <= radiusSq;
+            return entity.distanceToSqr(69.5, 109.0, 121.5) <= radiusSq
+                    || entity.distanceToSqr(67.5, 109.0, 121.5) <= radiusSq
+                    || entity.distanceToSqr(48.5, 109.0, 121.5) <= radiusSq
+                    || entity.distanceToSqr(46.5, 109.0, 121.5) <= radiusSq;
         }, "2 safespot", "safespot 2", "early enter 2 safe spot"));
         positionDefinitions.add(new PositionDefinition("AtSafespot2High", "At Early Enter 2 Safe Spot! (High)", (clazz) -> true, (entity) -> isInBox(63, 66, 132, 133, 146, 147, entity), "2 safespot high", "safespot 2 high", "early enter 2 safe spot high"));
         positionDefinitions.add(new PositionDefinition("AtEE3", "At Pre Enter 3!", (clazz) -> true, (entity) -> isInBox(0, 4, 108, 115, 98, 107, entity), "early enter 3", "pre enter 3", "at ee3", "entered 3.3"));
         positionDefinitions.add(new PositionDefinition("AtSafespot3", "At Early Enter 3 Safe Spot!", (clazz) -> true, (entity) -> {
             double radiusSq = 0.45 * 0.45;
             for (double z = 91.5; z <= 99.5; z += 1.0) {
-                if (entity.squaredDistanceTo(18.5, 121.5, z) <= radiusSq) return true;
+                if (entity.distanceToSqr(18.5, 121.5, z) <= radiusSq) return true;
             }
             return false;
         }, "safespot 3", "3 safespot", "early enter 3 safe spot"));
-        positionDefinitions.add(new PositionDefinition("AtArrowsDevice", "At Arrows Device!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(-0.5, 120.0, 77.5) <= (1.5 * 1.5), "at arrows device"));
-        positionDefinitions.add(new PositionDefinition("EnteringCore", "Entering Core!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(58.0, 120.0, 122.0) <= (0.75 * 0.75), "entering core"));
+        positionDefinitions.add(new PositionDefinition("AtArrowsDevice", "At Arrows Device!", (clazz) -> true, (entity) -> entity.distanceToSqr(-0.5, 120.0, 77.5) <= (1.5 * 1.5), "at arrows device"));
+        positionDefinitions.add(new PositionDefinition("EnteringCore", "Entering Core!", (clazz) -> true, (entity) -> entity.distanceToSqr(58.0, 120.0, 122.0) <= (0.75 * 0.75), "entering core"));
         positionDefinitions.add(new PositionDefinition("AtCore", "At Core!", (clazz) -> true, (entity) -> isInBox(52, 57, 113, 117, 49, 53, entity), "at core", "pre enter 4", "early enter 4", "at ee4", "entered 3.4"));
         positionDefinitions.add(new PositionDefinition("InGoldorTunnel", "Inside Goldor Tunnel!", (clazz) -> true, (entity) -> isInBox(41, 68, 110, 150, 59, 117, entity), "in goldor tunnel", "inside goldor tunnel", "in core", "entered 3.5", "at ee5", "pre enter 5"));
-        positionDefinitions.add(new PositionDefinition("AtPewPewDev", "At Pew Pew Dev!", (clazz) -> true, (entity) -> entity.squaredDistanceTo(63.5, 127.0, 35.5) <= (1.5 * 1.5), "at pew pew dev"));
+        positionDefinitions.add(new PositionDefinition("AtPewPewDev", "At Pew Pew Dev!", (clazz) -> true, (entity) -> entity.distanceToSqr(63.5, 127.0, 35.5) <= (1.5 * 1.5), "at pew pew dev"));
         positionDefinitions.add(new PositionDefinition("AtMid", "At Mid!", (clazz) -> true, (entity) -> isInBox(47, 61.999, 64, 75, 69, 83.999, entity), "at mid", "in mid"));
         positionDefinitions.add(new PositionDefinition("AtPre4Entry", "At Pre4 Entry!", (clazz) -> true, (entity) -> isInBox(91, 93, 129, 133, 44, 46, entity), "i4 entry", "pre4 entry"));
         positionDefinitions.add(new PositionDefinition("AtP5", "At P5!", (clazz) -> "Healer".equals(clazz), (entity) -> entity.getY() < 50 && entity.getY() > 4, "at p5", "in p5"));

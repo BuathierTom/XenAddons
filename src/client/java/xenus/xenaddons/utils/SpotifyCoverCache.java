@@ -3,10 +3,10 @@ package xenus.xenaddons.utils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.Identifier;
 import xenus.xenaddons.XenAddons;
 
 import javax.imageio.ImageIO;
@@ -107,7 +107,7 @@ public final class SpotifyCoverCache {
             image = loadFromDiskOrNetwork(url);
 
             NativeImage loadedImage = image;
-            MinecraftClient.getInstance().execute(() -> register(url, loadedImage));
+            Minecraft.getInstance().execute(() -> register(url, loadedImage));
             scheduledRegister = true;
             image = null;
         } catch (Exception e) {
@@ -155,9 +155,9 @@ public final class SpotifyCoverCache {
 
     private static void register(String url, NativeImage image) {
         try {
-            Identifier id = Identifier.of("xenaddons", "spotify/cover_" + UUID.randomUUID().toString().replace("-", ""));
-            NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> "XenAddons Spotify cover", image);
-            MinecraftClient.getInstance().getTextureManager().registerTexture(id, texture);
+            Identifier id = Identifier.fromNamespaceAndPath("xenaddons", "spotify/cover_" + UUID.randomUUID().toString().replace("-", ""));
+            DynamicTexture texture = new DynamicTexture(() -> "XenAddons Spotify cover", image);
+            Minecraft.getInstance().getTextureManager().register(id, texture);
             COVERS.put(url, id);
         } catch (Exception e) {
             FAILED.add(url);
@@ -225,7 +225,7 @@ public final class SpotifyCoverCache {
         NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, bufferedImage.getWidth(), bufferedImage.getHeight(), false);
         for (int y = 0; y < bufferedImage.getHeight(); y++) {
             for (int x = 0; x < bufferedImage.getWidth(); x++) {
-                nativeImage.setColorArgb(x, y, bufferedImage.getRGB(x, y));
+                nativeImage.setPixel(x, y, bufferedImage.getRGB(x, y));
             }
         }
         return nativeImage;
@@ -244,7 +244,7 @@ public final class SpotifyCoverCache {
     private static void writeCachedNativeImage(NativeImage image, File cachedFile) {
         try {
             ensureCacheDirectory();
-            image.writeTo(cachedFile.toPath());
+            image.writeToFile(cachedFile.toPath());
             trimDiskCache();
         } catch (Exception e) {
             XenAddons.LOGGER.debug("Failed to write Spotify cover cache file {}", cachedFile, e);
@@ -256,7 +256,7 @@ public final class SpotifyCoverCache {
     }
 
     private static File cacheDirectory() {
-        return new File(MinecraftClient.getInstance().runDirectory, CACHE_DIRECTORY);
+        return new File(Minecraft.getInstance().gameDirectory, CACHE_DIRECTORY);
     }
 
     private static void ensureCacheDirectory() {

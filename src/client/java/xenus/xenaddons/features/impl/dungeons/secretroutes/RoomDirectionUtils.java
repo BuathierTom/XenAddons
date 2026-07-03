@@ -1,6 +1,6 @@
 package xenus.xenaddons.features.impl.dungeons.secretroutes;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import xenus.xenaddons.features.impl.dungeons.secretroutes.dungeon.DungeonScanner;
 import java.awt.Point;
 

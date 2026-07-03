@@ -1,21 +1,22 @@
 package xenus.xenaddons.compat;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import xenus.xenaddons.XenAddons;
 import xenus.xenaddons.features.impl.misc.ExperimentationTableSolverTracker;
 import xenus.xenaddons.mixin.client.HandledScreenAccessor;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class XenHandledScreenCompat {
     private static final Identifier BUTTONS_TEXTURE = XenIdentifierCompat.xen("textures/gui/buttons.png");
@@ -24,11 +25,19 @@ public final class XenHandledScreenCompat {
 
     private XenHandledScreenCompat() {}
 
-    public static XenAddons.CustomButtonData renderInvButtons(Screen screen, DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY) {
+    public static XenAddons.CustomButtonData renderInvButtons(Screen screen, GuiGraphicsExtractor context, Font textRenderer, int mouseX, int mouseY) {
+        return renderInvButtons(screen, context, textRenderer, mouseX, mouseY, false);
+    }
+
+    public static XenAddons.CustomButtonData renderInvButtonsInContainerSpace(Screen screen, GuiGraphicsExtractor context, Font textRenderer, int mouseX, int mouseY) {
+        return renderInvButtons(screen, context, textRenderer, mouseX, mouseY, true);
+    }
+
+    private static XenAddons.CustomButtonData renderInvButtons(Screen screen, GuiGraphicsExtractor context, Font textRenderer, int mouseX, int mouseY, boolean containerSpace) {
         if (!XenAddons.instance.enabled) return null;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (XenAddons.instance.hideInCreative && client.interactionManager != null && client.interactionManager.getCurrentGameMode().isCreative()) {
+        Minecraft client = Minecraft.getInstance();
+        if (XenAddons.instance.hideInCreative && client.gameMode != null && client.gameMode.getPlayerMode().isCreative()) {
             return null;
         }
 
@@ -40,52 +49,67 @@ public final class XenHandledScreenCompat {
         boolean isPlayerInventory = screen instanceof InventoryScreen;
         int containerOffset = ySize - STANDARD_INV_HEIGHT;
         XenAddons.CustomButtonData hovered = null;
+        List<ButtonRenderEntry> entries = new ArrayList<>();
+
+        context.nextStratum();
 
         for (XenAddons.CustomButtonData button : XenAddons.instance.buttons) {
             int renderOffsetY = getRenderOffsetY(button, isPlayerInventory, containerOffset);
             if (renderOffsetY == Integer.MIN_VALUE) continue;
 
-            int x = button.x + (button.anchorRight ? xSize : 0);
-            int y = button.y + renderOffsetY + (button.anchorBottom ? ySize : 0);
+            int localX = button.x + (button.anchorRight ? xSize : 0);
+            int localY = button.y + renderOffsetY + (button.anchorBottom ? ySize : 0);
+            int x = containerSpace ? localX : guiLeft + localX;
+            int y = containerSpace ? localY : guiTop + localY;
+            int hoverX = guiLeft + localX;
+            int hoverY = guiTop + localY;
 
             XenDrawContextCompat.drawTexture(context, BUTTONS_TEXTURE, x, y, button.backgroundIndex * 18.0f, 18.0f, 18, 18, 90, 36);
+            entries.add(new ButtonRenderEntry(button, x, y));
 
-            Identifier customTexture = findCustomTexture(button);
+            if (mouseX >= hoverX && mouseX <= hoverX + 18 && mouseY >= hoverY && mouseY <= hoverY + 18) {
+                hovered = button;
+            }
+        }
+
+        if (!entries.isEmpty()) context.guiRenderState.up();
+
+        for (ButtonRenderEntry entry : entries) {
+            XenAddons.CustomButtonData button = entry.button;
+            int x = entry.x;
+            int y = entry.y;
+            Identifier customTexture = XenAddons.findCustomTexture(button.itemId);
             if (customTexture != null) {
                 XenDrawContextCompat.drawTexture(context, customTexture, x + 1, y + 1, 0.0f, 0.0f, 16, 16, 16, 16);
             } else {
                 ItemStack stack = button.getItemStack();
-                if (!stack.isEmpty()) context.drawItem(stack, x + 1, y + 1);
-                else XenDrawContextCompat.drawTextWithShadow(context, textRenderer, "?", x + 9 - textRenderer.getWidth("?") / 2, y + 5, 0xFFFFFFFF);
-            }
-
-            if (mouseX >= guiLeft + x && mouseX <= guiLeft + x + 18 && mouseY >= guiTop + y && mouseY <= guiTop + y + 18) {
-                hovered = button;
+                if (!stack.isEmpty()) XenDrawContextCompat.item(context, stack, x + 1, y + 1);
+                else XenDrawContextCompat.text(context, textRenderer, "?", x + 9 - textRenderer.width("?") / 2, y + 5, 0xFFFFFFFF);
             }
         }
 
         return hovered;
     }
 
-    public static void drawInvTooltip(DrawContext context, TextRenderer textRenderer, XenAddons.CustomButtonData hoveredButton, int mouseX, int mouseY) {
+    public static void drawInvTooltip(GuiGraphicsExtractor context, Font textRenderer, XenAddons.CustomButtonData hoveredButton, int mouseX, int mouseY) {
         if (hoveredButton != null && XenAddons.instance.showTooltips) {
-            context.drawTooltip(textRenderer, Text.literal(hoveredButton.command), mouseX, mouseY);
+            context.setTooltipForNextFrame(textRenderer, Component.literal(hoveredButton.command), mouseX, mouseY);
         }
     }
 
-    public static boolean handleMouseClicked(Screen screen, Click click) {
-        if (screen instanceof HandledScreen<?> handled && ExperimentationTableSolverTracker.onHandledScreenMouseClicked(handled, click.button())) {
+    public static boolean handleMouseClicked(Screen screen, MouseButtonEvent click) {
+        if (screen instanceof AbstractContainerScreen<?> handled && ExperimentationTableSolverTracker.onHandledScreenMouseClicked(handled, click.button())) {
             return true;
         }
 
         if (!XenAddons.instance.enabled) return false;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (XenAddons.instance.hideInCreative && client.interactionManager != null && client.interactionManager.getCurrentGameMode().isCreative()) {
+        Minecraft client = Minecraft.getInstance();
+        if (XenAddons.instance.hideInCreative && client.gameMode != null && client.gameMode.getPlayerMode().isCreative()) {
             return false;
         }
 
-        if (click.button() != 0 || !(screen instanceof HandledScreen<?>)) return false;
+        if (click.button() != 0 || !(screen instanceof AbstractContainerScreen<?>)) return false;
 
         HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
         int guiLeft = accessor.getXPosition();
@@ -111,7 +135,7 @@ public final class XenHandledScreenCompat {
         return false;
     }
 
-    public static Slot getFocusedSlot(HandledScreen<?> screen) {
+    public static Slot getFocusedSlot(AbstractContainerScreen<?> screen) {
         if (screen == null) return null;
         return ((HandledScreenAccessor) screen).getFocusedSlot();
     }
@@ -127,21 +151,23 @@ public final class XenHandledScreenCompat {
         return containerOffset;
     }
 
-    private static Identifier findCustomTexture(XenAddons.CustomButtonData button) {
-        if (button.itemId == null) return null;
-        for (Map.Entry<String, Identifier> entry : XenAddons.CUSTOM_TEXTURES.entrySet()) {
-            if (entry.getValue().toString().equals(button.itemId)) {
-                return entry.getValue();
-            }
-        }
-        return null;
-    }
-
-    private static void sendButtonCommand(MinecraftClient client, String command) {
+    private static void sendButtonCommand(Minecraft client, String command) {
         if (client.player == null) return;
         String cleanCommand = command;
         if (cleanCommand.startsWith("/")) cleanCommand = cleanCommand.substring(1);
-        client.player.networkHandler.sendChatCommand(cleanCommand);
+        client.player.connection.sendCommand(cleanCommand);
         XenSoundCompat.playButtonClick(client);
+    }
+
+    private static final class ButtonRenderEntry {
+        private final XenAddons.CustomButtonData button;
+        private final int x;
+        private final int y;
+
+        private ButtonRenderEntry(XenAddons.CustomButtonData button, int x, int y) {
+            this.button = button;
+            this.x = x;
+            this.y = y;
+        }
     }
 }

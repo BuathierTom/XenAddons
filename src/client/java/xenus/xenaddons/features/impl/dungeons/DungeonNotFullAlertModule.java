@@ -2,7 +2,7 @@ package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.utils.ChatUtils;
@@ -62,9 +62,9 @@ public class DungeonNotFullAlertModule extends Module {
             if (alertedForCurrentStart) return;
             if (players <= 0 || players >= 5) return;
 
-            if (mc.inGameHud != null) {
-                mc.inGameHud.setTitle(Text.of("§cNot 5/5!"));
-                mc.inGameHud.setTitleTicks(10, 40, 10);
+            if (mc.gui != null) {
+                mc.gui.setTitle(Component.literal("§cNot 5/5!"));
+                mc.gui.setTimes(10, 40, 10);
             }
 
             ChatUtils.warning("Dungeon not full (" + players + "/5)!");

@@ -2,14 +2,14 @@ package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.ActionSetting;
@@ -32,24 +32,24 @@ public class ReminderGateModule extends Module {
     private static final int CHAT_HISTORY_SYNC_TICKS = 20 * 15;
     private static final int CHAT_HISTORY_SYNC_MESSAGES = 10;
     private static final int NOTIFICATION_DURATION_TICKS = 20 * 5;
-    private static final Box[] REGIONS = {
-            new Box(90, 106, 50, 111, 145, 123),
-            new Box(17, 106, 121, 108, 145, 143),
-            new Box(-2, 106, 51, 20, 145, 142),
-            new Box(-1, 26, 29, 191, 145, 58),
-            new Box(3, 5, 0, 128, 48, 140)
+    private static final AABB[] REGIONS = {
+            new AABB(90, 106, 50, 111, 145, 123),
+            new AABB(17, 106, 121, 108, 145, 143),
+            new AABB(-2, 106, 51, 20, 145, 142),
+            new AABB(-1, 26, 29, 191, 145, 58),
+            new AABB(3, 5, 0, 128, 48, 140)
     };
     private static final Identifier[] RANDOM_SOUND_POOL = new Identifier[]{
-            Identifier.of("xenaddons", "reminder_gate.fah"),
-            Identifier.of("xenaddons", "reminder_gate.nuke_bomb"),
-            Identifier.of("xenaddons", "reminder_gate.android_meme"),
-            Identifier.of("xenaddons", "reminder_gate.pump_shotgun"),
-            Identifier.of("xenaddons", "reminder_gate.knocked"),
-            Identifier.of("xenaddons", "reminder_gate.hog_rider"),
-            Identifier.of("xenaddons", "reminder_gate.airhorn")
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.fah"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.nuke_bomb"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.android_meme"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.pump_shotgun"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.knocked"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.hog_rider"),
+            Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.airhorn")
     };
 
-    private final StringSetting displayText = new StringSetting("Display Text", "GATEEEEEE !!!!!!!", 64);
+    private final StringSetting displayText = new StringSetting("Display Component", "GATEEEEEE !!!!!!!", 64);
     private final BooleanSetting enableSound = new BooleanSetting("Enable Sound", true);
     private final ModeSetting sound = new ModeSetting(
             "Sound",
@@ -115,7 +115,7 @@ public class ReminderGateModule extends Module {
             updateRuntimeState();
         });
 
-        HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate_hud"), (drawContext, tickDelta) -> {
             if (!this.isEnabled()) return;
             if (debugDisplayTicks <= 0 && !notificationActive) return;
             renderHud(drawContext, getDisplayText());
@@ -230,12 +230,12 @@ public class ReminderGateModule extends Module {
         lastDungeonSeconds = currentSeconds;
     }
 
-    private int getRegionIndex(ClientPlayerEntity player) {
+    private int getRegionIndex(LocalPlayer player) {
         double x = player.getX();
         double y = player.getY();
         double z = player.getZ();
         for (int i = 0; i < REGIONS.length; i++) {
-            Box box = REGIONS[i];
+            AABB box = REGIONS[i];
             if (x >= Math.min(box.minX, box.maxX) && x <= Math.max(box.minX, box.maxX)
                 && y >= Math.min(box.minY, box.maxY) && y <= Math.max(box.minY, box.maxY)
                 && z >= Math.min(box.minZ, box.maxZ) && z <= Math.max(box.minZ, box.maxZ)) {
@@ -246,16 +246,16 @@ public class ReminderGateModule extends Module {
     }
 
     private void syncGateStateFromChat() {
-        if (mc.inGameHud == null || mc.player == null) return;
-        List<ChatHudLine> messages = XenChatHudCompat.getMessages(mc.inGameHud.getChatHud());
+        if (mc.gui == null || mc.player == null) return;
+        List<GuiMessage> messages = XenChatHudCompat.getMessages(mc.gui.getChat());
         if (messages == null || messages.isEmpty()) return;
 
         int start = Math.max(0, messages.size() - CHAT_HISTORY_SYNC_MESSAGES);
-        int currentTick = mc.player.age;
+        int currentTick = mc.player.tickCount;
         for (int i = messages.size() - 1; i >= start; i--) {
-            ChatHudLine line = messages.get(i);
+            GuiMessage line = messages.get(i);
             if (line == null || line.content() == null) continue;
-            if ((currentTick - line.creationTick()) > CHAT_HISTORY_SYNC_TICKS) continue;
+            if ((currentTick - line.addedTime()) > CHAT_HISTORY_SYNC_TICKS) continue;
             String clean = COLOR_PATTERN.matcher(line.content().getString()).replaceAll("").trim().toLowerCase();
             if (clean.isEmpty()) continue;
             if (clean.contains(GATE_DESTROYED)) {
@@ -273,30 +273,30 @@ public class ReminderGateModule extends Module {
         return (text == null || text.isBlank()) ? "GATEEEEEE !!!!!!!" : text;
     }
 
-    private void renderHud(DrawContext drawContext, String text) {
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-        int textWidth = mc.textRenderer.getWidth(text);
-        int textHeight = mc.textRenderer.fontHeight;
+    private void renderHud(GuiGraphicsExtractor drawContext, String text) {
+        int width = mc.getWindow().getGuiScaledWidth();
+        int height = mc.getWindow().getGuiScaledHeight();
+        int textWidth = mc.font.width(text);
+        int textHeight = mc.font.lineHeight;
         float scale = (float) hudScale.getValue().doubleValue();
         float inv = 1.0f / scale;
         int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
         int yRaw = hudY.getValue().intValue();
         int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
         int maxCenterX = width - minCenterX;
-        int centerX = MathHelper.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
+        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
         int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = MathHelper.clamp(yRaw, 2, Math.max(2, maxY));
+        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
 
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().scale(scale, scale);
+        drawContext.pose().pushMatrix();
+        drawContext.pose().scale(scale, scale);
         int x = (int) ((centerX * inv) - (textWidth / 2f));
         int drawY = (int) (y * inv);
-        drawContext.drawTextWithShadow(mc.textRenderer, text, x, drawY, 0xFFFF5555);
-        drawContext.getMatrices().popMatrix();
+        drawContext.text(mc.font, text, x, drawY, 0xFFFF5555);
+        drawContext.pose().popMatrix();
     }
 
-    public void renderPreview(DrawContext drawContext) {
+    public void renderPreview(GuiGraphicsExtractor drawContext) {
         renderHud(drawContext, getDisplayText());
     }
 
@@ -311,9 +311,9 @@ public class ReminderGateModule extends Module {
 
     private void playSelectedSound() {
         if (!enableSound.getValue()) return;
-        if (mc.player == null || mc.world == null) return;
+        if (mc.player == null || mc.level == null) return;
         Identifier id = resolveSoundId(sound.getValue());
-        SoundEvent event = SoundEvent.of(id);
+        SoundEvent event = SoundEvent.createVariableRangeEvent(id);
         float volume = 8.0f;
         float pitch = 1.0f;
         mc.player.playSound(event, volume, pitch);
@@ -325,16 +325,16 @@ public class ReminderGateModule extends Module {
                 int idx = ThreadLocalRandom.current().nextInt(RANDOM_SOUND_POOL.length);
                 yield RANDOM_SOUND_POOL[idx];
             }
-            case "Nuke Bomb" -> Identifier.of("xenaddons", "reminder_gate.nuke_bomb");
-            case "Android Meme" -> Identifier.of("xenaddons", "reminder_gate.android_meme");
-            case "Pump Shotgun" -> Identifier.of("xenaddons", "reminder_gate.pump_shotgun");
-            case "Knocked" -> Identifier.of("xenaddons", "reminder_gate.knocked");
-            case "Hog Rider" -> Identifier.of("xenaddons", "reminder_gate.hog_rider");
-            case "Airhorn" -> Identifier.of("xenaddons", "reminder_gate.airhorn");
-            case "FAHHHHHHHHHHHHHH" -> Identifier.of("xenaddons", "reminder_gate.fah");
+            case "Nuke Bomb" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.nuke_bomb");
+            case "Android Meme" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.android_meme");
+            case "Pump Shotgun" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.pump_shotgun");
+            case "Knocked" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.knocked");
+            case "Hog Rider" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.hog_rider");
+            case "Airhorn" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.airhorn");
+            case "FAHHHHHHHHHHHHHH" -> Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.fah");
             default -> {
                 Identifier parsed = Identifier.tryParse(selected);
-                yield parsed != null ? parsed : Identifier.of("xenaddons", "reminder_gate.fah");
+                yield parsed != null ? parsed : Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate.fah");
             }
         };
     }

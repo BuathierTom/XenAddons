@@ -1,7 +1,7 @@
 package xenus.xenaddons.features.impl.dungeons;
 
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import java.awt.Point;
 
 public class DungeonRoomManager {
@@ -9,7 +9,7 @@ public class DungeonRoomManager {
     private static String rotation = "NW";
     private static Point corner = new Point(0, 0);
 
-    public static void updateCurrentRoom(Vec3d pos) {
+    public static void updateCurrentRoom(Vec3 pos) {
         // Hypixel Dungeons use a 32x32 grid shifted by 8 blocks
         double shiftedX = pos.x + 8.5; 
         double shiftedZ = pos.z + 8.5;
@@ -64,7 +64,7 @@ public class DungeonRoomManager {
         return new BlockPos(x, relY, z);
     }
 
-    public static Vec3d relativeToActual(double relX, double relY, double relZ) {
+    public static Vec3 relativeToActual(double relX, double relY, double relZ) {
         double x = 0;
         double z = 0;
         switch (rotation) {
@@ -85,6 +85,6 @@ public class DungeonRoomManager {
                 z = -(relX - corner.y);
                 break;
         }
-        return new Vec3d(x, relY, z);
+        return new Vec3(x, relY, z);
     }
 }

@@ -31,7 +31,7 @@ public class CommandKeybindsModule extends Module {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || !this.isEnabled()) return;
             
-            boolean allowTrigger = client.currentScreen == null;
+            boolean allowTrigger = client.screen == null;
             
             wardP = checkKey(wardrobe, "/wardrobe", wardP, allowTrigger);
             equipP = checkKey(equipment, "/equipment", equipP, allowTrigger);
@@ -45,11 +45,11 @@ public class CommandKeybindsModule extends Module {
         int key = setting.getKey();
         if (key == -1) return false;
         
-        long handle = mc.getWindow().getHandle();
+        long handle = mc.getWindow().handle();
         boolean isPressed = false;
         try {
             if (key < 0) {
-                // Mouse Button
+                // MouseHandler Button
                 int btn = -100 - key;
                 if (btn >= 0) {
                      isPressed = GLFW.glfwGetMouseButton(handle, btn) == GLFW.GLFW_PRESS;
@@ -63,7 +63,7 @@ public class CommandKeybindsModule extends Module {
         if (isPressed && !wasPressed && allowTrigger) {
             if (mc.player != null) {
                 String c = cmd.startsWith("/") ? cmd.substring(1) : cmd;
-                mc.player.networkHandler.sendChatCommand(c);
+                mc.player.connection.sendCommand(c);
             }
         }
         

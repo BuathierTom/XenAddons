@@ -3,16 +3,16 @@ package xenus.xenaddons.config;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.StyleSpriteSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
 import xenus.xenaddons.cosmetics.CosmeticsRepository;
 import xenus.xenaddons.cosmetics.CosmeticsSnapshot.PlayerCosmetic;
 import xenus.xenaddons.cosmetics.CosmeticsSnapshot.PlayerScale;
@@ -51,9 +51,9 @@ public class GoatedPlayersManager {
     private static final String CAPY_GLYPH = "\uE100";
     private static final String FRANCE_GLYPH = "\uE101";
     private static final String LIP_GLYPH = "\uE102";
-    private static final Identifier CAPY_FONT = Identifier.of("xenaddons", "capybara");
-    private static final Identifier FRANCE_FONT = Identifier.of("xenaddons", "france");
-    private static final Identifier LIP_FONT = Identifier.of("xenaddons", "lip");
+    private static final Identifier CAPY_FONT = Identifier.fromNamespaceAndPath("xenaddons", "capybara");
+    private static final Identifier FRANCE_FONT = Identifier.fromNamespaceAndPath("xenaddons", "france");
+    private static final Identifier LIP_FONT = Identifier.fromNamespaceAndPath("xenaddons", "lip");
 
     private static final String[] CONCAT_STATUS_SUFFIXES = new String[] {"offline", "online"};
     private static final Map<String, String> NAMED_COLOR_TO_LEGACY = buildNamedColorMap();
@@ -305,10 +305,10 @@ public class GoatedPlayersManager {
 
         LinkedHashMap<String, CosmeticEntry> merged = new LinkedHashMap<>(STATIC_NAME_COSMETICS);
 
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         if (mc != null) {
-            if (mc.getNetworkHandler() != null) {
-                for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
+            if (mc.getConnection() != null) {
+                for (PlayerInfo entry : mc.getConnection().getListedOnlinePlayers()) {
                     if (entry == null || entry.getProfile() == null) continue;
                     UUID uuid = entry.getProfile().id();
                     if (uuid == null) continue;
@@ -324,10 +324,10 @@ public class GoatedPlayersManager {
                 }
             }
 
-            if (mc.world != null) {
-                for (PlayerEntity player : mc.world.getPlayers()) {
+            if (mc.level != null) {
+                for (Player player : mc.level.players()) {
                     if (player == null) continue;
-                    UUID uuid = player.getUuid();
+                    UUID uuid = player.getUUID();
                     if (uuid == null) continue;
 
                     CosmeticEntry cosmetic = UUID_COSMETICS.get(uuid);
@@ -422,7 +422,7 @@ public class GoatedPlayersManager {
         return normalized;
     }
 
-    public static Text applyVisualWords(Text text) {
+    public static Component applyVisualWords(Component text) {
         if (text == null) return null;
         String original = text.getString();
         if (original == null || original.isEmpty()) return text;
@@ -430,7 +430,7 @@ public class GoatedPlayersManager {
         boolean hasLegacyMarkers = original.indexOf('§') >= 0 || original.indexOf('&') >= 0;
         if (replacedCombined.equals(original) && !hasLegacyMarkers) return text;
 
-        MutableText rebuilt = Text.empty();
+        MutableComponent rebuilt = Component.empty();
         text.visit((style, string) -> {
             appendLegacyFormatted(rebuilt, applyVisualWordsInternal(string, true), style);
             return Optional.empty();
@@ -438,7 +438,7 @@ public class GoatedPlayersManager {
         return rebuilt;
     }
 
-    public static OrderedText applyVisualWords(OrderedText text) {
+    public static FormattedCharSequence applyVisualWords(FormattedCharSequence text) {
         if (text == null) return null;
         StringBuilder plainBuilder = new StringBuilder();
         text.accept((index, style, codePoint) -> {
@@ -451,7 +451,7 @@ public class GoatedPlayersManager {
         boolean hasLegacyMarkers = original.indexOf('§') >= 0 || original.indexOf('&') >= 0;
         if (replacedCombined.equals(original) && !hasLegacyMarkers) return text;
 
-        MutableText rebuilt = Text.empty();
+        MutableComponent rebuilt = Component.empty();
         final Style[] currentStyle = new Style[] {null};
         final StringBuilder buffer = new StringBuilder();
 
@@ -461,7 +461,7 @@ public class GoatedPlayersManager {
                 currentStyle[0] = effective;
             } else if (!currentStyle[0].equals(effective)) {
                 if (!buffer.isEmpty()) {
-                    rebuilt.append(Text.literal(buffer.toString()).setStyle(currentStyle[0]));
+                    rebuilt.append(Component.literal(buffer.toString()).setStyle(currentStyle[0]));
                     buffer.setLength(0);
                 }
                 currentStyle[0] = effective;
@@ -471,13 +471,13 @@ public class GoatedPlayersManager {
         });
 
         if (!buffer.isEmpty()) {
-            rebuilt.append(Text.literal(buffer.toString()).setStyle(currentStyle[0] == null ? Style.EMPTY : currentStyle[0]));
+            rebuilt.append(Component.literal(buffer.toString()).setStyle(currentStyle[0] == null ? Style.EMPTY : currentStyle[0]));
         }
 
-        return applyVisualWords(rebuilt).asOrderedText();
+        return applyVisualWords(rebuilt).getVisualOrderText();
     }
 
-    public static Text applyVisualWordsForTooltip(Text text) {
+    public static Component applyVisualWordsForTooltip(Component text) {
         if (text == null) return null;
         String original = text.getString();
         if (original == null || original.isEmpty()) return text;
@@ -510,12 +510,12 @@ public class GoatedPlayersManager {
             return Optional.empty();
         }, Style.EMPTY);
 
-        MutableText rebuilt = Text.empty();
+        MutableComponent rebuilt = Component.empty();
         appendLegacyFormatted(rebuilt, replaced, firstStyle[0]);
         return rebuilt;
     }
 
-    private static void appendLegacyFormatted(MutableText out, String input, Style baseStyle) {
+    private static void appendLegacyFormatted(MutableComponent out, String input, Style baseStyle) {
         if (input == null || input.isEmpty()) return;
         String normalized = normalizeLegacyCodes(input);
         StringBuilder plain = new StringBuilder();
@@ -546,14 +546,14 @@ public class GoatedPlayersManager {
                     plain.setLength(0);
                 }
 
-                Formatting fmt = Formatting.byCode(normalized.charAt(i + 1));
+                ChatFormatting fmt = ChatFormatting.getByCode(normalized.charAt(i + 1));
                 if (fmt != null) {
-                    if (fmt == Formatting.RESET) {
+                    if (fmt == ChatFormatting.RESET) {
                         currentStyle = baseStyle;
                     } else if (fmt.isColor()) {
-                        currentStyle = baseStyle.withFormatting(fmt);
+                        currentStyle = baseStyle.applyFormat(fmt);
                     } else {
-                        currentStyle = currentStyle.withFormatting(fmt);
+                        currentStyle = currentStyle.applyFormat(fmt);
                     }
                 }
                 i++;
@@ -567,7 +567,7 @@ public class GoatedPlayersManager {
         }
     }
 
-    private static void appendWithIconTokens(MutableText out, String plain, Style style) {
+    private static void appendWithIconTokens(MutableComponent out, String plain, Style style) {
         if (plain == null || plain.isEmpty()) return;
 
         int idx = 0;
@@ -596,16 +596,16 @@ public class GoatedPlayersManager {
             }
 
             if (marker < 0) {
-                out.append(Text.literal(plain.substring(idx)).setStyle(style));
+                out.append(Component.literal(plain.substring(idx)).setStyle(style));
                 break;
             }
 
             if (marker > idx) {
-                out.append(Text.literal(plain.substring(idx, marker)).setStyle(style));
+                out.append(Component.literal(plain.substring(idx, marker)).setStyle(style));
             }
 
-            Style iconStyle = style.withColor(Formatting.WHITE).withFont(new StyleSpriteSource.Font(font));
-            out.append(Text.literal(glyph).setStyle(iconStyle));
+            Style iconStyle = style.withColor(ChatFormatting.WHITE).withFont(new FontDescription.Resource(font));
+            out.append(Component.literal(glyph).setStyle(iconStyle));
             idx = marker + markerToken.length();
         }
     }

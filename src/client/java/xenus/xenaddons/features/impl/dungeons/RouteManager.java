@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,8 +21,8 @@ public class RouteManager {
 
     public static void loadRoutes() {
         try {
-            Identifier id = Identifier.of("xenaddons", "dungeons/routes.json");
-            InputStream stream = MinecraftClient.getInstance().getResourceManager().getResource(id).get().getInputStream();
+            Identifier id = Identifier.fromNamespaceAndPath("xenaddons", "dungeons/routes.json");
+            InputStream stream = Minecraft.getInstance().getResourceManager().getResource(id).get().open();
             JsonObject json = GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
             
             routes.clear();
