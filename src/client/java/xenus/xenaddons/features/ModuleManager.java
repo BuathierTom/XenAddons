@@ -38,7 +38,6 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.DungeonNotFullAlertModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.SecretRoutesModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule());
-        modules.add(new xenus.xenaddons.features.impl.dungeons.MaskReminderModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.ReminderGateModule());
         
         modules.add(new xenus.xenaddons.features.impl.misc.CommandAliasesModule());

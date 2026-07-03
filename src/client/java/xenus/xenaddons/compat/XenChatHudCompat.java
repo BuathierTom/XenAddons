@@ -29,7 +29,7 @@ public final class XenChatHudCompat {
         int mouseY = Mth.floor(client.mouseHandler.getScaledYPos(window));
 
         context.nextStratum();
-        chatHud.extractRenderState(context, client.font, ticks, mouseX, mouseY, ChatComponent.DisplayMode.BACKGROUND, false);
+        chatHud.extractRenderState(context, client.font, ticks, mouseX, mouseY, ChatComponent.DisplayMode.FOREGROUND, false);
         return true;
     }
 

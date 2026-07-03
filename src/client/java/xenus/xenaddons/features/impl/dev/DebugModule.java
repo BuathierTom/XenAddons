@@ -13,7 +13,6 @@ public class DebugModule extends Module {
     public final BooleanSetting enableProcsTest = new BooleanSetting("/xa procs", true);
     public final BooleanSetting enableGateTest = new BooleanSetting("/xa gate", true);
     public final BooleanSetting enableMilestoneTest = new BooleanSetting("/xa milestone", true);
-    public final BooleanSetting enableMaskTest = new BooleanSetting("/xa mask", true);
     public final BooleanSetting enablePfStatsTest = new BooleanSetting("/xa pf [pseudo]", true);
 
     public DebugModule() {
@@ -25,7 +24,6 @@ public class DebugModule extends Module {
         this.registerSetting(enableProcsTest);
         this.registerSetting(enableGateTest);
         this.registerSetting(enableMilestoneTest);
-        this.registerSetting(enableMaskTest);
         this.registerSetting(enablePfStatsTest);
     }
 }

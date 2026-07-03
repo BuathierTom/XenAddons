@@ -38,9 +38,6 @@ Available when `Debug` is enabled:
 - `/xa procs <spirit|bonzo|phoenix>`
 - `/xa gate`
 - `/xa milestone`
-- `/xa mask`
-- `/xa mask has`
-- `/xa mask nomask`
 - `/xa pf <pseudo>`
 
 ---
@@ -72,7 +69,6 @@ Available when `Debug` is enabled:
 - **Dungeon Not Full Alert** → Warns if your party is incomplete.
 - **Invisibility Timer** → Tracks Bonzo, Spirit, and Phoenix invulnerability.
 - **Item Quality** → Dungeon item quality tooltip.
-- **Mask Reminder** → Reminds you to equip dungeon masks.
 - **Milestone Reminder** → Dungeon milestone HUD reminders.
 - **Players Leaped** → Displays leap progress in F7 terms.
 - **Pos Message** → Party callouts at configured spots.

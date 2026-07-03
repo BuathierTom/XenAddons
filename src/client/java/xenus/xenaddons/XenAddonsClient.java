@@ -86,8 +86,8 @@ public class XenAddonsClient implements ClientModInitializer {
                         if (debug == null || !debug.isEnabled() || !debug.enablePfStatsTest.getValue()) {
                             return 0;
                         }
-                        xenus.xenaddons.features.impl.dungeons.DungeonsStatsPFModule.debugTrigger("dtXenus");
-                        xenus.xenaddons.utils.ChatUtils.info("PF debug launched for dtXenus");
+                        xenus.xenaddons.features.impl.dungeons.DungeonsStatsPFModule.debugTrigger("dtNyro");
+                        xenus.xenaddons.utils.ChatUtils.info("PF debug launched for dtNyro");
                         return 1;
                     }).then(ClientCommands.argument("player", StringArgumentType.word()).executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug =
@@ -260,50 +260,6 @@ public class XenAddonsClient implements ClientModInitializer {
                         xenus.xenaddons.utils.ChatUtils.info("Milestone Reminder test triggered.");
                         return 1;
                     }))
-                    .then(literal("mask")
-                        .executes(context -> {
-                            xenus.xenaddons.features.impl.dev.DebugModule debug =
-                                    xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
-                            if (debug == null || !debug.isEnabled() || !debug.enableMaskTest.getValue()) {
-                                return 0;
-                            }
-                            xenus.xenaddons.features.impl.dungeons.MaskReminderModule module =
-                                    xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.MaskReminderModule.class);
-                            if (module == null) return 0;
-                            if (!module.isEnabled()) module.setEnabled(true);
-
-                            if (module.debugHasMaskEquipped()) {
-                                xenus.xenaddons.utils.ChatUtils.info("Mask Reminder debug: mask detected, no notification.");
-                            } else {
-                                module.debugTriggerNoMask();
-                                xenus.xenaddons.utils.ChatUtils.info("Mask Reminder debug: no mask detected, notification triggered.");
-                            }
-                            return 1;
-                        })
-                        .then(literal("has").executes(context -> {
-                            xenus.xenaddons.features.impl.dev.DebugModule debug =
-                                    xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
-                            if (debug == null || !debug.isEnabled() || !debug.enableMaskTest.getValue()) {
-                                return 0;
-                            }
-                            xenus.xenaddons.utils.ChatUtils.info("Mask Reminder debug: simulated MASK equipped (no notification).");
-                            return 1;
-                        }))
-                        .then(literal("nomask").executes(context -> {
-                            xenus.xenaddons.features.impl.dev.DebugModule debug =
-                                    xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
-                            if (debug == null || !debug.isEnabled() || !debug.enableMaskTest.getValue()) {
-                                return 0;
-                            }
-                            xenus.xenaddons.features.impl.dungeons.MaskReminderModule module =
-                                    xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.MaskReminderModule.class);
-                            if (module == null) return 0;
-                            if (!module.isEnabled()) module.setEnabled(true);
-                            module.debugTriggerNoMask();
-                            xenus.xenaddons.utils.ChatUtils.info("Mask Reminder debug: simulated NO MASK, notification triggered.");
-                            return 1;
-                        }))
-                    )
 					.executes(context -> {
 						openClickGUINextTick = true;
 						return 1;

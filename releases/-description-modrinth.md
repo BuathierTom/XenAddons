@@ -53,7 +53,6 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Dungeon Not Full Alert**: Warns at dungeon start if the party is not full.
 - **Invisibility Timer**: Tracks Bonzo's Mask, Spirit Mask, and Phoenix Pet invulnerability timers.
 - **Item Quality**: Adds dungeon item quality information to item tooltips.
-- **Mask Reminder**: Reminds you to equip Spirit Mask or Bonzo's Mask during relevant dungeon phases.
 - **Milestone Reminder**: Displays dungeon milestone progress and sends reminders when needed.
 - **Players Leaped**: Displays leap progress in F7 terminal-related zones.
 - **Pos Message**: Sends party callouts when reaching configured dungeon spots.
