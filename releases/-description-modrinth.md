@@ -7,17 +7,17 @@
 [![Version](https://img.shields.io/modrinth/v/xenaddons?style=for-the-badge&logo=modrinth&logoColor=white&label=Version&color=E67E22)](https://modrinth.com/mod/xenaddons)
 [![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-Portal-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
-**A Fabric mod for Minecraft 1.21.11 focused on Hypixel SkyBlock QoL**
+**A Fabric mod for Minecraft 26.1.2 focused on Hypixel SkyBlock QoL**
 
 </div>
 
-XenAddons is a Fabric mod for Minecraft **1.21.11** focused on Hypixel SkyBlock quality-of-life features.
+XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock quality-of-life features.
 
 ## Compatibility
 
-- Minecraft: `1.21.11`
+- Minecraft: `26.1.2`
 - Mod loader: `Fabric`
-- Java: `21+`
+- Java: `25+`
 
 ## Main Commands
 
