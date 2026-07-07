@@ -40,7 +40,6 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Exp Table Addons**: Keeps Experimentation Table items visible.
 - **Inventory Buttons**: Adds configurable inventory buttons.
 - **Item Price**: Shows item prices in tooltips.
-- **Lava Replacement**: Replaces lava visuals with water visuals.
 - **Peek Chat**: Temporarily displays expanded chat without opening chat.
 - **Spotify Overlay**: Displays the current Spotify track as a HUD element, with optional better display controls.
 - **ZguegAddons**: Extra chat, dungeon, and party utilities.

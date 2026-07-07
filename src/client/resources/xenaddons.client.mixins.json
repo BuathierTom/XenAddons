@@ -31,7 +31,6 @@
 		"MixinMousePeekChat",
 		"MixinSoundManagerCustomHyperionSound",
 		"MixinClientPlayerInteractionManagerCooldownItems",
-		"MixinFluidRenderHandlerRegistry",
 		"MixinClientWorldBatDeathAlert",
 		"MixinClientPlayNetworkHandlerBatDeathAlert"
 	],

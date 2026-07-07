@@ -1,7 +1,7 @@
 ## Added
 
-- **Minecraft 1.21.12 Support**
-  - Added support for Minecraft `1.21.12`.
+- **Minecraft 26.1.2 Support**
+  - Added support for Minecraft `26.1.2`.
 
 ## Notice
 

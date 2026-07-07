@@ -56,7 +56,6 @@ Available when `Debug` is enabled:
 - **Exp Table Addons** → Keeps Experimentation Table items visible.
 - **Inventory Buttons** → Configurable inventory buttons.
 - **Item Price** → Bazaar & Lowest BIN tooltip prices.
-- **Lava Replacement** → Replaces lava visuals with water visuals.
 - **Peek Chat** → Temporarily expand chat without opening it.
 - **Spotify Overlay** → Displays the current Spotify track as a HUD element, with optional better display controls.
 - **ZguegAddons** → Chat, dungeon, and party QoL tools.
