@@ -100,6 +100,7 @@ object ConfigManager {
                     setting.name.equals("Class Notify", ignoreCase = true) -> "Notify"
                 setting.name.equals("Radio Msg", ignoreCase = true) ||
                     setting.name.equals("Discord Warn", ignoreCase = true) ||
+                    setting.name.equals("Annoying messages", ignoreCase = true) ||
                     setting.name.equals("Hit text", ignoreCase = true) ||
                     setting.name.equals("Implosion text", ignoreCase = true) ||
                     setting.name.equals("Implosion", ignoreCase = true) -> "Chat Hider"

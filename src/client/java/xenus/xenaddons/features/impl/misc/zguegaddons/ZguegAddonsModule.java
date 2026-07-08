@@ -18,6 +18,7 @@ public class ZguegAddonsModule extends Module {
     public final BooleanSetting cryptsNotify = new BooleanSetting("Crypts Notify", false);
     public final BooleanSetting classNotify = new BooleanSetting("Class Notify", false);
     public final BooleanSetting implosionText = new BooleanSetting("Implosion", true);
+    public final BooleanSetting annoyingMessages = new BooleanSetting("Annoying messages", true);
     
     // Command Settings
     public final BooleanSetting cmdBoom = new BooleanSetting("!boom", true);
@@ -33,10 +34,15 @@ public class ZguegAddonsModule extends Module {
         "Your radio signal is strong!",
         "Your radio lost signal. There's too many enjoyers on this channel."
     };
+    private static final String[] ANNOYING_MESSAGES = {
+        "There are blocks in the way!"
+    };
     
     private final String DISCORD_WARNING = "Please be mindful of Discord links in chat as they may pose a security risk";
+    private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("(?i)§[0-9a-fk-orx]");
     private static final Pattern HIT_TEXT_PATTERN = Pattern.compile(
-        "^Your (Spirit Sceptre|Implosion) hit [0-9.,]+ enemies? for [0-9.,]+ damage\\.$"
+        "^Your\\s+.+?\\s+hit\\s+[0-9,]+\\s+enem(?:y|ies)\\s+for\\s+[0-9,]+(?:\\.[0-9]+)?\\s+damage\\.?$",
+        Pattern.CASE_INSENSITIVE
     );
     private int lastCryptsCount = 0;
 
@@ -45,6 +51,7 @@ public class ZguegAddonsModule extends Module {
         this.registerSetting(cryptsNotify);
         this.registerSetting(classNotify);
         this.registerSetting(implosionText);
+        this.registerSetting(annoyingMessages);
 
         this.registerSetting(hideRadioMessages);
         this.registerSetting(hideDiscordWarning);
@@ -129,11 +136,37 @@ public class ZguegAddonsModule extends Module {
             if (modified) return false;
         }
 
-        if (implosionText.getValue() && HIT_TEXT_PATTERN.matcher(msg).matches()) {
+        if (annoyingMessages.getValue() && isAnnoyingMessage(msg)) {
+            return false;
+        }
+
+        if (implosionText.getValue() && isHitText(msg)) {
             return false;
         }
 
         return true;
+    }
+
+    private static boolean isHitText(String message) {
+        if (message == null || message.isBlank()) return false;
+        return HIT_TEXT_PATTERN.matcher(normalizeChatText(message)).matches();
+    }
+
+    private static boolean isAnnoyingMessage(String message) {
+        if (message == null || message.isBlank()) return false;
+        String clean = normalizeChatText(message);
+        for (String annoyingMessage : ANNOYING_MESSAGES) {
+            if (clean.contains(annoyingMessage)) return true;
+        }
+        return false;
+    }
+
+    private static String normalizeChatText(String message) {
+        return COLOR_CODE_PATTERN.matcher(message)
+            .replaceAll("")
+            .replace('\u00A0', ' ')
+            .replaceAll("\\s+", " ")
+            .trim();
     }
 
     private boolean hasAnyCommandEnabled() {
