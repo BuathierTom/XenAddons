@@ -7,6 +7,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import xenus.xenaddons.XenAddons;
@@ -19,6 +20,7 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -40,6 +42,30 @@ public final class ItemPriceManager {
         "UNCOMMON",
         "COMMON"
     };
+    private static final Set<String> ULTIMATE_ENCHANT_BASE_NAMES = Set.of(
+        "BANK",
+        "BOBBIN_TIME",
+        "CHIMERA",
+        "COMBO",
+        "CROP_FEVER",
+        "DUPLEX",
+        "FATAL_TEMPO",
+        "FLASH",
+        "HABANERO_TACTICS",
+        "HECATOMB",
+        "INFERNO",
+        "LAST_STAND",
+        "LEGION",
+        "NO_PAIN_NO_GAIN",
+        "ONE_FOR_ALL",
+        "REND",
+        "SOUL_EATER",
+        "SWARM",
+        "THE_ONE",
+        "JERRY",
+        "WISE",
+        "WISDOM"
+    );
 
     private static final Map<String, Double> LOWEST_BIN_BY_ID = new ConcurrentHashMap<>();
     private static final Map<String, BazaarPrice> BAZAAR_BY_ID = new ConcurrentHashMap<>();
@@ -98,7 +124,8 @@ public final class ItemPriceManager {
         CompoundTag root = customData.copyTag();
         if (root == null) return null;
 
-        CompoundTag extra = root.getCompound("ExtraAttributes").orElse(null);
+        CompoundTag extra = root.getCompound("ExtraAttributes")
+            .orElse(root.getCompound("extra_attributes").orElse(null));
         if (extra != null) {
             String id = readString(extra, "id");
             if (id != null) return id;
@@ -115,14 +142,26 @@ public final class ItemPriceManager {
         String sbId = extractSkyBlockId(stack);
         String petPricingId = resolvePetPricingId(stack, sbId);
         if (petPricingId != null) return petPricingId;
-        if (sbId == null) return null;
-        if (!"ENCHANTED_BOOK".equals(sbId)) return sbId;
 
-        String firstLore = getFirstLoreLine(stack);
-        if (firstLore == null || firstLore.isBlank()) return sbId;
+        if (isEnchantedBookStack(stack, sbId)) {
+            String converted = resolveEnchantedBookPricingId(stack);
+            if (converted != null) return converted;
+            if ("ENCHANTED_BOOK".equals(sbId)) return sbId;
+        }
 
-        String converted = enchantNameToId(firstLore);
-        return converted != null ? converted : sbId;
+        return sbId;
+    }
+
+    public static String resolveQuickSearchName(ItemStack stack) {
+        if (!isEnchantedBookStack(stack, extractSkyBlockId(stack))) return null;
+
+        String fromDisplay = resolveEnchantedBookSearchNameFromDisplay(stack);
+        if (fromDisplay != null) return fromDisplay;
+
+        String fromLore = resolveEnchantedBookSearchNameFromLore(stack);
+        if (fromLore != null) return fromLore;
+
+        return formatEnchantmentSearchName(resolveEnchantedBookPricingIdFromNbt(stack));
     }
 
     public static String formatCoins(double value) {
@@ -145,6 +184,11 @@ public final class ItemPriceManager {
         String value = nbt.getStringOr(key, "");
         if (value == null || value.isBlank()) return null;
         return value;
+    }
+
+    private static boolean isEnchantedBookStack(ItemStack stack, String sbId) {
+        return "ENCHANTED_BOOK".equals(sbId)
+            || (stack != null && !stack.isEmpty() && stack.is(Items.ENCHANTED_BOOK));
     }
 
     private static String resolvePetPricingId(ItemStack stack, String sbId) {
@@ -260,11 +304,74 @@ public final class ItemPriceManager {
         return customData == null ? null : customData.copyTag();
     }
 
-    private static String getFirstLoreLine(ItemStack stack) {
+    private static String resolveEnchantedBookPricingId(ItemStack stack) {
+        String fromNbt = resolveEnchantedBookPricingIdFromNbt(stack);
+        if (fromNbt != null) return fromNbt;
+
+        String fromDisplay = resolveEnchantedBookPricingIdFromDisplay(stack);
+        if (fromDisplay != null) return fromDisplay;
+
+        return resolveEnchantedBookPricingIdFromLore(stack);
+    }
+
+    private static String resolveEnchantedBookPricingIdFromNbt(ItemStack stack) {
+        CompoundTag root = getCustomDataTag(stack);
+        if (root == null) return null;
+
+        CompoundTag extra = root.getCompound("ExtraAttributes")
+            .orElse(root.getCompound("extra_attributes").orElse(root));
+        CompoundTag enchantments = extra.getCompound("enchantments").orElse(null);
+        if (enchantments == null || enchantments.isEmpty()) return null;
+
+        for (String enchantName : enchantments.keySet()) {
+            int level = enchantments.getIntOr(enchantName, 0);
+            String pricingId = buildEnchantmentPricingId(enchantName, level);
+            if (pricingId != null) return pricingId;
+        }
+
+        return null;
+    }
+
+    private static String resolveEnchantedBookPricingIdFromDisplay(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+        return enchantNameToId(stack.getHoverName().getString());
+    }
+
+    private static String resolveEnchantedBookPricingIdFromLore(ItemStack stack) {
         ItemLore lore = stack.get(DataComponents.LORE);
         if (lore == null || lore.lines().isEmpty()) return null;
-        Component first = lore.lines().getFirst();
-        return first == null ? null : stripFormatting(first.getString());
+
+        for (Component component : lore.lines()) {
+            if (component == null) continue;
+            String pricingId = enchantNameToId(component.getString());
+            if (pricingId != null) return pricingId;
+        }
+
+        return null;
+    }
+
+    private static String resolveEnchantedBookSearchNameFromDisplay(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+        return resolveEnchantedBookSearchNameFromText(stack.getHoverName().getString());
+    }
+
+    private static String resolveEnchantedBookSearchNameFromLore(ItemStack stack) {
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null || lore.lines().isEmpty()) return null;
+
+        for (Component component : lore.lines()) {
+            if (component == null) continue;
+            String searchName = resolveEnchantedBookSearchNameFromText(component.getString());
+            if (searchName != null) return searchName;
+        }
+
+        return null;
+    }
+
+    private static String resolveEnchantedBookSearchNameFromText(String text) {
+        String enchantmentText = extractEnchantmentText(text);
+        if (enchantmentText == null || enchantmentText.isBlank()) return null;
+        return enchantNameToId(enchantmentText) == null ? null : enchantmentText;
     }
 
     private static String stripFormatting(String input) {
@@ -275,21 +382,109 @@ public final class ItemPriceManager {
     private static String enchantNameToId(String loreLine) {
         if (loreLine == null || loreLine.isBlank()) return null;
 
-        String cleaned = stripFormatting(loreLine);
+        String cleaned = extractEnchantmentText(loreLine);
+        if (cleaned == null || cleaned.isBlank()) return null;
+
         int lastSpace = cleaned.lastIndexOf(' ');
         if (lastSpace <= 0 || lastSpace >= cleaned.length() - 1) return null;
 
         String namePart = cleaned.substring(0, lastSpace).trim();
-        String levelPart = cleaned.substring(lastSpace + 1).trim();
+        String levelPart = cleaned.substring(lastSpace + 1).replaceAll("[^A-Za-z0-9]", "").trim();
         int level = parseLevel(levelPart);
         if (level <= 0) return null;
 
-        boolean ultimate = namePart.toLowerCase(Locale.ROOT).startsWith("ultimate ");
-        String normalized = namePart.toUpperCase(Locale.ROOT).replace(' ', '_');
-        if (ultimate && !normalized.startsWith("ULTIMATE_")) {
-            normalized = "ULTIMATE_" + normalized;
+        return buildEnchantmentPricingId(namePart, level);
+    }
+
+    private static String extractEnchantmentText(String loreLine) {
+        String cleaned = stripFormatting(loreLine);
+        if (cleaned == null || cleaned.isBlank()) return null;
+        if ("Enchanted Book".equalsIgnoreCase(cleaned)) return null;
+
+        int bookPrefix = cleaned.indexOf("Enchanted Book (");
+        if (bookPrefix >= 0) {
+            int open = cleaned.indexOf('(', bookPrefix);
+            int close = cleaned.lastIndexOf(')');
+            if (open >= 0 && close > open) {
+                return cleaned.substring(open + 1, close).trim();
+            }
         }
-        return "ENCHANTMENT_" + normalized + "_" + level;
+
+        return cleaned;
+    }
+
+    private static String buildEnchantmentPricingId(String enchantName, int level) {
+        if (level <= 0) return null;
+
+        String normalized = normalizeApiPart(enchantName);
+        if (normalized == null) return null;
+
+        if (normalized.startsWith("ULTIMATE_")) {
+            return "ENCHANTMENT_" + normalized + "_" + level;
+        }
+
+        String normalId = "ENCHANTMENT_" + normalized + "_" + level;
+        String ultimateId = "ENCHANTMENT_ULTIMATE_" + normalized + "_" + level;
+        if (ULTIMATE_ENCHANT_BASE_NAMES.contains(normalized) || BAZAAR_BY_ID.containsKey(ultimateId)) {
+            return ultimateId;
+        }
+
+        return normalId;
+    }
+
+    private static String formatEnchantmentSearchName(String pricingId) {
+        if (pricingId == null || !pricingId.startsWith("ENCHANTMENT_")) return null;
+
+        String body = pricingId.substring("ENCHANTMENT_".length());
+        int split = body.lastIndexOf('_');
+        if (split <= 0 || split >= body.length() - 1) return null;
+
+        String levelPart = body.substring(split + 1);
+        int level;
+        try {
+            level = Integer.parseInt(levelPart);
+        } catch (Exception ignored) {
+            return null;
+        }
+
+        String name = body.substring(0, split);
+        if (name.startsWith("ULTIMATE_")) {
+            name = name.substring("ULTIMATE_".length());
+        }
+
+        String displayName = titleCaseApiPart(name);
+        if (displayName == null) return null;
+        return displayName + " " + intToRoman(level);
+    }
+
+    private static String titleCaseApiPart(String value) {
+        if (value == null || value.isBlank()) return null;
+
+        String[] parts = value.toLowerCase(Locale.ROOT).split("_+");
+        StringBuilder out = new StringBuilder();
+        for (String part : parts) {
+            if (part.isBlank()) continue;
+            if (!out.isEmpty()) out.append(' ');
+            out.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) out.append(part.substring(1));
+        }
+
+        return out.isEmpty() ? null : out.toString();
+    }
+
+    private static String intToRoman(int value) {
+        if (value <= 0) return Integer.toString(value);
+        int[] numbers = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
+        String[] romans = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+        StringBuilder out = new StringBuilder();
+        int remaining = value;
+        for (int i = 0; i < numbers.length; i++) {
+            while (remaining >= numbers[i]) {
+                out.append(romans[i]);
+                remaining -= numbers[i];
+            }
+        }
+        return out.toString();
     }
 
     private static int parseLevel(String level) {
