@@ -1,10 +1,10 @@
 {
   "24c56ab5-b504-4d38-bd06-e5af6686fcaa": {
-    "username": "dtXenus",
+    "username": "dtXen",
     "aliases": [
-      "dtXenus"
+      "dtXen"
     ],
-    "displayName": "&#F45454&ld&#EE4671&lt&#E9388D&lX&#E32AAA&le&#DD1CC6&ln&#D80EE3&lu&#D200FF&ls&r"
+    "displayName": "&#F45454&ld&#EE4671&lt&#E9388D&lX&#E32AAA&le&#DD1CC6&ln&r"
   },
   "c7b5e04d-eaea-46a8-8440-5930b5c53b85": {
     "username": "DungeonsRat",
@@ -89,10 +89,7 @@
       "dtFiong"
     ],
     "username": "dtFiong",
-    "displayName": "&#04E05F&ld&#07D465&lt&#0BC86C&lF&#0EBC72&li&#11B078&lo&#15A47F&ln&#189885&lg&r",
-    "sizeX": 2,
-    "sizeY": 0.3,
-    "sizeZ": 1
+    "displayName": "&#4FACFE&ld&#42B8FE&lt&#35C3FE&lF&#28CFFE&li&#1ADBFE&lo&#0DE6FE&ln&#00F2FE&lg&r"
   },
   "bed21919-20ad-4df8-b959-23af7f37db16": {
     "aliases": [
@@ -112,5 +109,19 @@
     "sizeX": 2.3,
     "sizeY": 1.2,
     "sizeZ": 2.3
+  },
+  "a9e45b99-d523-4303-bd34-080691a86db1": {
+    "aliases": [
+      "wWuzax_"
+    ],
+    "username": "wWuzax_",
+    "displayName": "&#FD9916&lw&#FBA813&lW&#F8B60F&lu&#F6C50C&lz&#F3D408&la&#F1E205&lx&#EEF101&l_&r"
+  },
+  "2cf1f467-102b-4a56-b463-de07c9a9de4f": {
+    "aliases": [
+      "wWuzax__"
+    ],
+    "username": "wWuzax__",
+    "displayName": "&#FD9916&lw&#FBA813&lW&#F8B60F&lu&#F6C50C&lz&#F3D408&la&#F1E205&lx&#EEF101&l__&r"
   }
 }
