@@ -21,11 +21,25 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 public final class ItemPriceManager {
     private static final String HYPIXEL_BAZAAR_API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
     private static final String LOWEST_BIN_API_URL = "https://whatyouth.ing/api/nofrills/v2/economy/get-item-pricing/";
     private static final long REFRESH_MS = 5 * 60 * 1000L;
+    private static final Pattern PET_LEVEL_PREFIX_PATTERN = Pattern.compile("^\\s*\\[\\s*Lvl\\s+\\d+\\s*]\\s*", Pattern.CASE_INSENSITIVE);
+    private static final Pattern PET_SUFFIX_PATTERN = Pattern.compile("\\s+Pet\\s*$", Pattern.CASE_INSENSITIVE);
+    private static final String[] PET_RARITIES = {
+        "VERY SPECIAL",
+        "SPECIAL",
+        "DIVINE",
+        "MYTHIC",
+        "LEGENDARY",
+        "EPIC",
+        "RARE",
+        "UNCOMMON",
+        "COMMON"
+    };
 
     private static final Map<String, Double> LOWEST_BIN_BY_ID = new ConcurrentHashMap<>();
     private static final Map<String, BazaarPrice> BAZAAR_BY_ID = new ConcurrentHashMap<>();
@@ -99,6 +113,8 @@ public final class ItemPriceManager {
 
     public static String resolvePricingId(ItemStack stack) {
         String sbId = extractSkyBlockId(stack);
+        String petPricingId = resolvePetPricingId(stack, sbId);
+        if (petPricingId != null) return petPricingId;
         if (sbId == null) return null;
         if (!"ENCHANTED_BOOK".equals(sbId)) return sbId;
 
@@ -129,6 +145,119 @@ public final class ItemPriceManager {
         String value = nbt.getStringOr(key, "");
         if (value == null || value.isBlank()) return null;
         return value;
+    }
+
+    private static String resolvePetPricingId(ItemStack stack, String sbId) {
+        if (stack == null || stack.isEmpty()) return null;
+
+        String petInfo = readPetInfo(stack);
+        String petPricingId = resolvePetPricingIdFromInfo(petInfo);
+        if (petPricingId != null) return petPricingId;
+
+        if (!"PET".equals(sbId)) return null;
+
+        String petName = resolvePetNameFromDisplay(stack);
+        String petRarity = resolvePetRarityFromLore(stack);
+        return buildPetPricingId(petName, petRarity);
+    }
+
+    private static String readPetInfo(ItemStack stack) {
+        CompoundTag root = getCustomDataTag(stack);
+        if (root == null) return null;
+
+        CompoundTag extra = root.getCompound("ExtraAttributes")
+            .orElse(root.getCompound("extra_attributes").orElse(null));
+        String petInfo = readString(extra, "petInfo");
+        if (petInfo != null) return petInfo;
+
+        return readString(root, "petInfo");
+    }
+
+    private static String resolvePetPricingIdFromInfo(String petInfo) {
+        if (petInfo == null || petInfo.isBlank()) return null;
+
+        try {
+            JsonElement rootElement = JsonParser.parseString(petInfo);
+            if (rootElement == null || !rootElement.isJsonObject()) return null;
+
+            JsonObject root = rootElement.getAsJsonObject();
+            String type = readJsonString(root, "type");
+            String tier = readJsonString(root, "tier");
+            if (tier == null) tier = readJsonString(root, "rarity");
+
+            return buildPetPricingId(type, tier);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static String resolvePetNameFromDisplay(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+
+        String displayName = stripFormatting(stack.getHoverName().getString());
+        if (displayName == null || displayName.isBlank()) return null;
+
+        String name = PET_LEVEL_PREFIX_PATTERN.matcher(displayName).replaceFirst("").trim();
+        name = PET_SUFFIX_PATTERN.matcher(name).replaceFirst("").trim();
+        return name.isBlank() ? null : name;
+    }
+
+    private static String resolvePetRarityFromLore(ItemStack stack) {
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null || lore.lines().isEmpty()) return null;
+
+        for (int i = lore.lines().size() - 1; i >= 0; i--) {
+            Component component = lore.lines().get(i);
+            if (component == null) continue;
+
+            String line = stripFormatting(component.getString());
+            if (line == null || line.isBlank()) continue;
+
+            String upper = line.toUpperCase(Locale.ROOT);
+            if (!upper.contains("PET")) continue;
+
+            for (String rarity : PET_RARITIES) {
+                if (upper.contains(rarity)) return rarity;
+            }
+        }
+
+        return null;
+    }
+
+    private static String buildPetPricingId(String petName, String rarity) {
+        String normalizedPet = normalizeApiPart(petName);
+        String normalizedRarity = normalizeApiPart(rarity);
+        if (normalizedPet == null || normalizedRarity == null) return null;
+
+        if (normalizedPet.endsWith("_PET")) {
+            normalizedPet = normalizedPet.substring(0, normalizedPet.length() - 4);
+        }
+        if (normalizedPet.isBlank()) return null;
+
+        return normalizedPet + "_PET_" + normalizedRarity;
+    }
+
+    private static String normalizeApiPart(String value) {
+        if (value == null || value.isBlank()) return null;
+        String normalized = stripFormatting(value)
+            .toUpperCase(Locale.ROOT)
+            .replaceAll("[^A-Z0-9]+", "_")
+            .replaceAll("^_+|_+$", "");
+        return normalized.isBlank() ? null : normalized;
+    }
+
+    private static String readJsonString(JsonObject object, String key) {
+        if (object == null || key == null || !object.has(key)) return null;
+        JsonElement value = object.get(key);
+        if (value == null || !value.isJsonPrimitive()) return null;
+        String string = value.getAsString();
+        return string == null || string.isBlank() ? null : string;
+    }
+
+    private static CompoundTag getCustomDataTag(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+        return customData == null ? null : customData.copyTag();
     }
 
     private static String getFirstLoreLine(ItemStack stack) {
