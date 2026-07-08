@@ -11,8 +11,3 @@
 
 - **Mask Reminder**
   - Removed the feature completely, including debug commands and settings.
-
-## Changed
-
-- **Docs**
-  - Updated version and compatibility metadata for `1.3.7`.
