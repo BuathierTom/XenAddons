@@ -17,7 +17,7 @@ public class ZguegAddonsModule extends Module {
     
     public final BooleanSetting cryptsNotify = new BooleanSetting("Crypts Notify", false);
     public final BooleanSetting classNotify = new BooleanSetting("Class Notify", false);
-    public final BooleanSetting implosionText = new BooleanSetting("Implosion", true);
+    public final BooleanSetting implosionText = new BooleanSetting("Ability damage", true);
     public final BooleanSetting annoyingMessages = new BooleanSetting("Annoying messages", true);
     
     // Command Settings
