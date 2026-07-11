@@ -38,6 +38,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.SecretRoutesModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.ReminderGateModule());
+        modules.add(new xenus.xenaddons.features.impl.dungeons.RefillModule());
         
         modules.add(new xenus.xenaddons.features.impl.misc.CommandAliasesModule());
         modules.add(new xenus.xenaddons.features.impl.dev.EditHudModule());
