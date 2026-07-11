@@ -24,6 +24,7 @@ XenAddons is a Fabric mod for Minecraft **1.21.11** focused on Hypixel SkyBlock 
 - `/xa` - Open XenAddons GUI
 - `/xenaddons` - Open XenAddons GUI
 - `/xa hud` - Open HUD editor
+- `/xa refill <pearl|tnt|leap|twap|tap|jerry|decoy>` - Refill a dungeon utility item to its target stack size
 - `/pcc` - Shortcut for `/chat party`
 
 ## Features
@@ -40,7 +41,6 @@ XenAddons is a Fabric mod for Minecraft **1.21.11** focused on Hypixel SkyBlock 
 - **Exp Table Addons**: Keeps Experimentation Table items visible.
 - **Inventory Buttons**: Adds configurable inventory buttons.
 - **Item Price**: Shows item prices in tooltips.
-- **Lava Replacement**: Replaces lava visuals with water visuals.
 - **Peek Chat**: Temporarily displays expanded chat without opening chat.
 - **Spotify Overlay**: Displays the current Spotify track as a HUD element, with optional better display controls.
 - **ZguegAddons**: Extra chat, dungeon, and party utilities.
@@ -58,6 +58,7 @@ XenAddons is a Fabric mod for Minecraft **1.21.11** focused on Hypixel SkyBlock 
 - **Players Leaped**: Displays leap progress in F7 terminal-related zones.
 - **Pos Message**: Sends party callouts when reaching configured dungeon spots.
 - **Pos Titles**: Displays teammate callouts as movable HUD text.
+- **Refill**: Checks your inventory and requests only the missing dungeon utility items with `/gfs`.
 - **Reminder Gate**: Shows gate reminders based on lever progress messages.
 - **SecretRoutes**: Renders dungeon routes, secrets, waypoints, and room helpers.
 

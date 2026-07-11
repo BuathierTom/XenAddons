@@ -4,7 +4,7 @@
 
 [![Downloads](https://img.shields.io/modrinth/dt/xenaddons?style=for-the-badge&logo=modrinth&logoColor=007F43&label=Downloads&color=00AF5C)](https://modrinth.com/mod/xenaddons)
 [![Discord](https://img.shields.io/discord/1473269453213925492?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=1E3A8A)](https://discord.gg/yRbJJwGTPG)
-[![GitHub Version](https://img.shields.io/badge/GitHub-v1.3.5-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
+[![GitHub Version](https://img.shields.io/badge/GitHub-v1.3.6-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
 [![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-Portal-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
 ### A Fabric mod for Minecraft 1.21.11 focused on Hypixel SkyBlock QoL
@@ -25,6 +25,7 @@
 
 - `/xa` or `/xenaddons` → Open GUI
 - `/xa hud` → Open HUD editor
+- `/xa refill <pearl|tnt|leap|twap|tap|jerry|decoy>` → Refill a dungeon utility item to its target stack size
 - `/pcc` → Shortcut for `/chat party`
 
 ### Debug Commands
@@ -59,7 +60,6 @@ Available when `Debug` is enabled:
 - **Exp Table Addons** → Keeps Experimentation Table items visible.
 - **Inventory Buttons** → Configurable inventory buttons.
 - **Item Price** → Bazaar & Lowest BIN tooltip prices.
-- **Lava Replacement** → Replaces lava visuals with water visuals.
 - **Peek Chat** → Temporarily expand chat without opening it.
 - **Spotify Overlay** → Displays the current Spotify track as a HUD element, with optional better display controls.
 - **ZguegAddons** → Chat, dungeon, and party QoL tools.
@@ -77,6 +77,7 @@ Available when `Debug` is enabled:
 - **Players Leaped** → Displays leap progress in F7 terms.
 - **Pos Message** → Party callouts at configured spots.
 - **Pos Titles** → Displays teammate callouts as HUD text.
+- **Refill** → Uses `/xa refill` to request only the dungeon utility items missing from the target stack.
 - **Reminder Gate** → Gate reminder from lever progress.
 - **SecretRoutes** → Dungeon routes, secrets, and room helpers.
 
