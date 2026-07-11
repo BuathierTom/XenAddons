@@ -40,7 +40,7 @@ public class MixinScreenTooltipVisualWords {
                 // Bazaar has priority; if missing, fallback to Lowest BIN.
                 if (bazaar != null) {
                     int stackAmountForShift = count > 1 ? count : 64;
-                    boolean showStack = true;
+                    boolean showStack = !itemId.startsWith("ENCHANTMENT_");
                     long handle = client.getWindow().getHandle();
                     boolean shiftDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
                         || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;

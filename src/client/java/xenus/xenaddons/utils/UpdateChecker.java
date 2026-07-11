@@ -5,6 +5,11 @@ import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import xenus.xenaddons.XenAddons;
 
 import java.net.URI;
@@ -21,6 +26,7 @@ import java.util.Locale;
 public final class UpdateChecker {
     private static final String MODRINTH_PROJECT_SLUG = "xenaddons";
     private static final String MODRINTH_PROJECT_PAGE = "https://modrinth.com/mod/xenaddons";
+    private static final String DISCORD_INVITE = "https://discord.com/invite/yRbJJwGTPG";
     private static final String MODRINTH_VERSIONS_API =
         "https://api.modrinth.com/v2/project/" + MODRINTH_PROJECT_SLUG + "/version";
 
@@ -78,6 +84,8 @@ public final class UpdateChecker {
         } catch (Exception e) {
             XenAddons.LOGGER.warn("Update check failed", e);
             warning("Unable to check updates right now.");
+        } finally {
+            discordInvite();
         }
     }
 
@@ -240,6 +248,24 @@ public final class UpdateChecker {
 
     private static void warning(String message) {
         runOnClientThread(() -> ChatUtils.warning(message));
+    }
+
+    private static void discordInvite() {
+        runOnClientThread(() -> {
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client == null || client.player == null) return;
+
+            MutableText message = Text.literal(ChatUtils.PREFIX + "§eJoin the Discord: ");
+            MutableText link = Text.literal("CLICK TO JOIN");
+            link.setStyle(link.getStyle()
+                .withColor(Formatting.YELLOW)
+                .withBold(true)
+                .withUnderline(false)
+                .withClickEvent(new ClickEvent.OpenUrl(URI.create(DISCORD_INVITE)))
+                .withHoverEvent(new HoverEvent.ShowText(Text.literal("§e" + DISCORD_INVITE))));
+            message.append(link);
+            client.player.sendMessage(message, false);
+        });
     }
 
     private static void runOnClientThread(Runnable runnable) {

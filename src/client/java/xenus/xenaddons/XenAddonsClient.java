@@ -80,6 +80,7 @@ public class XenAddonsClient implements ClientModInitializer {
 						openEditorNextTick = true;
 						return 1;
 					}))
+					.then(xenus.xenaddons.features.impl.dungeons.RefillModule.createCommand())
 					.then(literal("pf").executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug =
                                 xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);

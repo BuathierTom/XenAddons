@@ -66,7 +66,10 @@ public class BazaarAHQuickSearchModule extends Module {
 
         ItemStack stack = slot.getStack();
         if (stack == null || stack.isEmpty()) return;
-        String itemName = sanitizeItemName(stack.getName().getString(), stack);
+        String itemName = ItemPriceManager.resolveQuickSearchName(stack);
+        if (itemName == null || itemName.isBlank()) {
+            itemName = sanitizeItemName(stack.getName().getString(), stack);
+        }
         if (itemName.isBlank()) return;
 
         String cmd = buildCommand(handled.getTitle().getString(), stack, itemName);
@@ -79,7 +82,7 @@ public class BazaarAHQuickSearchModule extends Module {
         // Auto only: detect from item id first, then from current gui title.
         ItemPriceManager.requestRefreshIfNeeded();
         String pricingId = ItemPriceManager.resolvePricingId(stack);
-        if (pricingId != null && ItemPriceManager.getBazaarPrice(pricingId) != null) {
+        if (pricingId != null && (pricingId.startsWith("ENCHANTMENT_") || ItemPriceManager.getBazaarPrice(pricingId) != null)) {
             return "bz " + itemName;
         }
         String title = stripFormatting(screenTitle).toLowerCase(Locale.ROOT);
@@ -127,24 +130,33 @@ public class BazaarAHQuickSearchModule extends Module {
 
     private static String removeKnownReforgePrefix(String name) {
         if (name == null || name.isBlank()) return "";
-        int split = name.indexOf(' ');
-        if (split <= 0) return name;
 
-        String firstWord = name.substring(0, split).toLowerCase(Locale.ROOT);
-        // Broad curated set of common hypixel reforges (armor/weapons/bows/tools/accessories).
+        String lowerName = name.toLowerCase(Locale.ROOT);
+
         String[] reforges = {
-            "ancient", "gentle", "fierce", "heavy", "light", "mythic", "pure", "smart", "titanic", "wise",
-            "perfect", "necrotic", "loving", "giant", "spiked", "renowned", "cubic", "reinforced", "clean",
-            "hasty", "sharp", "heroic", "spicy", "legendary", "odd", "fast", "fair", "epic", "awkward",
-            "rich", "fine", "neat", "rapid", "deadly", "unreal", "precise", "headstrong", "spiritual",
-            "fleet", "dirty", "fabled", "suspicious", "gilded", "warped", "withered", "livid", "bizarre",
-            "itchy", "pleasant", "pretty", "shiny", "simple", "strange", "vivid", "godly", "demonic",
-            "forceful", "hurtful", "strong", "superior", "keen", "fortuitous", "fortunate", "treacherous",
-            "zealous", "silky", "bloody", "shaded", "sweet", "commando", "itchy", "hurtful", "warrior"
+            "ambered", "ancient", "astute", "auspicious", "awkward", "beady", "bizarre", "blazing",
+            "blended", "blessed", "blood-soaked", "bloodshot", "bloody", "blooming", "bountiful",
+            "brilliant", "bulky", "bustling", "buzzing", "candied", "chomp", "clean", "coldfused",
+            "colossal", "cubic", "deadly", "demonic", "dimensional", "dirty", "double-bit", "earthy",
+            "empowered", "epic", "erudite", "excellent", "fabled", "fair", "fanged", "fast",
+            "festive", "fierce", "fine", "fleet", "forceful", "fortified", "fortunate", "fruitful",
+            "gentle", "giant", "gilded", "glacial", "glistening", "godly", "grand", "great",
+            "greater spook", "green thumb", "hasty", "headstrong", "heated", "heavy", "hefty",
+            "heroic", "honored", "hurtful", "hyper", "itchy", "jaded", "jerry", "keen",
+            "legendary", "light", "loving", "lucky", "lumberjack's", "lush", "lustrous", "magnetic",
+            "menacing", "mithraic", "moil", "mossy", "mythic", "neat", "necrotic", "odd",
+            "ominous", "peasant's", "perfect", "pitchin'", "pleasant", "precise", "pretty",
+            "prospector's", "pure", "rapid", "refined", "reinforced", "renowned", "rich",
+            "ridiculous", "robust", "rooted", "royal", "rugged", "salty", "scraped", "shaded",
+            "sharp", "shiny", "silky", "simple", "smart", "snowy", "soft", "spicy", "spiritual",
+            "spiked", "stained", "stellar", "stiff", "strange", "strengthened", "strong", "sturdy",
+            "superior", "suspicious", "sunny", "sweet", "treacherous", "undead", "unyielding", "warped",
+            "waxed", "withered", "zooming"
         };
         for (String reforge : reforges) {
-            if (firstWord.equals(reforge)) {
-                return name.substring(split + 1).trim();
+            if (lowerName.equals(reforge)) return "";
+            if (lowerName.startsWith(reforge + " ")) {
+                return name.substring(reforge.length() + 1).trim();
             }
         }
         return name;
