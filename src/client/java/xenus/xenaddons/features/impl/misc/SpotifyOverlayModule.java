@@ -110,6 +110,7 @@ public class SpotifyOverlayModule extends Module {
             "MEWA",
             "Playing",
             "",
+            null,
             "",
             74,
             151

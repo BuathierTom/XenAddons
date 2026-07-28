@@ -5,8 +5,6 @@ import xenus.xenaddons.XenAddons;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,10 +42,10 @@ public final class SpotifyNowPlaying {
     private static volatile String title = "";
     private static volatile String state = "Not open";
     private static volatile String artworkUrl = "";
+    private static volatile byte[] artworkBytes;
     private static volatile String trackUrl = "";
     private static volatile int progressSeconds = -1;
     private static volatile int durationSeconds = -1;
-    private static volatile int spotifyProcessId = -1;
     private static volatile boolean lastFetchIncludedProgress = false;
 
     private SpotifyNowPlaying() {}
@@ -88,10 +86,28 @@ public final class SpotifyNowPlaying {
     }
 
     public static Snapshot getSnapshot() {
-        return new Snapshot(artist, title, state, artworkUrl, trackUrl, progressSeconds, durationSeconds);
+        return new Snapshot(
+            artist,
+            title,
+            state,
+            artworkUrl,
+            artworkBytes,
+            trackUrl,
+            progressSeconds,
+            durationSeconds
+        );
     }
 
-    public record Snapshot(String artist, String title, String state, String artworkUrl, String trackUrl, int progressSeconds, int durationSeconds) {
+    public record Snapshot(
+        String artist,
+        String title,
+        String state,
+        String artworkUrl,
+        byte[] artworkBytes,
+        String trackUrl,
+        int progressSeconds,
+        int durationSeconds
+    ) {
         public boolean isPlaying() {
             return "Playing".equals(state) && !artist.isBlank() && !title.isBlank();
         }
@@ -108,7 +124,7 @@ public final class SpotifyNowPlaying {
     private static void refreshNowPlaying(boolean includeProgress) {
         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         if (os.contains("win")) {
-            refreshWindowsLikeSoopy();
+            refreshWindows(includeProgress);
             return;
         }
         if (os.contains("mac")) {
@@ -119,53 +135,27 @@ public final class SpotifyNowPlaying {
         title = "";
         state = "Not open";
         artworkUrl = "";
+        artworkBytes = null;
         trackUrl = "";
         progressSeconds = -1;
         durationSeconds = -1;
     }
 
-    private static void refreshWindowsLikeSoopy() {
-        String currentSong = getWindowsSpotifyWindowTitle();
-        if (currentSong == null) currentSong = getWindowsSpotifyTasklistTitle();
-
-        if (currentSong == null) {
-            artist = "";
-            title = "";
-            state = "Not open";
-            artworkUrl = "";
-            trackUrl = "";
-            progressSeconds = -1;
-            durationSeconds = -1;
+    private static void refreshWindows(boolean includeProgress) {
+        WindowsSpotifyBridge.Snapshot snapshot = WindowsSpotifyBridge.read(includeProgress);
+        if (snapshot == null) {
+            clearNowPlaying();
             return;
         }
 
-        if ("__PAUSED__".equals(currentSong)) {
-            artist = "";
-            title = "";
-            state = "Paused";
-            artworkUrl = "";
-            trackUrl = "";
-            progressSeconds = -1;
-            durationSeconds = -1;
-            return;
-        }
-
-        if ("Spotify".equalsIgnoreCase(currentSong)) {
-            currentSong = "Advertisement";
-        }
-        String[] parts = currentSong.split(" - ", 2);
-        if (parts.length == 2) {
-            artist = sanitize(parts[0]);
-            title = sanitize(parts[1]);
-        } else {
-            artist = "Unknown";
-            title = sanitize(currentSong);
-        }
-        state = "Playing";
+        artist = sanitize(snapshot.artist());
+        title = sanitize(snapshot.title());
+        state = snapshot.playing() ? "Playing" : "Paused";
         artworkUrl = "";
+        artworkBytes = includeProgress ? snapshot.artwork() : null;
         trackUrl = "";
-        progressSeconds = -1;
-        durationSeconds = -1;
+        progressSeconds = includeProgress ? snapshot.progressSeconds() : -1;
+        durationSeconds = includeProgress ? snapshot.durationSeconds() : -1;
     }
 
     private static void refreshMac(boolean includeProgress) {
@@ -178,6 +168,7 @@ public final class SpotifyNowPlaying {
                 title = "";
                 state = "Not open";
                 artworkUrl = "";
+                artworkBytes = null;
                 trackUrl = "";
                 progressSeconds = -1;
                 durationSeconds = -1;
@@ -190,6 +181,7 @@ public final class SpotifyNowPlaying {
                 title = "";
                 state = "Not open";
                 artworkUrl = "";
+                artworkBytes = null;
                 trackUrl = "";
                 progressSeconds = -1;
                 durationSeconds = -1;
@@ -202,6 +194,7 @@ public final class SpotifyNowPlaying {
                 title = "";
                 state = "Not open";
                 artworkUrl = "";
+                artworkBytes = null;
                 trackUrl = "";
                 progressSeconds = -1;
                 durationSeconds = -1;
@@ -216,6 +209,7 @@ public final class SpotifyNowPlaying {
                 title = "";
                 state = normalizedState.contains("playing") ? "Playing" : "Paused";
                 artworkUrl = "";
+                artworkBytes = null;
                 trackUrl = "";
                 progressSeconds = -1;
                 durationSeconds = -1;
@@ -226,6 +220,7 @@ public final class SpotifyNowPlaying {
             title = sanitize(titleRaw);
             state = normalizedState.contains("playing") ? "Playing" : "Paused";
             artworkUrl = includeProgress ? sanitizeUrl(fields[3]) : "";
+            artworkBytes = null;
             trackUrl = includeProgress ? sanitizeTrackUrl(fields[4]) : "";
             if (includeProgress) {
                 progressSeconds = parseIntOrDefault(fields[5], -1);
@@ -240,6 +235,7 @@ public final class SpotifyNowPlaying {
             title = "";
             state = "Not open";
             artworkUrl = "";
+            artworkBytes = null;
             trackUrl = "";
             progressSeconds = -1;
             durationSeconds = -1;
@@ -271,16 +267,7 @@ public final class SpotifyNowPlaying {
         }
 
         if (os.contains("win")) {
-            String key = switch (action) {
-                case PREVIOUS -> "0xB1";
-                case PLAY_PAUSE -> "0xB3";
-                case NEXT -> "0xB0";
-            };
-            String script = "$sig='[DllImport(\"user32.dll\")]public static extern void keybd_event(byte bVk, byte bScan, int dwFlags, int dwExtraInfo);';"
-                + "Add-Type -MemberDefinition $sig -Name MediaKeys -Namespace XenAddons;"
-                + "[XenAddons.MediaKeys]::keybd_event(" + key + ",0,0,0);"
-                + "[XenAddons.MediaKeys]::keybd_event(" + key + ",0,2,0);";
-            runCommand(1500, "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script);
+            WindowsSpotifyBridge.control(action);
             lastFetchAt = 0L;
             return;
         }
@@ -306,6 +293,8 @@ public final class SpotifyNowPlaying {
             String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
             if (os.contains("mac")) {
                 runAppleScript("tell application \"Spotify\" to set sound volume to " + safePercent);
+            } else if (os.contains("win")) {
+                WindowsSpotifyBridge.setVolume(safePercent);
             } else if (!os.contains("win")) {
                 runCommand(1500, "playerctl", "volume", (safePercent / 100.0) + "");
             }
@@ -317,6 +306,8 @@ public final class SpotifyNowPlaying {
             String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
             if (os.contains("mac")) {
                 runAppleScript("tell application \"Spotify\" to set repeating to " + enabled);
+            } else if (os.contains("win")) {
+                WindowsSpotifyBridge.setRepeat(enabled);
             } else if (!os.contains("win")) {
                 runCommand(1500, "playerctl", "loop", enabled ? "Playlist" : "None");
             }
@@ -328,6 +319,8 @@ public final class SpotifyNowPlaying {
             String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
             if (os.contains("mac")) {
                 runAppleScript("tell application \"Spotify\" to set shuffling to " + enabled);
+            } else if (os.contains("win")) {
+                WindowsSpotifyBridge.setShuffle(enabled);
             } else if (!os.contains("win")) {
                 runCommand(1500, "playerctl", "shuffle", enabled ? "On" : "Off");
             }
@@ -341,136 +334,21 @@ public final class SpotifyNowPlaying {
                 runAppleScript(
                     "tell application \"Spotify\" to set starred of current track to not (starred of current track)"
                 );
+            } else if (os.contains("win")) {
+                WindowsSpotifyBridge.toggleLike();
             }
         });
     }
 
-    private static String getWindowsSpotifyWindowTitle() {
-        Process process = null;
-        try {
-            String script = "$enc=New-Object System.Component.UTF8Encoding $false;"
-                + "[Console]::OutputEncoding=$enc;"
-                + "$OutputEncoding=$enc;"
-                + "Get-Process -Name Spotify -ErrorAction SilentlyContinue | "
-                + "Where-Object { $_.MainWindowTitle -and $_.MainWindowTitle.Trim().Length -gt 0 } | "
-                + "ForEach-Object { $_.MainWindowTitle }";
-            process = new ProcessBuilder(
-                "powershell.exe",
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-Command",
-                script
-            ).start();
-
-            String pausedCandidate = null;
-            try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    String windowTitle = line.trim();
-                    if (windowTitle.isBlank()) continue;
-                    if (isPausedWindowTitle(windowTitle)) {
-                        pausedCandidate = "__PAUSED__";
-                        continue;
-                    }
-                    return windowTitle;
-                }
-            }
-
-            process.waitFor(1500, TimeUnit.MILLISECONDS);
-            return pausedCandidate;
-        } catch (Exception ignored) {
-            return null;
-        } finally {
-            if (process != null && process.isAlive()) process.destroyForcibly();
-        }
-    }
-
-    private static String getWindowsSpotifyTasklistTitle() {
-        String currentSong = getSongFromPid(spotifyProcessId);
-        if (currentSong != null) return currentSong;
-
-        spotifyProcessId = -1;
-        for (Integer pid : getSpotifyPids()) {
-            String song = getSongFromPid(pid);
-            if (song != null) {
-                spotifyProcessId = pid;
-                return song;
-            }
-        }
-        return null;
-    }
-
-    private static List<Integer> getSpotifyPids() {
-        List<Integer> out = new ArrayList<>();
-        Process process = null;
-        try {
-            process = new ProcessBuilder("tasklist.exe", "/fo", "csv", "/nh").start();
-            try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    String[] parts = parseCsvLine(line);
-                    if (parts.length < 2) continue;
-                    if (!"Spotify.exe".equalsIgnoreCase(parts[0])) continue;
-                    try {
-                        out.add(Integer.parseInt(parts[1]));
-                    } catch (Exception ignored) {}
-                }
-            }
-            process.waitFor(1500, TimeUnit.MILLISECONDS);
-        } catch (Exception ignored) {
-        } finally {
-            if (process != null && process.isAlive()) process.destroyForcibly();
-        }
-        return out;
-    }
-
-    private static String getSongFromPid(int pid) {
-        if (pid <= 0) return null;
-        Process process = null;
-        try {
-            process = new ProcessBuilder("tasklist.exe", "/FO", "csv", "/V", "/FI", "PID eq " + pid).start();
-            try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                boolean headerSkipped = false;
-                while ((line = reader.readLine()) != null) {
-                    if (!headerSkipped) {
-                        headerSkipped = true;
-                        continue;
-                    }
-                    String[] parts = parseCsvLine(line);
-                    if (parts.length < 9) continue;
-                    String status = parts[parts.length - 1];
-                    if ("N/A".equalsIgnoreCase(status)) continue;
-                    if (isPausedWindowTitle(status)) {
-                        return "__PAUSED__";
-                    }
-                    return status;
-                }
-            }
-            process.waitFor(1500, TimeUnit.MILLISECONDS);
-        } catch (Exception ignored) {
-        } finally {
-            if (process != null && process.isAlive()) process.destroyForcibly();
-        }
-        return null;
-    }
-
-    private static boolean isPausedWindowTitle(String title) {
-        return "Spotify Free".equalsIgnoreCase(title)
-            || "Spotify Premium".equalsIgnoreCase(title)
-            || "AngleHiddenWindow".equalsIgnoreCase(title);
-    }
-
-    private static String[] parseCsvLine(String line) {
-        if (line == null) return new String[0];
-        String trimmed = line.trim();
-        if (trimmed.startsWith("\"")) trimmed = trimmed.substring(1);
-        if (trimmed.endsWith("\"")) trimmed = trimmed.substring(0, trimmed.length() - 1);
-        return trimmed.split("\",\"");
+    private static void clearNowPlaying() {
+        artist = "";
+        title = "";
+        state = "Not open";
+        artworkUrl = "";
+        artworkBytes = null;
+        trackUrl = "";
+        progressSeconds = -1;
+        durationSeconds = -1;
     }
 
     private static String runAppleScript(String script) {

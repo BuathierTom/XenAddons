@@ -45,6 +45,18 @@ public final class SpotifyCoverCache {
     public static Identifier getOrLoad(SpotifyNowPlaying.Snapshot snapshot) {
         if (snapshot == null) return null;
 
+        byte[] embeddedArtwork = snapshot.artworkBytes();
+        if (embeddedArtwork != null && embeddedArtwork.length > 0) {
+            String embeddedKey = "embedded:"
+                + snapshot.artist().toLowerCase(Locale.ROOT)
+                + '\u0000'
+                + snapshot.title().toLowerCase(Locale.ROOT)
+                + '\u0000'
+                + Arrays.hashCode(embeddedArtwork);
+            Identifier cover = getOrLoadBytes(embeddedKey, embeddedArtwork);
+            if (cover != null || !FAILED.contains(embeddedKey)) return cover;
+        }
+
         String directUrl = sanitizeUrl(snapshot.artworkUrl());
         if (!directUrl.isBlank()) {
             Identifier cover = getOrLoadUrl(directUrl);
@@ -72,6 +84,15 @@ public final class SpotifyCoverCache {
         if (!LOADING.add(cleanUrl)) return null;
 
         Thread.startVirtualThread(() -> load(cleanUrl));
+        return null;
+    }
+
+    private static Identifier getOrLoadBytes(String key, byte[] imageBytes) {
+        Identifier cached = COVERS.get(key);
+        if (cached != null || FAILED.contains(key)) return cached;
+        if (!LOADING.add(key)) return null;
+
+        Thread.startVirtualThread(() -> loadBytes(key, imageBytes));
         return null;
     }
 
@@ -116,6 +137,44 @@ public final class SpotifyCoverCache {
         } finally {
             if (!scheduledRegister) {
                 LOADING.remove(url);
+            }
+            if (image != null) {
+                image.close();
+            }
+        }
+    }
+
+    private static void loadBytes(String key, byte[] imageBytes) {
+        NativeImage image = null;
+        boolean scheduledRegister = false;
+        try {
+            File cachedFile = cacheFile(key);
+            if (cachedFile.isFile()) {
+                try {
+                    image = readCachedImage(cachedFile);
+                } catch (Exception ignored) {
+                    if (!cachedFile.delete()) {
+                        XenAddons.LOGGER.debug(
+                            "Failed to delete invalid Spotify cover cache file {}",
+                            cachedFile
+                        );
+                    }
+                }
+            }
+            if (image == null) {
+                image = readLikeSpotifyOverlay(imageBytes, cachedFile);
+            }
+
+            NativeImage loadedImage = image;
+            Minecraft.getInstance().execute(() -> register(key, loadedImage));
+            scheduledRegister = true;
+            image = null;
+        } catch (Exception e) {
+            FAILED.add(key);
+            XenAddons.LOGGER.debug("Failed to load embedded Spotify cover", e);
+        } finally {
+            if (!scheduledRegister) {
+                LOADING.remove(key);
             }
             if (image != null) {
                 image.close();
