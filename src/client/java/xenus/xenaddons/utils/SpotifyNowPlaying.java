@@ -14,6 +14,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class SpotifyNowPlaying {
     private static final long REFRESH_MS = 1500L;
     private static final int DEFAULT_MAX_TITLE_LENGTH = 20;
+    private static final String MAC_FIELD_SEPARATOR = "\u001F";
+    private static final String MAC_NOW_PLAYING_SCRIPT = """
+        tell application "Spotify"
+            set stateValue to player state as text
+            set artistValue to ""
+            set titleValue to ""
+            set artworkValue to ""
+            set trackValue to ""
+            set positionValue to "-1"
+            set durationValue to "-1"
+
+            try
+                set artistValue to artist of current track as text
+                set titleValue to name of current track as text
+                set artworkValue to artwork url of current track as text
+                set trackValue to spotify url of current track as text
+                set positionValue to player position as integer
+                set durationValue to duration of current track as integer
+            end try
+
+            return stateValue & (ASCII character 31) & artistValue & (ASCII character 31) & titleValue & (ASCII character 31) & artworkValue & (ASCII character 31) & trackValue & (ASCII character 31) & positionValue & (ASCII character 31) & durationValue
+        end tell
+        """;
     private static final AtomicBoolean FETCHING = new AtomicBoolean(false);
 
     private static volatile long lastFetchAt = 0L;
@@ -161,8 +184,8 @@ public final class SpotifyNowPlaying {
                 return;
             }
 
-            String playerState = runAppleScript("tell application \"Spotify\" to player state as text");
-            if (playerState == null) {
+            String nowPlaying = runAppleScript(MAC_NOW_PLAYING_SCRIPT);
+            if (nowPlaying == null) {
                 artist = "";
                 title = "";
                 state = "Not open";
@@ -173,9 +196,21 @@ public final class SpotifyNowPlaying {
                 return;
             }
 
-            String normalizedState = playerState.trim().toLowerCase(Locale.ROOT);
-            String artistRaw = runAppleScript("tell application \"Spotify\" to artist of current track as text");
-            String titleRaw = runAppleScript("tell application \"Spotify\" to name of current track as text");
+            String[] fields = nowPlaying.split(MAC_FIELD_SEPARATOR, -1);
+            if (fields.length < 7) {
+                artist = "";
+                title = "";
+                state = "Not open";
+                artworkUrl = "";
+                trackUrl = "";
+                progressSeconds = -1;
+                durationSeconds = -1;
+                return;
+            }
+
+            String normalizedState = fields[0].trim().toLowerCase(Locale.ROOT);
+            String artistRaw = fields[1];
+            String titleRaw = fields[2];
             if (artistRaw == null || titleRaw == null || artistRaw.isBlank() || titleRaw.isBlank()) {
                 artist = "";
                 title = "";
@@ -190,11 +225,11 @@ public final class SpotifyNowPlaying {
             artist = sanitize(artistRaw);
             title = sanitize(titleRaw);
             state = normalizedState.contains("playing") ? "Playing" : "Paused";
-            artworkUrl = includeProgress ? sanitizeUrl(runAppleScript("tell application \"Spotify\" to artwork url of current track as text")) : "";
-            trackUrl = includeProgress ? sanitizeTrackUrl(runAppleScript("tell application \"Spotify\" to spotify url of current track as text")) : "";
+            artworkUrl = includeProgress ? sanitizeUrl(fields[3]) : "";
+            trackUrl = includeProgress ? sanitizeTrackUrl(fields[4]) : "";
             if (includeProgress) {
-                progressSeconds = parseIntOrDefault(runAppleScript("tell application \"Spotify\" to player position as integer"), -1);
-                int durationMs = parseIntOrDefault(runAppleScript("tell application \"Spotify\" to duration of current track as integer"), -1);
+                progressSeconds = parseIntOrDefault(fields[5], -1);
+                int durationMs = parseIntOrDefault(fields[6], -1);
                 durationSeconds = durationMs > 0 ? durationMs / 1000 : -1;
             } else {
                 progressSeconds = -1;

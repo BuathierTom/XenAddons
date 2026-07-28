@@ -57,13 +57,17 @@ void main() {
 
     if (blurStrength > 0.05) {
         float radius = min(blurStrength, 30.0);
-        float sigma = radius / 2.0; 
+        float sigma = radius / 2.0;
         float sigma2 = 2.0 * sigma * sigma;
         float totalWeight = 0.0;
-        float stepAmount = max(1.0, radius / 12.0); 
+        float stepAmount = radius / 3.0;
 
-        for (float x = -radius; x <= radius; x += stepAmount) {
-            for (float y = -radius; y <= radius; y += stepAmount) {
+        // Seven samples per axis retain the same blur radius while avoiding the
+        // previous 25x25 kernel on every pixel of the card.
+        for (int sampleX = -3; sampleX <= 3; sampleX++) {
+            for (int sampleY = -3; sampleY <= 3; sampleY++) {
+                float x = float(sampleX) * stepAmount;
+                float y = float(sampleY) * stepAmount;
                 float weight = exp(-(x * x + y * y) / sigma2);
                 vec2 offset = vec2(x, y) / texSize;
                 average += texture(Sampler0, screenUV + offset).rgb * weight;

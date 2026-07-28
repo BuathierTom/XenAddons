@@ -35,6 +35,11 @@ Minecraft `26.1.2` • Fabric • Java `25+`
 
 ## Fixed
 
+- **Spotify Better Display**
+  - Reduced the Liquid Glass blur kernel from `625` to `49` samples per pixel while keeping the same blur radius.
+  - Limited background capture to `30 FPS` to avoid copying the full framebuffer every rendered frame.
+  - Combined macOS Spotify metadata reads into one AppleScript process to reduce periodic stutters.
+
 - **SecretRoutes**
   - Improved room scanning and retry behavior when dungeon chunks are not ready yet.
   - Fixed dungeon state resets when leaving a run.

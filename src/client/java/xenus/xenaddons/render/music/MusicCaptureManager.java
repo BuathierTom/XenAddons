@@ -11,9 +11,12 @@ import net.minecraft.client.gui.render.TextureSetup;
 import java.util.OptionalDouble;
 
 public final class MusicCaptureManager {
+    private static final long CAPTURE_INTERVAL_NANOS = 33_333_333L;
+
     private static GpuTexture captureTexture;
     private static GpuTextureView captureView;
     private static TextureSetup textureSetup;
+    private static long lastCaptureNanos;
 
     private MusicCaptureManager() {}
 
@@ -31,9 +34,17 @@ public final class MusicCaptureManager {
         int height = screenTexture.getHeight(0);
         if (width <= 0 || height <= 0) return;
 
-        if (captureTexture == null
+        boolean recreateCapture = captureTexture == null
             || captureTexture.getWidth(0) != width
-            || captureTexture.getHeight(0) != height) {
+            || captureTexture.getHeight(0) != height;
+        long now = System.nanoTime();
+        if (!recreateCapture
+            && lastCaptureNanos != 0L
+            && now - lastCaptureNanos < CAPTURE_INTERVAL_NANOS) {
+            return;
+        }
+
+        if (recreateCapture) {
             cleanup();
             captureTexture = RenderSystem.getDevice().createTexture(
                 "XenAddons Music Liquid Glass Capture",
@@ -70,9 +81,11 @@ public final class MusicCaptureManager {
             width,
             height
         );
+        lastCaptureNanos = now;
     }
 
     public static void cleanup() {
+        lastCaptureNanos = 0L;
         textureSetup = null;
         if (captureView != null) {
             captureView.close();

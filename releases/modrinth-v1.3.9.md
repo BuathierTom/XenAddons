@@ -27,6 +27,10 @@
 
 ## Fixed
 
+- **Spotify Better Display**
+  - Greatly reduced the Liquid Glass shader cost and limited background capture to `30 FPS`.
+  - Combined macOS metadata reads to reduce periodic stutters.
+
 - **SecretRoutes**
   - Improved dungeon room scanning, retry behavior, run resets, and floor detection.
   - Prevented stale route loads when switching between current and old routes.
