@@ -24,7 +24,7 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - `/xa` - Open XenAddons GUI
 - `/xenaddons` - Open XenAddons GUI
 - `/xa hud` - Open HUD editor
-- `/xa refill <pearl|tnt|leap|twap|tap|jerry|decoy>` - Refill a dungeon utility item to its target stack size
+- `/xa refill <pearl|tnt|leap|twap|tap|jerry|decoy>` - Refill a dungeon utility item to its default or custom target amount
 - `/pcc` - Shortcut for `/chat party`
 
 ## Features
