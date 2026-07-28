@@ -265,6 +265,51 @@ public final class SpotifyNowPlaying {
         NEXT
     }
 
+    public static void setVolume(int percent) {
+        int safePercent = Math.max(0, Math.min(100, percent));
+        Thread.startVirtualThread(() -> {
+            String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+            if (os.contains("mac")) {
+                runAppleScript("tell application \"Spotify\" to set sound volume to " + safePercent);
+            } else if (!os.contains("win")) {
+                runCommand(1500, "playerctl", "volume", (safePercent / 100.0) + "");
+            }
+        });
+    }
+
+    public static void setRepeat(boolean enabled) {
+        Thread.startVirtualThread(() -> {
+            String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+            if (os.contains("mac")) {
+                runAppleScript("tell application \"Spotify\" to set repeating to " + enabled);
+            } else if (!os.contains("win")) {
+                runCommand(1500, "playerctl", "loop", enabled ? "Playlist" : "None");
+            }
+        });
+    }
+
+    public static void setShuffle(boolean enabled) {
+        Thread.startVirtualThread(() -> {
+            String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+            if (os.contains("mac")) {
+                runAppleScript("tell application \"Spotify\" to set shuffling to " + enabled);
+            } else if (!os.contains("win")) {
+                runCommand(1500, "playerctl", "shuffle", enabled ? "On" : "Off");
+            }
+        });
+    }
+
+    public static void toggleLike() {
+        Thread.startVirtualThread(() -> {
+            String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+            if (os.contains("mac")) {
+                runAppleScript(
+                    "tell application \"Spotify\" to set starred of current track to not (starred of current track)"
+                );
+            }
+        });
+    }
+
     private static String getWindowsSpotifyWindowTitle() {
         Process process = null;
         try {

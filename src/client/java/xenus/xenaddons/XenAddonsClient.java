@@ -1,6 +1,9 @@
 package xenus.xenaddons;
 
 import xenus.xenaddons.gui.GuiInvButtonMenu;
+import xenus.xenaddons.render.music.MusicCaptureManager;
+import xenus.xenaddons.render.music.MusicRenderPipelines;
+import xenus.xenaddons.render.music.font.MusicMsdfFontManager;
 import xenus.xenaddons.render.nvg.XenNvgSpecialElementRenderer;
 import xenus.xenaddons.utils.HypixelItemManager;
 import xenus.xenaddons.utils.KotlinGuiBridge;
@@ -9,6 +12,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.PictureInPictureRendererRegistry;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
@@ -28,7 +32,12 @@ public class XenAddonsClient implements ClientModInitializer {
 		// Initialize Modules
 		xenus.xenaddons.features.ModuleManager.init();
 
+		MusicRenderPipelines.init();
 		PictureInPictureRendererRegistry.register(context -> new XenNvgSpecialElementRenderer(context.bufferSource()));
+		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+			MusicMsdfFontManager.close();
+			MusicCaptureManager.cleanup();
+		});
 
         // Initialize Utilities
         xenus.xenaddons.utils.DungeonUtils.init();
