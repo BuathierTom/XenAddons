@@ -24,7 +24,7 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - `/xa` - Open XenAddons GUI
 - `/xenaddons` - Open XenAddons GUI
 - `/xa hud` - Open HUD editor
-- `/xa refill <pearl|tnt|leap|twap|tap|jerry|decoy>` - Refill a dungeon utility item to its default or custom target amount
+- `/xa refill <pearl|tnt|leap|twap|tap|jerry|decoy> [amount]` - Refill a dungeon utility item to its default or custom target amount
 - `/pcc` - Shortcut for `/chat party`
 
 ## Features
@@ -42,7 +42,7 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Inventory Buttons**: Adds configurable inventory buttons.
 - **Item Price**: Shows item prices in tooltips.
 - **Peek Chat**: Temporarily displays expanded chat without opening chat.
-- **Spotify Overlay**: Displays the current Spotify track as a HUD element, with optional better display controls.
+- **Spotify Overlay**: Displays the current track, with an optional Liquid Glass HUD, album artwork, progress, and playback controls.
 - **ZguegAddons**: Extra chat, dungeon, and party utilities.
 
 ### Category: DUNGEONS
@@ -53,13 +53,14 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Dungeon Not Full Alert**: Warns at dungeon start if the party is not full.
 - **Invisibility Timer**: Tracks Bonzo's Mask, Spirit Mask, and Phoenix Pet invulnerability timers.
 - **Item Quality**: Adds dungeon item quality information to item tooltips.
+- **Loadout Title**: Replaces loadout equip messages with a compact chat line and an optional HUD title.
 - **Milestone Reminder**: Displays dungeon milestone progress and sends reminders when needed.
 - **Players Leaped**: Displays leap progress in F7 terminal-related zones.
 - **Pos Message**: Sends party callouts when reaching configured dungeon spots.
 - **Pos Titles**: Displays teammate callouts as movable HUD text.
-- **Refill**: Checks your inventory and requests only the missing dungeon utility items with `/gfs`.
+- **Refill**: Checks your inventory and requests only the missing items up to the default or custom target amount.
 - **Reminder Gate**: Shows gate reminders based on lever progress messages.
-- **SecretRoutes**: Renders dungeon routes, secrets, waypoints, and room helpers.
+- **SecretRoutes**: Renders dungeon routes, secrets, waypoints, and room helpers, with current and legacy route sets.
 
 ### Category: DEV
 
