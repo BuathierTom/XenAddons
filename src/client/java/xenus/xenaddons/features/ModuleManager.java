@@ -27,6 +27,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.misc.BazaarAHQuickSearchModule());
         
         modules.add(new xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule());
+        modules.add(new xenus.xenaddons.features.impl.dungeons.LoadoutTitleModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.BatDeathAlertModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.DungeonsStatsPFModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosMsgModule());

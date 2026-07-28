@@ -13,6 +13,7 @@ import xenus.xenaddons.features.impl.dungeons.MilestoneDisplayModule;
 import xenus.xenaddons.features.impl.misc.CooldownItemsTracker;
 import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule;
 import xenus.xenaddons.hud.HudState;
+import xenus.xenaddons.hud.PetNotification;
 
 public final class XenHudCompat {
     private XenHudCompat() {}
@@ -30,7 +31,23 @@ public final class XenHudCompat {
     }
 
     public static void renderPetNotification(GuiGraphicsExtractor context) {
-        var notif = HudState.PET_NOTIFICATION;
+        AutoPetRuleTitleModule autoPet = ModuleManager.getModule(AutoPetRuleTitleModule.class);
+        renderTitleNotification(
+            context,
+            HudState.PET_NOTIFICATION,
+            autoPet == null ? 0 : autoPet.getHudOffsetX(),
+            autoPet == null ? HudState.PET_NOTIFICATION.yOffset : autoPet.getHudOffsetY(),
+            autoPet == null ? HudState.PET_NOTIFICATION.scale : (float) autoPet.getHudScale()
+        );
+    }
+
+    private static void renderTitleNotification(
+        GuiGraphicsExtractor context,
+        PetNotification notif,
+        int hudOffsetX,
+        int hudOffsetY,
+        float titleScale
+    ) {
         if (!notif.isActive()) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -40,20 +57,10 @@ public final class XenHudCompat {
         Component title = notif.getTitle();
         Component subtitle = notif.getSubtitle();
 
-        float titleScale = notif.scale;
         int screenWidth = XenDrawContextCompat.scaledWidth(context);
         int screenHeight = XenDrawContextCompat.scaledHeight(context);
         int titleWidth = textRenderer.width(title);
         int centerX = screenWidth / 2;
-        int hudOffsetX = 0;
-        int hudOffsetY = notif.yOffset;
-
-        AutoPetRuleTitleModule module = ModuleManager.getModule(AutoPetRuleTitleModule.class);
-        if (module != null) {
-            hudOffsetX = module.getHudOffsetX();
-            hudOffsetY = module.getHudOffsetY();
-            titleScale = (float) module.getHudScale();
-        }
 
         context.pose().pushMatrix();
         context.pose().scale(titleScale, titleScale);

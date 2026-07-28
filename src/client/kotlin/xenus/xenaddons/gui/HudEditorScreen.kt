@@ -724,7 +724,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
 
     private enum class ComponentType(val label: String) {
         POS_TITLES("Pos Titles"),
-        AUTOPET_TITLE("AutoPet Title"),
+        AUTOPET_TITLE("AutoPet / Loadout Titles"),
         PLAYERS_LEAPED("Players Leaped"),
         INVISIBILITY_TIMER("Invisibility timer"),
         MILESTONE_DISPLAY("Milestone Reminder"),
