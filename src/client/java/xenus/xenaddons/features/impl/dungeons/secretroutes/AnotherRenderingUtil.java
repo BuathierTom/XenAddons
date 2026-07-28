@@ -1,352 +1,500 @@
 package xenus.xenaddons.features.impl.dungeons.secretroutes;
 
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.Camera;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import xenus.xenaddons.compat.XenCameraCompat;
-import xenus.xenaddons.compat.XenWorldRenderCompat;
-
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
-public class AnotherRenderingUtil {
+public final class AnotherRenderingUtil {
     private static final float THICKNESS_MULTIPLIER = 0.01f;
-    private static final RenderType SEE_THROUGH_LAYER = XenWorldRenderCompat.seeThroughFilledLayer();
-    private static final RenderType SEE_THROUGH_LINE_LAYER = XenWorldRenderCompat.seeThroughLineLayer();
-    public static List<RenderTypes.WorldText> worldTexts = new ArrayList<>();
-    public static List<RenderTypes.OutlinedBox> outlinedBoxes = new ArrayList<>();
-    public static List<RenderTypes.FilledBox> filledBoxes = new ArrayList<>();
-    public static List<RenderTypes.Line> lines = new ArrayList<>();
-    public static List<RenderTypes.LineFromCursor> linesFromCursor = new ArrayList<>();
 
-    // Settings bridge (to be populated by SecretRoutesModule)
+    private static final RenderPipeline SEE_THROUGH_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(id("secret_routes/see_through"))
+            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
+            .withDepthStencilState(Optional.empty())
+            .withCull(false)
+            .build()
+    );
+    private static final RenderType SEE_THROUGH_LAYER = RenderType.create(
+        "xenaddons_secret_routes_see_through",
+        RenderSetup.builder(SEE_THROUGH_PIPELINE).createRenderSetup()
+    );
+
+    private static final RenderPipeline NORMAL_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(id("secret_routes/normal"))
+            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
+            .withCull(false)
+            .build()
+    );
+    private static final RenderType NORMAL_LAYER = RenderType.create(
+        "xenaddons_secret_routes_normal",
+        RenderSetup.builder(NORMAL_PIPELINE).createRenderSetup()
+    );
+
+    private static final RenderPipeline CURSOR_LINE_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
+            .withLocation(id("secret_routes/cursor_line"))
+            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR_NORMAL_LINE_WIDTH, VertexFormat.Mode.LINES)
+            .withDepthStencilState(Optional.empty())
+            .build()
+    );
+    private static final RenderType CURSOR_LINE_LAYER = RenderType.create(
+        "xenaddons_secret_routes_cursor_line",
+        RenderSetup.builder(CURSOR_LINE_PIPELINE).createRenderSetup()
+    );
+
+    private static final List<RenderTypes.WorldText> worldTexts = new ArrayList<>();
+    private static final List<RenderTypes.OutlinedBox> outlinedBoxes = new ArrayList<>();
+    private static final List<RenderTypes.FilledBox> filledBoxes = new ArrayList<>();
+    private static final List<RenderTypes.Line> lines = new ArrayList<>();
+    private static final List<RenderTypes.LineFromCursor> linesFromCursor = new ArrayList<>();
+
+    private static final Vector3f scratchLineDirection = new Vector3f();
+
     public static float filledBoxAlpha = 0.5f;
-    public static float boxLineWidth = 5.0f;
+    public static float boxLineWidth = 2.0f;
+    public static Runnable preRenderCallback;
 
-    public static Runnable preRenderCallback = null;
-
-    public static void register() {
-        LevelRenderEvents.END_MAIN.register(AnotherRenderingUtil::render);
+    private AnotherRenderingUtil() {
     }
 
-    private static void render(LevelRenderContext context) {
-        if (preRenderCallback != null) preRenderCallback.run();
+    public static void register() {
+        LevelRenderEvents.COLLECT_SUBMITS.register(AnotherRenderingUtil::collect);
+        LevelRenderEvents.END_MAIN.register(AnotherRenderingUtil::cleanup);
+    }
 
-        PoseStack matrices = context.poseStack();
-        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Vec3 cameraPos = XenCameraCompat.getPos(camera);
-
-        try (ByteBufferBuilder allocator = new ByteBufferBuilder(196608)) {
-            MultiBufferSource.BufferSource consumers = MultiBufferSource.immediate(allocator);
-
-            renderFilledBoxes(consumers, matrices, cameraPos, true, SEE_THROUGH_LAYER);
-            renderOutlinedBoxesAsQuads(consumers, matrices, cameraPos, true, SEE_THROUGH_LAYER);
-            renderLines(consumers, matrices, cameraPos, true);
-            renderLinesFromCursor(consumers, matrices, cameraPos, true);
-
-            consumers.endBatch();
-
-            RenderType normalLayer = XenWorldRenderCompat.normalFilledBoxLayer();
-
-            renderFilledBoxes(consumers, matrices, cameraPos, false, normalLayer);
-            renderOutlinedBoxesAsQuads(consumers, matrices, cameraPos, false, normalLayer);
-            renderLines(consumers, matrices, cameraPos, false);
-            renderLinesFromCursor(consumers, matrices, cameraPos, false);
-
-            consumers.endBatch();
+    private static void collect(LevelRenderContext context) {
+        if (preRenderCallback != null) {
+            preRenderCallback.run();
         }
 
+        PoseStack poseStack = context.poseStack();
+        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        Vec3 cameraPosition = camera.position();
+        OrderedSubmitNodeCollector collector = context.submitNodeCollector();
+
+        boolean hasSeeThroughGeometry = hasGeometry(true);
+        boolean hasNormalGeometry = hasGeometry(false);
+
+        if (hasSeeThroughGeometry) {
+            collector.submitCustomGeometry(poseStack, SEE_THROUGH_LAYER, (pose, buffer) -> {
+                Matrix4f matrix = pose.pose();
+                renderFilledBoxes(buffer, matrix, cameraPosition, true);
+                renderOutlinedBoxes(buffer, matrix, cameraPosition, true);
+                renderLines(buffer, matrix, cameraPosition, true);
+            });
+        }
+
+        if (hasNormalGeometry) {
+            collector.submitCustomGeometry(poseStack, NORMAL_LAYER, (pose, buffer) -> {
+                Matrix4f matrix = pose.pose();
+                renderFilledBoxes(buffer, matrix, cameraPosition, false);
+                renderOutlinedBoxes(buffer, matrix, cameraPosition, false);
+                renderLines(buffer, matrix, cameraPosition, false);
+            });
+        }
+
+        if (!linesFromCursor.isEmpty()) {
+            collector.submitCustomGeometry(
+                poseStack,
+                CURSOR_LINE_LAYER,
+                (pose, buffer) -> renderLinesFromCursor(buffer, pose, cameraPosition)
+            );
+        }
+
+        submitWorldTexts(collector, poseStack, camera, cameraPosition);
+    }
+
+    private static boolean hasGeometry(boolean throughWalls) {
+        for (RenderTypes.FilledBox box : filledBoxes) {
+            if (box.throughWalls == throughWalls) return true;
+        }
+        for (RenderTypes.OutlinedBox box : outlinedBoxes) {
+            if (box.throughWalls == throughWalls) return true;
+        }
+        for (RenderTypes.Line line : lines) {
+            if (line.throughWalls == throughWalls) return true;
+        }
+        return false;
+    }
+
+    private static void submitWorldTexts(
+        OrderedSubmitNodeCollector collector,
+        PoseStack poseStack,
+        Camera camera,
+        Vec3 cameraPosition
+    ) {
+        if (worldTexts.isEmpty()) return;
+
+        Font font = Minecraft.getInstance().font;
+        Quaternionf cameraRotation = camera.rotation();
+
+        for (RenderTypes.WorldText worldText : worldTexts) {
+            poseStack.pushPose();
+            poseStack.translate(
+                worldText.position.x - cameraPosition.x,
+                worldText.position.y - cameraPosition.y,
+                worldText.position.z - cameraPosition.z
+            );
+            poseStack.mulPose(cameraRotation);
+
+            float scale = 0.025f * worldText.scale;
+            poseStack.scale(scale, -scale, scale);
+
+            Font.DisplayMode displayMode = worldText.throughWalls
+                ? Font.DisplayMode.SEE_THROUGH
+                : Font.DisplayMode.NORMAL;
+            float xOffset = -font.width(worldText.text) / 2.0f;
+
+            collector.submitText(
+                poseStack,
+                xOffset,
+                0,
+                worldText.text.getVisualOrderText(),
+                true,
+                displayMode,
+                0xF000F0,
+                0xFFFFFFFF,
+                0,
+                0
+            );
+            poseStack.popPose();
+        }
+    }
+
+    private static void renderFilledBoxes(
+        VertexConsumer buffer,
+        Matrix4f matrix,
+        Vec3 cameraPosition,
+        boolean throughWalls
+    ) {
+        float cameraX = (float) cameraPosition.x;
+        float cameraY = (float) cameraPosition.y;
+        float cameraZ = (float) cameraPosition.z;
+        float configuredAlpha = Math.max(0.0f, Math.min(1.0f, filledBoxAlpha));
+
+        for (RenderTypes.FilledBox box : filledBoxes) {
+            if (box.throughWalls != throughWalls) continue;
+
+            float minX = (float) box.position.x - cameraX;
+            float minY = (float) box.position.y - cameraY;
+            float minZ = (float) box.position.z - cameraZ;
+            float maxX = minX + box.boxWidth;
+            float maxY = minY + box.boxHeight;
+            float maxZ = minZ + box.boxWidth;
+
+            drawBoxFaces(
+                buffer,
+                matrix,
+                minX,
+                minY,
+                minZ,
+                maxX,
+                maxY,
+                maxZ,
+                box.color.getRed() / 255.0f,
+                box.color.getGreen() / 255.0f,
+                box.color.getBlue() / 255.0f,
+                configuredAlpha * (box.color.getAlpha() / 255.0f)
+            );
+        }
+    }
+
+    private static void renderOutlinedBoxes(
+        VertexConsumer buffer,
+        Matrix4f matrix,
+        Vec3 cameraPosition,
+        boolean throughWalls
+    ) {
+        float thickness = Math.max(0.002f, boxLineWidth * THICKNESS_MULTIPLIER);
+
+        for (RenderTypes.OutlinedBox box : outlinedBoxes) {
+            if (box.throughWalls != throughWalls) continue;
+
+            Vec3 min = box.position.subtract(cameraPosition);
+            Vec3 max = min.add(box.boxWidth, box.boxHeight, box.boxWidth);
+            float red = box.color.getRed() / 255.0f;
+            float green = box.color.getGreen() / 255.0f;
+            float blue = box.color.getBlue() / 255.0f;
+            float alpha = box.color.getAlpha() / 255.0f;
+
+            drawBoxEdges(buffer, matrix, min, max, red, green, blue, alpha, thickness);
+        }
+    }
+
+    private static void renderLines(
+        VertexConsumer buffer,
+        Matrix4f matrix,
+        Vec3 cameraPosition,
+        boolean throughWalls
+    ) {
+        for (RenderTypes.Line line : lines) {
+            if (line.throughWalls != throughWalls) continue;
+
+            Vec3 start = line.start.subtract(cameraPosition);
+            Vec3 end = line.end.subtract(cameraPosition);
+            drawBillboardLine(
+                buffer,
+                matrix,
+                start,
+                end,
+                line.color.getRed() / 255.0f,
+                line.color.getGreen() / 255.0f,
+                line.color.getBlue() / 255.0f,
+                line.color.getAlpha() / 255.0f,
+                Math.max(0.002f, line.lineWidth * THICKNESS_MULTIPLIER)
+            );
+        }
+    }
+
+    private static void renderLinesFromCursor(
+        VertexConsumer buffer,
+        PoseStack.Pose pose,
+        Vec3 cameraPosition
+    ) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) return;
+
+        float partialTick = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        Vec3 start = minecraft.player.getEyePosition(partialTick)
+            .add(minecraft.player.getLookAngle().scale(2.0));
+        float startX = (float) (start.x - cameraPosition.x);
+        float startY = (float) (start.y - cameraPosition.y);
+        float startZ = (float) (start.z - cameraPosition.z);
+        Matrix4f matrix = pose.pose();
+
+        for (RenderTypes.LineFromCursor line : linesFromCursor) {
+            float endX = (float) (line.point.x - cameraPosition.x);
+            float endY = (float) (line.point.y - cameraPosition.y);
+            float endZ = (float) (line.point.z - cameraPosition.z);
+
+            scratchLineDirection.set(endX - startX, endY - startY, endZ - startZ);
+            if (scratchLineDirection.lengthSquared() < 0.0001f) continue;
+            scratchLineDirection.normalize();
+
+            float red = line.color.getRed() / 255.0f;
+            float green = line.color.getGreen() / 255.0f;
+            float blue = line.color.getBlue() / 255.0f;
+            float alpha = line.color.getAlpha() / 255.0f;
+            float width = Math.max(1.0f, line.lineWidth);
+
+            buffer.addVertex(matrix, startX, startY, startZ)
+                .setNormal(pose, scratchLineDirection.x, scratchLineDirection.y, scratchLineDirection.z)
+                .setColor(red, green, blue, alpha)
+                .setLineWidth(width);
+            buffer.addVertex(matrix, endX, endY, endZ)
+                .setNormal(pose, scratchLineDirection.x, scratchLineDirection.y, scratchLineDirection.z)
+                .setColor(red, green, blue, alpha)
+                .setLineWidth(width);
+        }
+    }
+
+    private static void drawBoxEdges(
+        VertexConsumer buffer,
+        Matrix4f matrix,
+        Vec3 min,
+        Vec3 max,
+        float red,
+        float green,
+        float blue,
+        float alpha,
+        float thickness
+    ) {
+        Vec3 c000 = new Vec3(min.x, min.y, min.z);
+        Vec3 c100 = new Vec3(max.x, min.y, min.z);
+        Vec3 c010 = new Vec3(min.x, max.y, min.z);
+        Vec3 c110 = new Vec3(max.x, max.y, min.z);
+        Vec3 c001 = new Vec3(min.x, min.y, max.z);
+        Vec3 c101 = new Vec3(max.x, min.y, max.z);
+        Vec3 c011 = new Vec3(min.x, max.y, max.z);
+        Vec3 c111 = new Vec3(max.x, max.y, max.z);
+
+        drawBillboardLine(buffer, matrix, c000, c100, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c100, c101, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c101, c001, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c001, c000, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c010, c110, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c110, c111, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c111, c011, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c011, c010, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c000, c010, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c100, c110, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c001, c011, red, green, blue, alpha, thickness);
+        drawBillboardLine(buffer, matrix, c101, c111, red, green, blue, alpha, thickness);
+    }
+
+    private static void drawBillboardLine(
+        VertexConsumer buffer,
+        Matrix4f matrix,
+        Vec3 start,
+        Vec3 end,
+        float red,
+        float green,
+        float blue,
+        float alpha,
+        float thickness
+    ) {
+        Vector3f direction = new Vector3f(
+            (float) (end.x - start.x),
+            (float) (end.y - start.y),
+            (float) (end.z - start.z)
+        );
+        if (direction.lengthSquared() < 0.000001f) return;
+        direction.normalize();
+
+        Vector3f cameraDirection = new Vector3f(
+            (float) ((start.x + end.x) * 0.5),
+            (float) ((start.y + end.y) * 0.5),
+            (float) ((start.z + end.z) * 0.5)
+        );
+        if (cameraDirection.lengthSquared() < 0.0001f) {
+            cameraDirection.set(0, 1, 0);
+        } else {
+            cameraDirection.normalize();
+        }
+
+        Vector3f widthDirection = new Vector3f();
+        direction.cross(cameraDirection, widthDirection);
+        if (widthDirection.lengthSquared() < 0.0001f) {
+            widthDirection.set(Math.abs(direction.x) > 0.9f ? 0 : 1, Math.abs(direction.x) > 0.9f ? 1 : 0, 0);
+        }
+        widthDirection.normalize().mul(thickness / 2.0f);
+
+        float widthX = widthDirection.x;
+        float widthY = widthDirection.y;
+        float widthZ = widthDirection.z;
+        int light = 0xF000F0;
+
+        buffer.addVertex(matrix, (float) start.x - widthX, (float) start.y - widthY, (float) start.z - widthZ)
+            .setColor(red, green, blue, alpha).setLight(light);
+        buffer.addVertex(matrix, (float) start.x + widthX, (float) start.y + widthY, (float) start.z + widthZ)
+            .setColor(red, green, blue, alpha).setLight(light);
+        buffer.addVertex(matrix, (float) end.x + widthX, (float) end.y + widthY, (float) end.z + widthZ)
+            .setColor(red, green, blue, alpha).setLight(light);
+        buffer.addVertex(matrix, (float) end.x - widthX, (float) end.y - widthY, (float) end.z - widthZ)
+            .setColor(red, green, blue, alpha).setLight(light);
+    }
+
+    private static void drawBoxFaces(
+        VertexConsumer buffer,
+        Matrix4f matrix,
+        float x1,
+        float y1,
+        float z1,
+        float x2,
+        float y2,
+        float z2,
+        float red,
+        float green,
+        float blue,
+        float alpha
+    ) {
+        int light = 0xF000F0;
+
+        addVertex(buffer, matrix, x1, y1, z2, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x1, y1, z1, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y1, z1, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y1, z2, red, green, blue, alpha, light);
+
+        addVertex(buffer, matrix, x1, y2, z1, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x1, y2, z2, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y2, z2, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y2, z1, red, green, blue, alpha, light);
+
+        addVertex(buffer, matrix, x1, y1, z1, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x1, y2, z1, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y2, z1, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y1, z1, red, green, blue, alpha, light);
+
+        addVertex(buffer, matrix, x2, y1, z2, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y2, z2, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x1, y2, z2, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x1, y1, z2, red, green, blue, alpha, light);
+
+        addVertex(buffer, matrix, x1, y1, z2, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x1, y2, z2, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x1, y2, z1, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x1, y1, z1, red, green, blue, alpha, light);
+
+        addVertex(buffer, matrix, x2, y1, z1, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y2, z1, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y2, z2, red, green, blue, alpha, light);
+        addVertex(buffer, matrix, x2, y1, z2, red, green, blue, alpha, light);
+    }
+
+    private static void addVertex(
+        VertexConsumer buffer,
+        Matrix4f matrix,
+        float x,
+        float y,
+        float z,
+        float red,
+        float green,
+        float blue,
+        float alpha,
+        int light
+    ) {
+        buffer.addVertex(matrix, x, y, z)
+            .setColor(red, green, blue, alpha)
+            .setLight(light);
+    }
+
+    private static void cleanup(LevelRenderContext context) {
         outlinedBoxes.clear();
         filledBoxes.clear();
         lines.clear();
         linesFromCursor.clear();
-
-        renderText(matrices, cameraPos);
         worldTexts.clear();
     }
 
-    private static void renderFilledBoxes(MultiBufferSource consumers, PoseStack matrices, Vec3 camPos, boolean throughWalls, RenderType layer) {
-        VertexConsumer buffer = consumers.getBuffer(layer);
-        Matrix4f matrix = matrices.last().pose();
-
-        for (RenderTypes.FilledBox fb : filledBoxes) {
-            if (fb.throughWalls != throughWalls) continue;
-
-            AABB box = new AABB(fb.position.x, fb.position.y, fb.position.z,
-                    fb.position.x + fb.boxWidth,
-                    fb.position.y + fb.boxHeight,
-                    fb.position.z + fb.boxWidth)
-                    .move(camPos.reverse());
-
-            float r = fb.color.getRed() / 255f;
-            float g = fb.color.getGreen() / 255f;
-            float b = fb.color.getBlue() / 255f;
-            float a = filledBoxAlpha;
-
-            drawBoxFaces(buffer, matrix, box, r, g, b, a);
-        }
-    }
-
-    private static void renderOutlinedBoxesAsQuads(MultiBufferSource consumers, PoseStack matrices, Vec3 camPos, boolean throughWalls, RenderType layer) {
-        VertexConsumer buffer = consumers.getBuffer(layer);
-        Matrix4f matrix = matrices.last().pose();
-
-        float thickness = Math.max(0.002f, boxLineWidth * THICKNESS_MULTIPLIER);
-
-        for (RenderTypes.OutlinedBox ob : outlinedBoxes) {
-            if (ob.throughWalls != throughWalls) continue;
-
-            AABB box = new AABB(ob.position.x, ob.position.y, ob.position.z,
-                    ob.position.x + ob.boxWidth,
-                    ob.position.y + ob.boxHeight,
-                    ob.position.z + ob.boxWidth)
-                    .move(camPos.reverse());
-
-            float r = ob.color.getRed() / 255f;
-            float g = ob.color.getGreen() / 255f;
-            float b = ob.color.getBlue() / 255f;
-
-            drawBoxEdgesAsQuads(buffer, matrix, box, r, g, b, 1.0f, thickness);
-        }
-    }
-
-    private static void renderLines(MultiBufferSource consumers, PoseStack matrices, Vec3 camPos, boolean throughWalls) {
-        RenderType layer = throughWalls ? SEE_THROUGH_LINE_LAYER : XenWorldRenderCompat.normalLineLayer();
-        VertexConsumer buffer = consumers.getBuffer(layer);
-
-        for (RenderTypes.Line line : lines) {
-            if (line.throughWalls != throughWalls) continue;
-
-            float r = line.color.getRed() / 255f;
-            float g = line.color.getGreen() / 255f;
-            float b = line.color.getBlue() / 255f;
-
-            Vec3 start = line.start.subtract(camPos);
-            Vec3 end = line.end.subtract(camPos);
-            float lineWidth = Math.max(1.0f, line.lineWidth);
-            XenWorldRenderCompat.setLineWidth(lineWidth);
-            drawSimpleLine(buffer, matrices, start, end, r, g, b, 1.0f, lineWidth);
-        }
-    }
-
-    private static void renderLinesFromCursor(MultiBufferSource consumers, PoseStack matrices, Vec3 camPos, boolean throughWalls) {
-        RenderType layer = throughWalls ? SEE_THROUGH_LINE_LAYER : XenWorldRenderCompat.normalLineLayer();
-        VertexConsumer buffer = consumers.getBuffer(layer);
-
-        for (RenderTypes.LineFromCursor line : linesFromCursor) {
-            if (line.throughWalls != throughWalls) continue;
-
-            float r = line.color.getRed() / 255f;
-            float g = line.color.getGreen() / 255f;
-            float b = line.color.getBlue() / 255f;
-
-            Vec3 target = line.point.subtract(camPos);
-            float lineWidth = Math.max(1.0f, line.lineWidth);
-            XenWorldRenderCompat.setLineWidth(lineWidth);
-            drawSimpleLine(buffer, matrices, Vec3.ZERO, target, r, g, b, 1.0f, lineWidth);
-        }
-    }
-
-    private static float toWorldThickness(float lineWidth) {
-        return Math.max(0.002f, lineWidth * THICKNESS_MULTIPLIER);
-    }
-
-    private static void renderText(PoseStack matrices, Vec3 camPos) {
-        Font textRenderer = Minecraft.getInstance().font;
-        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        MultiBufferSource.BufferSource consumers = Minecraft.getInstance().renderBuffers().bufferSource();
-
-        for (RenderTypes.WorldText wt : worldTexts) {
-            matrices.pushPose();
-            Vec3 pos = wt.position.subtract(camPos);
-            matrices.translate(pos.x, pos.y, pos.z);
-            matrices.mulPose(camera.rotation());
-            matrices.scale(-0.025f * wt.scale, -0.025f * wt.scale, 0.025f * wt.scale);
-
-            Matrix4f matrix = matrices.last().pose();
-            float xOffset = -textRenderer.width(wt.text) / 2f;
-
-            Font.DisplayMode layerType = wt.throughWalls
-                    ? Font.DisplayMode.SEE_THROUGH
-                    : Font.DisplayMode.NORMAL;
-
-            textRenderer.drawInBatch(wt.text, xOffset, 0, 0xFFFFFFFF, false, matrix,
-                    consumers, layerType, 0, 15728880);
-
-            matrices.popPose();
-        }
-
-        consumers.endBatch();
-    }
-
-    private static float computeScreenSpaceThicknessAtPoint(float pixelWidth, Vec3 point) {
-        Minecraft mc = Minecraft.getInstance();
-        int framebufferHeight = Math.max(1, mc.getWindow().getHeight());
-        double fovDeg = mc.options.fov().get();
-        double fovRad = Math.toRadians(fovDeg);
-
-        double distance = Math.max(1.0, point.length());
-        double worldPerPixel = (2.0 * distance * Math.tan(fovRad * 0.5)) / framebufferHeight;
-
-        return (float) Math.max(0.002f, pixelWidth * worldPerPixel);
-    }
-
-    private static void drawSimpleLine(VertexConsumer buffer, PoseStack matrices, Vec3 start, Vec3 end, float r, float g, float b, float a, float lineWidth) {
-        matrices.pushPose();
-        matrices.translate(start.x, start.y, start.z);
-        Matrix4f matrix = matrices.last().pose();
-        buffer.addVertex(matrix, 0, 0, 0).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(lineWidth);
-        buffer.addVertex(matrix, (float) (end.x - start.x), (float) (end.y - start.y), (float) (end.z - start.z)).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(lineWidth);
-        matrices.popPose();
-    }
-
-    private static void drawBillboardLine(VertexConsumer buffer, Matrix4f mat, Vec3 start, Vec3 end, float r, float g, float b, float a, float thickness) {
-        drawBillboardLineVariable(buffer, mat, start, end, r, g, b, a, thickness, thickness);
-    }
-
-    private static void drawBillboardLineVariable(VertexConsumer buffer, Matrix4f mat, Vec3 start, Vec3 end, float r, float g, float b, float a, float startThickness, float endThickness) {
-        Vector3f lineDir = new Vector3f((float) (end.x - start.x), (float) (end.y - start.y), (float) (end.z - start.z));
-        if (lineDir.lengthSquared() < 0.000001f) return;
-        lineDir.normalize();
-
-        Vector3f camDirMid = new Vector3f(
-                (float) ((start.x + end.x) * 0.5),
-                (float) ((start.y + end.y) * 0.5),
-                (float) ((start.z + end.z) * 0.5)
-        );
-        if (camDirMid.lengthSquared() < 0.0001f) camDirMid.set(0, 1, 0);
-        camDirMid.normalize();
-
-        Vector3f widthDir = new Vector3f();
-        lineDir.cross(camDirMid, widthDir);
-        if (widthDir.lengthSquared() < 0.0001f) widthDir.set(Math.abs(lineDir.x) > 0.9f ? 0 : 1, Math.abs(lineDir.x) > 0.9f ? 1 : 0, 0);
-        widthDir.normalize();
-
-        Vector3f startOffset = new Vector3f(widthDir).mul(startThickness / 2.0f);
-        Vector3f endOffset = new Vector3f(widthDir).mul(endThickness / 2.0f);
-
-        float x1 = (float) start.x - startOffset.x;
-        float y1 = (float) start.y - startOffset.y;
-        float z1 = (float) start.z - startOffset.z;
-        float x2 = (float) start.x + startOffset.x;
-        float y2 = (float) start.y + startOffset.y;
-        float z2 = (float) start.z + startOffset.z;
-        float x3 = (float) end.x + endOffset.x;
-        float y3 = (float) end.y + endOffset.y;
-        float z3 = (float) end.z + endOffset.z;
-        float x4 = (float) end.x - endOffset.x;
-        float y4 = (float) end.y - endOffset.y;
-        float z4 = (float) end.z - endOffset.z;
-
-        int light = 15728880;
-
-        buffer.addVertex(mat, x1, y1, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y2, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x3, y3, z3).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x4, y4, z4).setColor(r, g, b, a).setLight(light);
-    }
-
-    private static void drawBoxEdgesAsQuads(VertexConsumer buffer, Matrix4f mat, AABB box, float r, float g, float b, float a, float t) {
-        Vec3 c000 = new Vec3(box.minX, box.minY, box.minZ);
-        Vec3 c100 = new Vec3(box.maxX, box.minY, box.minZ);
-        Vec3 c010 = new Vec3(box.minX, box.maxY, box.minZ);
-        Vec3 c110 = new Vec3(box.maxX, box.maxY, box.minZ);
-        Vec3 c001 = new Vec3(box.minX, box.minY, box.maxZ);
-        Vec3 c101 = new Vec3(box.maxX, box.minY, box.maxZ);
-        Vec3 c011 = new Vec3(box.minX, box.maxY, box.maxZ);
-        Vec3 c111 = new Vec3(box.maxX, box.maxY, box.maxZ);
-
-        drawBillboardLine(buffer, mat, c000, c100, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c100, c101, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c101, c001, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c001, c000, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c010, c110, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c110, c111, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c111, c011, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c011, c010, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c000, c010, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c100, c110, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c001, c011, r, g, b, a, t);
-        drawBillboardLine(buffer, mat, c101, c111, r, g, b, a, t);
-    }
-
-    private static void drawBoxFaces(VertexConsumer buffer, Matrix4f mat, AABB box, float r, float g, float b, float a) {
-        float x1 = (float) box.minX;
-        float y1 = (float) box.minY;
-        float z1 = (float) box.minZ;
-        float x2 = (float) box.maxX;
-        float y2 = (float) box.maxY;
-        float z2 = (float) box.maxZ;
-
-        int light = 15728880;
-
-        buffer.addVertex(mat, x1, y1, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x1, y1, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y1, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y1, z2).setColor(r, g, b, a).setLight(light);
-
-        buffer.addVertex(mat, x1, y2, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x1, y2, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y2, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y2, z1).setColor(r, g, b, a).setLight(light);
-
-        buffer.addVertex(mat, x1, y1, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x1, y2, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y2, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y1, z1).setColor(r, g, b, a).setLight(light);
-
-        buffer.addVertex(mat, x2, y1, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y2, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x1, y2, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x1, y1, z2).setColor(r, g, b, a).setLight(light);
-
-        buffer.addVertex(mat, x1, y1, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x1, y2, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x1, y2, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x1, y1, z1).setColor(r, g, b, a).setLight(light);
-
-        buffer.addVertex(mat, x2, y1, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y2, z1).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y2, z2).setColor(r, g, b, a).setLight(light);
-        buffer.addVertex(mat, x2, y1, z2).setColor(r, g, b, a).setLight(light);
-    }
-
     public static void addWorldText(RenderTypes.WorldText worldText) {
-        if (!worldTexts.contains(worldText)) worldTexts.add(worldText);
+        worldTexts.add(worldText);
     }
 
     public static void addOutlinedBox(RenderTypes.OutlinedBox outlinedBox) {
-        if (!outlinedBoxes.contains(outlinedBox)) outlinedBoxes.add(outlinedBox);
+        outlinedBoxes.add(outlinedBox);
     }
 
     public static void addFilledBox(RenderTypes.FilledBox filledBox) {
-        if (!filledBoxes.contains(filledBox)) filledBoxes.add(filledBox);
+        filledBoxes.add(filledBox);
     }
 
     public static void addLine(RenderTypes.Line line) {
-        if (!lines.contains(line)) lines.add(line);
+        lines.add(line);
     }
 
     public static void addLinesFromPoints(Vec3[] points, Color color, float lineWidth, boolean throughWalls) {
-        for (int i = 0; i < points.length - 1; i++) {
-            RenderTypes.Line line = new RenderTypes.Line(points[i], points[i + 1], color, lineWidth, throughWalls);
-            addLine(line);
+        for (int index = 0; index < points.length - 1; index++) {
+            addLine(new RenderTypes.Line(points[index], points[index + 1], color, lineWidth, throughWalls));
         }
     }
 
     public static void addLineFromCursor(RenderTypes.LineFromCursor lineFromCursor) {
-        if (!linesFromCursor.contains(lineFromCursor)) linesFromCursor.add(lineFromCursor);
+        linesFromCursor.add(lineFromCursor);
+    }
+
+    private static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath("xenaddons", path);
     }
 }

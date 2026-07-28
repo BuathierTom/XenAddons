@@ -31,7 +31,8 @@ public class DungeonScanner {
 
     public static DungeonRoom currentRoom = null;
     public static final Set<DungeonRoom> passedRooms = new HashSet<>();
-    private static Vector2i lastRoomCentre = new Vector2i(0, 0);
+    private static Vector2i lastRoomCentre = new Vector2i(Integer.MIN_VALUE, Integer.MIN_VALUE);
+    private static int scanRetryCooldown = 0;
 
     private static final int ROOM_SIZE_SHIFT = 5;
     private static final int START_COORDINATE = -185;
@@ -46,10 +47,8 @@ public class DungeonScanner {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.level == null) return;
             if (!LocationUtils.isInDungeons()) {
-                if (currentRoom != null) {
-                    currentRoom = null;
-                    OnEnterNewRoom.currentRoom = new Room(null);
-                    SecretRouteProgressTracker.clear();
+                if (currentRoom != null || !passedRooms.isEmpty()) {
+                    reset();
                 }
                 return;
             }
@@ -86,22 +85,40 @@ public class DungeonScanner {
         int playerZ = (int) client.player.getZ();
         Vector2i roomCentre = getRoomCentre(playerX, playerZ);
 
-        if (roomCentre.equals(lastRoomCentre)) return;
-        lastRoomCentre = roomCentre;
+        boolean sameCentre = roomCentre.equals(lastRoomCentre);
+        if (sameCentre && currentRoom != null && hasComponent(currentRoom, roomCentre)) return;
+
+        if (!sameCentre) {
+            lastRoomCentre = roomCentre;
+            scanRetryCooldown = 0;
+        } else if (scanRetryCooldown > 0) {
+            scanRetryCooldown--;
+            return;
+        }
 
         for (DungeonRoom passed : passedRooms) {
             for (RoomComponent comp : passed.roomComponents) {
                 if (comp.vec2().equals(roomCentre)) {
-                    if (currentRoom == null || !hasComponent(currentRoom, roomCentre)) enterRoom(passed);
+                    if (currentRoom == null || !hasComponent(currentRoom, roomCentre)) {
+                        enterRoom(passed);
+                    }
                     return;
                 }
             }
         }
 
-        if (!client.level.hasChunk(roomCentre.x >> 4, roomCentre.y >> 4)) return;
+        if (!client.level.hasChunk(roomCentre.x >> 4, roomCentre.y >> 4)) {
+            scanRetryCooldown = 5;
+            return;
+        }
 
         DungeonRoom newRoom = scanRoom(roomCentre);
-        if (newRoom != null && newRoom.rotation != Rotations.NONE) enterRoom(newRoom);
+        if (newRoom != null && newRoom.rotation != Rotations.NONE) {
+            scanRetryCooldown = 0;
+            enterRoom(newRoom);
+        } else {
+            scanRetryCooldown = 10;
+        }
     }
 
     private static void enterRoom(DungeonRoom room) {
@@ -176,48 +193,12 @@ public class DungeonScanner {
                     if (neighborsValid) {
                         room.clayPos = checkPos;
                         room.rotation = rot;
-                        if (room.rotation != Rotations.NONE && (room.data.name().equalsIgnoreCase("Slime-5") || room.data.name().equalsIgnoreCase("Sewer-7"))) {
-                            Rotations newRot = room.rotation;
-
-                            switch (room.rotation) {
-                                case NORTH -> newRot = Rotations.SOUTH;
-                                case SOUTH -> newRot = Rotations.NORTH;
-                                case EAST  -> newRot = Rotations.WEST;
-                                case WEST  -> newRot = Rotations.EAST;
-                                case NONE -> {}
-                            }
-
-                            room.rotation = newRot;
-                            room.clayPos = calculateCorner(room.roomComponents, newRot);
-                        }
                         return;
                     }
                 }
             }
         }
         room.rotation = Rotations.NONE;
-    }
-
-    private static BlockPos calculateCorner(Set<RoomComponent> components, Rotations rotation) {
-        int minX = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int minZ = Integer.MAX_VALUE;
-        int maxZ = Integer.MIN_VALUE;
-
-        for (RoomComponent comp : components) {
-            if (comp.x() < minX) minX = comp.x();
-            if (comp.x() > maxX) maxX = comp.x();
-            if (comp.z() < minZ) minZ = comp.z();
-            if (comp.z() > maxZ) maxZ = comp.z();
-        }
-
-        return switch (rotation) {
-            case SOUTH -> new BlockPos(minX + rotation.x, 0, minZ + rotation.z);
-            case WEST  -> new BlockPos(maxX + rotation.x, 0, minZ + rotation.z);
-            case NORTH -> new BlockPos(maxX + rotation.x, 0, maxZ + rotation.z);
-            case EAST  -> new BlockPos(minX + rotation.x, 0, maxZ + rotation.z);
-            default    -> new BlockPos(minX, 0, minZ);
-        };
     }
 
     private static boolean isBlueTerracotta(BlockPos pos) {
@@ -277,10 +258,12 @@ public class DungeonScanner {
     }
 
     private static void reset() {
-        lastRoomCentre = new Vector2i(0, 0);
+        lastRoomCentre = new Vector2i(Integer.MIN_VALUE, Integer.MIN_VALUE);
+        scanRetryCooldown = 0;
         currentRoom = null;
         passedRooms.clear();
         OnEnterNewRoom.currentRoom = null;
+        OnEnterNewRoom.lastKnownRoom = null;
         SecretRouteProgressTracker.clear();
     }
 }

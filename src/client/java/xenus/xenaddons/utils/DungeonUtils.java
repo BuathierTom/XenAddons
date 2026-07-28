@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerScoreEntry;
+import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.network.chat.Component;
 import xenus.xenaddons.compat.XenPlayerListCompat;
@@ -40,6 +41,8 @@ public class DungeonUtils {
     private static int tickCounter = 0;
     
     private static final Pattern CRYPTS_PATTERN = Pattern.compile("Crypts:\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DUNGEON_FLOOR_PATTERN =
+            Pattern.compile("The Catacombs\\s*\\(([FM])(\\d+)\\)", Pattern.CASE_INSENSITIVE);
     private static final Pattern UNIQUE_CLASS_BONUS_PATTERN =
             Pattern.compile("^Your\\s+([A-Za-z]+)\\s+stats are doubled because you are the only player using this class!$", Pattern.CASE_INSENSITIVE);
 
@@ -102,13 +105,26 @@ public class DungeonUtils {
         Objective objective = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
         if (objective == null) return;
 
+        boolean foundDungeon = false;
         Collection<PlayerScoreEntry> entries = scoreboard.listPlayerScores(objective);
         for (PlayerScoreEntry entry : entries) {
-            String line = entry.ownerName().getString().replaceAll("§[0-9a-fk-or]", "");
+            PlayerTeam team = scoreboard.getPlayersTeam(entry.owner());
+            Component formattedLine = PlayerTeam.formatNameForTeam(team, entry.ownerName());
+            String line = formattedLine.getString().replaceAll("§[0-9a-fk-or]", "").trim();
             
-            if (line.contains("The Catacombs (F7)") || line.contains("Floor VII")) {
+            Matcher floorMatcher = DUNGEON_FLOOR_PATTERN.matcher(line);
+            if (floorMatcher.find()) {
+                foundDungeon = true;
+                try {
+                    floorNumber = Integer.parseInt(floorMatcher.group(2));
+                } catch (NumberFormatException ignored) {
+                }
+            } else if (line.contains("Floor VII")) {
+                foundDungeon = true;
                 floorNumber = 7;
             }
+
+            if (checkTabLine(line)) foundDungeon = true;
 
             if (line.contains("Time: ") || (line.contains(":") && !line.contains("Party") && !line.contains("Guild"))) {
                 java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+):(\\d+)").matcher(line);
@@ -120,6 +136,10 @@ public class DungeonUtils {
                     } catch (Exception ignored) {}
                 }
             }
+        }
+
+        if (foundDungeon) {
+            inCatacombs = true;
         }
     }
 

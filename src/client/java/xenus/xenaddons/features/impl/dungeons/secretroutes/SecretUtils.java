@@ -35,7 +35,8 @@ public class SecretUtils {
 
         int currentIndex = OnEnterNewRoom.currentRoom.currentSecretIndex;
         boolean isCurrentSecret = (index2 == currentIndex);
-        boolean shouldRenderWaypoints = isCurrentSecret;
+        boolean shouldRenderWaypoints =
+            isCurrentSecret || config.wholeRoute.getValue() || config.allSteps.getValue();
 
         // Player to waypoint line
         if (isCurrentSecret && config.playerWaypointLine.getValue()) {
@@ -129,8 +130,8 @@ public class SecretUtils {
             AnotherRenderingUtil.addLinesFromPoints(linePoints, new Color(config.lineColor.getValue()), (float)config.lineWidth.getValue().doubleValue(), false);
         }
 
-        // Render "Start" on the first point of each rendered route (visible through blocks).
-        if (shouldRenderWaypoints && currentSecretWaypoints.has("locations")) {
+        // Render "Start" only for the first secret of the route.
+        if (index2 == 0 && shouldRenderWaypoints && currentSecretWaypoints.has("locations")) {
             JsonArray currentLocations = currentSecretWaypoints.get("locations").getAsJsonArray();
             if (!currentLocations.isEmpty()) {
                 JsonArray startCoords = currentLocations.get(0).getAsJsonArray();

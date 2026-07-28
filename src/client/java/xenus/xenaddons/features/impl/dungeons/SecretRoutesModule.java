@@ -20,6 +20,7 @@ public class SecretRoutesModule extends Module {
     public final BooleanSetting wholeRoute = new BooleanSetting("Full route", false);
     public final BooleanSetting allSteps = new BooleanSetting("Render steps", false);
     public final BooleanSetting allSecrets = new BooleanSetting("All secrets", false);
+    public final BooleanSetting oldRoutes = new BooleanSetting("Old Routes", false);
     
     // Rendering Config
     public final BooleanSetting renderLines = new BooleanSetting("Render Lines", true);
@@ -54,6 +55,9 @@ public class SecretRoutesModule extends Module {
         allSteps.setValue(false);
 
         this.registerSetting(renderRoutes);
+        this.registerSetting(wholeRoute);
+        this.registerSetting(allSecrets);
+        this.registerSetting(oldRoutes);
 
         // Rendering subcategory
         this.registerSetting(renderLines);
@@ -70,16 +74,24 @@ public class SecretRoutesModule extends Module {
         this.registerSetting(renderSecretsItem);
         this.registerSetting(renderSecretInteract);
         this.registerSetting(renderSecretBat);
+        this.registerSetting(playerWaypointLine);
 
         // Initialize the sub-systems
         DungeonScanner.init();
         AnotherRenderingUtil.register();
         AnotherRenderingUtil.preRenderCallback = this::onPreRender;
         SecretRoutesEvents.init();
+        oldRoutes.setListener(value -> {
+            Room room = OnEnterNewRoom.currentRoom;
+            if (room == null) return;
+
+            SecretUtils.resetValues();
+            SecretRoutesEvents.resetState();
+            room.reloadRouteData();
+        });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (this.isEnabled()) {
-                OnEnterNewRoom.checkForNewRoom();
                 SecretRoutesEvents.onTick(client);
             }
         });
@@ -114,8 +126,20 @@ public class SecretRoutesModule extends Module {
         AnotherRenderingUtil.filledBoxAlpha = (float) boxAlpha.getValue().doubleValue();
 
         try {
-            if (OnEnterNewRoom.currentRoom.currentSecretWaypoints != null) {
-                SecretUtils.renderingCallback(OnEnterNewRoom.currentRoom.currentSecretWaypoints, OnEnterNewRoom.currentRoom.currentSecretIndex);
+            Room room = OnEnterNewRoom.currentRoom;
+            if (allSecrets.getValue()) {
+                SecretUtils.renderSecrets();
+            }
+
+            if (wholeRoute.getValue() && room.currentSecretRoute != null) {
+                for (int index = room.currentSecretIndex; index < room.currentSecretRoute.size(); index++) {
+                    SecretUtils.renderingCallback(
+                        room.currentSecretRoute.get(index).getAsJsonObject(),
+                        index
+                    );
+                }
+            } else if (room.currentSecretWaypoints != null) {
+                SecretUtils.renderingCallback(room.currentSecretWaypoints, room.currentSecretIndex);
             }
             SecretUtils.renderLockedChestLever();
         } catch (Exception e) {
