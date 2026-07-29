@@ -16,8 +16,7 @@ public final class XenMouseCompat {
     public static boolean handleSpotifyOverlayClick(Minecraft client, long window, MouseButtonInfo input, int action) {
         if (window != client.getWindow().handle()) return false;
         if (action != GLFW.GLFW_PRESS) return false;
-        if (client.screen == null || client.getOverlay() != null) return false;
-        if ("xenus.xenaddons.gui.HudEditorScreen".equals(client.screen.getClass().getName())) return false;
+        if (client.getOverlay() != null || !SpotifyOverlayModule.isInteractiveScreen(client.screen)) return false;
 
         SpotifyOverlayModule module = ModuleManager.getModule(SpotifyOverlayModule.class);
         if (module == null) return false;

@@ -3,6 +3,11 @@ package xenus.xenaddons.features.impl.misc;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.LevelLoadingScreen;
+import net.minecraft.client.gui.screens.ProgressScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
@@ -78,7 +83,7 @@ public class SpotifyOverlayModule extends Module {
 
     public void renderInGameHud(GuiGraphicsExtractor graphics) {
         displayBoundsValid = false;
-        if (!isEnabled()) return;
+        if (!shouldRenderInGameHud()) return;
         SpotifyNowPlaying.requestRefreshIfNeeded(betterDisplay.getValue());
 
         if (betterDisplay.getValue()) {
@@ -340,7 +345,7 @@ public class SpotifyOverlayModule extends Module {
         double mouseY = mc.mouseHandler.getScaledYPos(mc.getWindow());
         float localMouseX = (float) ((mouseX - left) / scale);
         float localMouseY = (float) ((mouseY - top) / scale);
-        boolean canHover = interactive && mc.screen != null;
+        boolean canHover = interactive && isInteractiveScreen(mc.screen);
 
         float middleX = (BETTER_DISPLAY_WIDTH / 2.0f) + 2.0f;
         addControlIcon(
@@ -494,7 +499,13 @@ public class SpotifyOverlayModule extends Module {
     }
 
     public boolean onMouseClicked(double mouseX, double mouseY, int button) {
-        if (!isEnabled() || !betterDisplay.getValue() || !displayBoundsValid || button != 0) return false;
+        if (!shouldRenderInGameHud()
+            || !isInteractiveScreen(mc.screen)
+            || !betterDisplay.getValue()
+            || !displayBoundsValid
+            || button != 0) {
+            return false;
+        }
 
         float localX = (float) ((mouseX - displayLeft) / displayScale);
         float localY = (float) ((mouseY - displayTop) / displayScale);
@@ -525,6 +536,23 @@ public class SpotifyOverlayModule extends Module {
             return true;
         }
         return true;
+    }
+
+    public boolean shouldRenderInGameHud() {
+        if (!isEnabled()
+            || mc.level == null
+            || mc.player == null
+            || mc.options.hideGui
+            || mc.getOverlay() != null) {
+            return false;
+        }
+
+        return !(mc.screen instanceof LevelLoadingScreen)
+            && !(mc.screen instanceof ProgressScreen);
+    }
+
+    public static boolean isInteractiveScreen(Screen screen) {
+        return screen instanceof ChatScreen || screen instanceof AbstractContainerScreen<?>;
     }
 
     public int getHudOffsetX() {
