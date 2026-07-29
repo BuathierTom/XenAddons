@@ -79,6 +79,7 @@ final class WindowsSpotifyBridge {
     }
 
     record Snapshot(
+        String source,
         String artist,
         String title,
         boolean playing,
@@ -225,7 +226,10 @@ final class WindowsSpotifyBridge {
         private static Snapshot read(boolean includeDetails) throws Exception {
             ensureInitialized();
             try (Arena arena = Arena.ofConfined()) {
-                MemorySegment session = findSpotifySession(arena);
+                MediaSession selectedSession = findMediaSession(arena);
+                MemorySegment session = selectedSession == null
+                    ? MemorySegment.NULL
+                    : selectedSession.handle();
                 if (isNull(session)) return null;
 
                 MemorySegment media = MemorySegment.NULL;
@@ -262,6 +266,7 @@ final class WindowsSpotifyBridge {
                     }
 
                     return new Snapshot(
+                        selectedSession.source(),
                         artist,
                         title,
                         playing,
@@ -281,7 +286,10 @@ final class WindowsSpotifyBridge {
         private static boolean control(SpotifyNowPlaying.ControlAction action) throws Exception {
             ensureInitialized();
             try (Arena arena = Arena.ofConfined()) {
-                MemorySegment session = findSpotifySession(arena);
+                MediaSession selectedSession = findMediaSession(arena);
+                MemorySegment session = selectedSession == null
+                    ? MemorySegment.NULL
+                    : selectedSession.handle();
                 if (isNull(session)) return false;
                 try {
                     int slot = switch (action) {
@@ -299,7 +307,10 @@ final class WindowsSpotifyBridge {
         private static boolean setRepeat(boolean enabled) throws Exception {
             ensureInitialized();
             try (Arena arena = Arena.ofConfined()) {
-                MemorySegment session = findSpotifySession(arena);
+                MediaSession selectedSession = findMediaSession(arena);
+                MemorySegment session = selectedSession == null
+                    ? MemorySegment.NULL
+                    : selectedSession.handle();
                 if (isNull(session)) return false;
                 try {
                     MemorySegment operation = callIntOutPointer(
@@ -318,7 +329,10 @@ final class WindowsSpotifyBridge {
         private static boolean setShuffle(boolean enabled) throws Exception {
             ensureInitialized();
             try (Arena arena = Arena.ofConfined()) {
-                MemorySegment session = findSpotifySession(arena);
+                MediaSession selectedSession = findMediaSession(arena);
+                MemorySegment session = selectedSession == null
+                    ? MemorySegment.NULL
+                    : selectedSession.handle();
                 if (isNull(session)) return false;
                 try {
                     MemorySegment out = arena.allocate(ADDRESS);
@@ -526,7 +540,7 @@ final class WindowsSpotifyBridge {
             );
         }
 
-        private static MemorySegment findSpotifySession(Arena arena) throws Exception {
+        private static MediaSession findMediaSession(Arena arena) throws Exception {
             MemorySegment factory = activationFactory(
                 SESSION_MANAGER_CLASS,
                 IID_SESSION_MANAGER_STATICS,
@@ -536,8 +550,20 @@ final class WindowsSpotifyBridge {
             MemorySegment sessions = MemorySegment.NULL;
             try {
                 manager = awaitPointer(callOutPointer(factory, 6, arena), 8, arena);
+
+                MemorySegment currentSession = callOutPointer(manager, 6, arena);
+                if (!isNull(currentSession)) {
+                    try {
+                        String appId = readHStringProperty(currentSession, 6, arena);
+                        return new MediaSession(currentSession, sourceName(appId));
+                    } catch (Exception ignored) {
+                        release(currentSession);
+                    }
+                }
+
                 sessions = callOutPointer(manager, 7, arena);
                 int count = readIntProperty(sessions, 7, arena);
+                MediaSession fallback = null;
 
                 for (int index = 0; index < count; index++) {
                     MemorySegment session = callIntOutPointer(sessions, 6, index, arena);
@@ -548,18 +574,34 @@ final class WindowsSpotifyBridge {
                         release(session);
                         continue;
                     }
-                    if (appId.toLowerCase(Locale.ROOT).contains("spotify")) {
-                        return session;
+
+                    String source = sourceName(appId);
+                    if ("Spotify".equals(source) || "Deezer".equals(source)) {
+                        if (fallback != null) release(fallback.handle());
+                        return new MediaSession(session, source);
                     }
-                    release(session);
+                    if (fallback == null) {
+                        fallback = new MediaSession(session, source);
+                    } else {
+                        release(session);
+                    }
                 }
-                return MemorySegment.NULL;
+                return fallback;
             } finally {
                 release(sessions);
                 release(manager);
                 release(factory);
             }
         }
+
+        private static String sourceName(String appId) {
+            String normalized = appId == null ? "" : appId.toLowerCase(Locale.ROOT);
+            if (normalized.contains("deezer")) return "Deezer";
+            if (normalized.contains("spotify")) return "Spotify";
+            return "Music";
+        }
+
+        private record MediaSession(MemorySegment handle, String source) {}
 
         private static byte[] readArtwork(MemorySegment media, Arena arena) {
             MemorySegment thumbnail = MemorySegment.NULL;

@@ -54,10 +54,8 @@ public class SpotifyOverlayModule extends Module {
     private MusicMsdfFont detailFont;
     private MusicMsdfFont controlFont;
 
-    private int volumePercent = 50;
     private boolean repeatActive;
     private boolean shuffleActive;
-    private boolean liked;
     private double animatedProgress;
     private long lastProgressFrame = System.nanoTime();
     private String lastProgressTrack = "";
@@ -68,7 +66,7 @@ public class SpotifyOverlayModule extends Module {
     private float displayScale = 1.0f;
 
     public SpotifyOverlayModule() {
-        super("Spotify Overlay", "Displays currently playing Spotify track", Category.MISC);
+        super("Spotify Overlay", "Displays the current Spotify or compatible media track", Category.MISC);
         hudOffsetX.setVisibility(() -> false);
         hudY.setVisibility(() -> false);
         hudScale.setVisibility(() -> false);
@@ -106,6 +104,7 @@ public class SpotifyOverlayModule extends Module {
         }
 
         SpotifyNowPlaying.Snapshot preview = new SpotifyNowPlaying.Snapshot(
+            "Music",
             "kotlola, Haranczykov",
             "MEWA",
             "Playing",
@@ -343,65 +342,6 @@ public class SpotifyOverlayModule extends Module {
         float localMouseY = (float) ((mouseY - top) / scale);
         boolean canHover = interactive && mc.screen != null;
 
-        addControlIcon(
-            graphics,
-            pose,
-            scissor,
-            "E",
-            8.0f,
-            40.0f,
-            20.0f,
-            controlColor(canHover && hit(localMouseX, localMouseY, 6.0f, 17.0f))
-        );
-
-        float sliderX = 18.0f;
-        float sliderY = 46.5f;
-        float sliderWidth = 30.0f;
-        float sliderHeight = 2.0f;
-        float volume = volumePercent / 100.0f;
-        graphics.guiRenderState.addGuiElement(
-            new MusicRoundedRectState(
-                MusicRenderPipelines.ROUNDED_RECT,
-                pose,
-                sliderX,
-                sliderY,
-                sliderWidth,
-                sliderHeight,
-                ARGB.color(65, 255, 255, 255),
-                1.0f,
-                scissor
-            )
-        );
-        graphics.guiRenderState.addGuiElement(
-            new MusicRoundedRectState(
-                MusicRenderPipelines.ROUNDED_RECT,
-                pose,
-                sliderX,
-                sliderY,
-                sliderWidth * volume,
-                sliderHeight,
-                TITLE_COLOR,
-                1.0f,
-                scissor
-            )
-        );
-        boolean sliderHovered = canHover && hit(localMouseX, localMouseY, 18.0f, 48.0f);
-        float knobRadius = sliderHovered ? 2.5f : 1.5f;
-        float knobCenter = sliderX + (sliderWidth * volume);
-        graphics.guiRenderState.addGuiElement(
-            new MusicRoundedRectState(
-                MusicRenderPipelines.ROUNDED_RECT,
-                pose,
-                knobCenter - knobRadius,
-                sliderY + (sliderHeight / 2.0f) - knobRadius,
-                knobRadius * 2.0f,
-                knobRadius * 2.0f,
-                TITLE_COLOR,
-                knobRadius,
-                scissor
-            )
-        );
-
         float middleX = (BETTER_DISPLAY_WIDTH / 2.0f) + 2.0f;
         addControlIcon(
             graphics,
@@ -453,16 +393,6 @@ public class SpotifyOverlayModule extends Module {
             41.5f,
             16.0f,
             statefulControlColor(shuffleActive, canHover && hit(localMouseX, localMouseY, 147.0f, 159.0f))
-        );
-        addControlIcon(
-            graphics,
-            pose,
-            scissor,
-            "D",
-            BETTER_DISPLAY_WIDTH - PADDING - 7.0f,
-            41.5f,
-            16.0f,
-            statefulControlColor(liked, canHover && hit(localMouseX, localMouseY, 160.0f, 172.0f))
         );
     }
 
@@ -535,18 +465,18 @@ public class SpotifyOverlayModule extends Module {
         if (snapshot.isPlaying()) return snapshot.title();
         if (snapshot.isPaused() && !snapshot.title().isBlank()) return snapshot.title();
         if (snapshot.isPaused()) return "Paused";
-        return "Spotify not connected";
+        return snapshot.source() + " not connected";
     }
 
     private String betterSubtitle(SpotifyNowPlaying.Snapshot snapshot) {
         if (snapshot.isPlaying()) return snapshot.artist();
         if (snapshot.isPaused() && !snapshot.artist().isBlank()) return snapshot.artist();
-        if (snapshot.isPaused()) return "Spotify";
-        return "Spotify is not running";
+        if (snapshot.isPaused()) return snapshot.source();
+        return snapshot.source() + " is not running";
     }
 
-    private String formatTime(int seconds) {
-        int safeSeconds = Math.max(0, seconds);
+    private String formatTime(double seconds) {
+        int safeSeconds = Math.max(0, (int) Math.floor(seconds));
         return (safeSeconds / 60) + ":" + String.format("%02d", safeSeconds % 60);
     }
 
@@ -572,16 +502,6 @@ public class SpotifyOverlayModule extends Module {
             return false;
         }
 
-        if (localX >= 18.0f && localX <= 48.0f) {
-            volumePercent = Mth.clamp(Math.round(((localX - 18.0f) / 30.0f) * 100.0f), 0, 100);
-            SpotifyNowPlaying.setVolume(volumePercent);
-            return true;
-        }
-        if (localX >= 6.0f && localX <= 17.0f) {
-            volumePercent = volumePercent > 0 ? 0 : 50;
-            SpotifyNowPlaying.setVolume(volumePercent);
-            return true;
-        }
         if (localX >= 68.0f && localX <= 82.0f) {
             SpotifyNowPlaying.control(SpotifyNowPlaying.ControlAction.PREVIOUS);
             return true;
@@ -602,11 +522,6 @@ public class SpotifyOverlayModule extends Module {
         if (localX >= 147.0f && localX <= 159.0f) {
             shuffleActive = !shuffleActive;
             SpotifyNowPlaying.setShuffle(shuffleActive);
-            return true;
-        }
-        if (localX >= 160.0f && localX <= 172.0f) {
-            liked = !liked;
-            SpotifyNowPlaying.toggleLike();
             return true;
         }
         return true;

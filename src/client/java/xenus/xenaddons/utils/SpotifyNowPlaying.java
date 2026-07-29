@@ -38,14 +38,19 @@ public final class SpotifyNowPlaying {
     private static final AtomicBoolean FETCHING = new AtomicBoolean(false);
 
     private static volatile long lastFetchAt = 0L;
+    private static volatile String source = "Music";
     private static volatile String artist = "";
     private static volatile String title = "";
     private static volatile String state = "Not open";
     private static volatile String artworkUrl = "";
     private static volatile byte[] artworkBytes;
     private static volatile String trackUrl = "";
-    private static volatile int progressSeconds = -1;
+    private static volatile double progressSeconds = -1.0;
     private static volatile int durationSeconds = -1;
+    private static volatile long progressSampleNanos = 0L;
+    private static volatile boolean progressAdvancing = false;
+    private static volatile String progressTrack = "";
+    private static volatile double lastRawProgressSeconds = -1.0;
     private static volatile boolean lastFetchIncludedProgress = false;
 
     private SpotifyNowPlaying() {}
@@ -77,36 +82,40 @@ public final class SpotifyNowPlaying {
     public static String getFormattedLine(int maxTitleLength) {
         if ("Playing".equals(state) && !artist.isBlank() && !title.isBlank()) {
             String displayTitle = clampWithEllipsis(title, maxTitleLength);
-            return "§6Spotify §7> §a" + artist + " §7- §b" + displayTitle;
+            return "§6" + displaySource() + " §7> §a" + artist + " §7- §b" + displayTitle;
         }
         if ("Paused".equals(state)) {
-            return "§6Spotify §7> §cPaused";
+            return "§6" + displaySource() + " §7> §cPaused";
         }
-        return "§6Spotify §7> §cNot open";
+        return "§6" + displaySource() + " §7> §cNot open";
     }
 
     public static Snapshot getSnapshot() {
+        double liveProgress = currentProgress(System.nanoTime());
+
         return new Snapshot(
+            displaySource(),
             artist,
             title,
             state,
             artworkUrl,
             artworkBytes,
             trackUrl,
-            progressSeconds,
+            liveProgress,
             durationSeconds
         );
     }
 
     public record Snapshot(
-        String artist,
-        String title,
-        String state,
-        String artworkUrl,
-        byte[] artworkBytes,
-        String trackUrl,
-        int progressSeconds,
-        int durationSeconds
+            String source,
+            String artist,
+            String title,
+            String state,
+            String artworkUrl,
+            byte[] artworkBytes,
+            String trackUrl,
+            double progressSeconds,
+            int durationSeconds
     ) {
         public boolean isPlaying() {
             return "Playing".equals(state) && !artist.isBlank() && !title.isBlank();
@@ -117,7 +126,7 @@ public final class SpotifyNowPlaying {
         }
 
         public boolean hasProgress() {
-            return progressSeconds >= 0 && durationSeconds > 0;
+            return progressSeconds >= 0.0 && durationSeconds > 0;
         }
     }
 
@@ -131,14 +140,7 @@ public final class SpotifyNowPlaying {
             refreshMac(includeProgress);
             return;
         }
-        artist = "";
-        title = "";
-        state = "Not open";
-        artworkUrl = "";
-        artworkBytes = null;
-        trackUrl = "";
-        progressSeconds = -1;
-        durationSeconds = -1;
+        clearNowPlaying("Music");
     }
 
     private static void refreshWindows(boolean includeProgress) {
@@ -148,56 +150,41 @@ public final class SpotifyNowPlaying {
             return;
         }
 
+        source = snapshot.source();
         artist = sanitize(snapshot.artist());
         title = sanitize(snapshot.title());
         state = snapshot.playing() ? "Playing" : "Paused";
         artworkUrl = "";
         artworkBytes = includeProgress ? snapshot.artwork() : null;
         trackUrl = "";
-        progressSeconds = includeProgress ? snapshot.progressSeconds() : -1;
-        durationSeconds = includeProgress ? snapshot.durationSeconds() : -1;
+        setProgress(
+            includeProgress ? snapshot.progressSeconds() : -1.0,
+            includeProgress ? snapshot.durationSeconds() : -1,
+            snapshot.playing(),
+            artist + '\u0000' + title
+        );
     }
 
     private static void refreshMac(boolean includeProgress) {
+        source = "Spotify";
         try {
             Process check = new ProcessBuilder("pgrep", "-x", "Spotify").start();
             boolean done = check.waitFor(800, TimeUnit.MILLISECONDS);
             if (!done || check.exitValue() != 0) {
                 if (!done) check.destroyForcibly();
-                artist = "";
-                title = "";
-                state = "Not open";
-                artworkUrl = "";
-                artworkBytes = null;
-                trackUrl = "";
-                progressSeconds = -1;
-                durationSeconds = -1;
+                clearNowPlaying("Spotify");
                 return;
             }
 
             String nowPlaying = runAppleScript(MAC_NOW_PLAYING_SCRIPT);
             if (nowPlaying == null) {
-                artist = "";
-                title = "";
-                state = "Not open";
-                artworkUrl = "";
-                artworkBytes = null;
-                trackUrl = "";
-                progressSeconds = -1;
-                durationSeconds = -1;
+                clearNowPlaying("Spotify");
                 return;
             }
 
             String[] fields = nowPlaying.split(MAC_FIELD_SEPARATOR, -1);
             if (fields.length < 7) {
-                artist = "";
-                title = "";
-                state = "Not open";
-                artworkUrl = "";
-                artworkBytes = null;
-                trackUrl = "";
-                progressSeconds = -1;
-                durationSeconds = -1;
+                clearNowPlaying("Spotify");
                 return;
             }
 
@@ -211,8 +198,7 @@ public final class SpotifyNowPlaying {
                 artworkUrl = "";
                 artworkBytes = null;
                 trackUrl = "";
-                progressSeconds = -1;
-                durationSeconds = -1;
+                clearProgress();
                 return;
             }
 
@@ -223,22 +209,19 @@ public final class SpotifyNowPlaying {
             artworkBytes = null;
             trackUrl = includeProgress ? sanitizeTrackUrl(fields[4]) : "";
             if (includeProgress) {
-                progressSeconds = parseIntOrDefault(fields[5], -1);
+                double sampledProgress = parseIntOrDefault(fields[5], -1);
                 int durationMs = parseIntOrDefault(fields[6], -1);
-                durationSeconds = durationMs > 0 ? durationMs / 1000 : -1;
+                setProgress(
+                    sampledProgress,
+                    durationMs > 0 ? durationMs / 1000 : -1,
+                    "Playing".equals(state),
+                    artist + '\u0000' + title
+                );
             } else {
-                progressSeconds = -1;
-                durationSeconds = -1;
+                clearProgress();
             }
         } catch (Exception e) {
-            artist = "";
-            title = "";
-            state = "Not open";
-            artworkUrl = "";
-            artworkBytes = null;
-            trackUrl = "";
-            progressSeconds = -1;
-            durationSeconds = -1;
+            clearNowPlaying("Spotify");
             XenAddons.LOGGER.debug("Spotify overlay refresh failed", e);
         }
     }
@@ -341,14 +324,70 @@ public final class SpotifyNowPlaying {
     }
 
     private static void clearNowPlaying() {
+        clearNowPlaying("Music");
+    }
+
+    private static void clearNowPlaying(String preferredSource) {
+        source = preferredSource;
         artist = "";
         title = "";
         state = "Not open";
         artworkUrl = "";
         artworkBytes = null;
         trackUrl = "";
-        progressSeconds = -1;
+        clearProgress();
+    }
+
+    private static void setProgress(
+        double sampledProgress,
+        int duration,
+        boolean playing,
+        String trackKey
+    ) {
+        if (sampledProgress < 0.0 || duration <= 0) {
+            clearProgress();
+            return;
+        }
+
+        long now = System.nanoTime();
+        double nextProgress = sampledProgress;
+        if (trackKey.equals(progressTrack) && progressSeconds >= 0.0) {
+            double estimatedProgress = currentProgress(now);
+            boolean rawPositionChanged =
+                lastRawProgressSeconds < 0.0
+                    || Math.abs(sampledProgress - lastRawProgressSeconds) > 0.5;
+            if (!rawPositionChanged || Math.abs(sampledProgress - estimatedProgress) <= 2.0) {
+                nextProgress = Math.max(sampledProgress, estimatedProgress);
+            }
+        }
+
+        progressSeconds = Math.min(nextProgress, duration);
+        durationSeconds = duration;
+        progressSampleNanos = now;
+        progressAdvancing = playing;
+        progressTrack = trackKey;
+        lastRawProgressSeconds = sampledProgress;
+    }
+
+    private static double currentProgress(long now) {
+        double current = progressSeconds;
+        if (progressAdvancing && current >= 0.0 && progressSampleNanos > 0L) {
+            current += Math.max(0.0, (now - progressSampleNanos) / 1_000_000_000.0);
+        }
+        return durationSeconds > 0 ? Math.min(current, durationSeconds) : current;
+    }
+
+    private static void clearProgress() {
+        progressSeconds = -1.0;
         durationSeconds = -1;
+        progressSampleNanos = 0L;
+        progressAdvancing = false;
+        progressTrack = "";
+        lastRawProgressSeconds = -1.0;
+    }
+
+    private static String displaySource() {
+        return source == null || source.isBlank() ? "Music" : source;
     }
 
     private static String runAppleScript(String script) {
