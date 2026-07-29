@@ -1,18 +1,3 @@
-## Added
-
-- **Spotify / Deezer on Windows**
-  - Added native Windows media-session support for Spotify and Deezer.
-  - Added metadata, playback state, real-time progress, duration, embedded album artwork, and playback controls without PowerShell.
-
-## Changed
-
-- **Spotify Better Display**
-  - Progress now advances in real time on Windows and macOS.
-  - Media labels now follow the detected source.
-  - Removed the volume, mute, and like controls.
-  - Kept previous, play/pause, next, repeat, and shuffle controls.
-  - Controls are now clickable only from the chat or an inventory/container screen.
-
 ## Fixed
 
 - **Spotify Better Display**
