@@ -84,9 +84,10 @@ public class SpotifyOverlayModule extends Module {
     public void renderInGameHud(GuiGraphicsExtractor graphics) {
         displayBoundsValid = false;
         if (!shouldRenderInGameHud()) return;
-        SpotifyNowPlaying.requestRefreshIfNeeded(betterDisplay.getValue());
+        boolean useBetterDisplay = isBetterDisplayEnabled();
+        SpotifyNowPlaying.requestRefreshIfNeeded(useBetterDisplay);
 
-        if (betterDisplay.getValue()) {
+        if (useBetterDisplay) {
             renderBetterDisplay(graphics, SpotifyNowPlaying.getSnapshot());
             return;
         }
@@ -103,7 +104,7 @@ public class SpotifyOverlayModule extends Module {
 
     public void renderPreviewAt(GuiGraphicsExtractor graphics, int left, int top) {
         float scale = hudScale.getValue().floatValue();
-        if (!betterDisplay.getValue()) {
+        if (!isBetterDisplayEnabled()) {
             renderLineAt(graphics, STANDARD_PREVIEW_LINE, left, top, scale);
             return;
         }
@@ -501,7 +502,7 @@ public class SpotifyOverlayModule extends Module {
     public boolean onMouseClicked(double mouseX, double mouseY, int button) {
         if (!shouldRenderInGameHud()
             || !isInteractiveScreen(mc.screen)
-            || !betterDisplay.getValue()
+            || !isBetterDisplayEnabled()
             || !displayBoundsValid
             || button != 0) {
             return false;
@@ -568,15 +569,15 @@ public class SpotifyOverlayModule extends Module {
     }
 
     public boolean isBetterDisplayEnabled() {
-        return betterDisplay.getValue();
+        return betterDisplay.getValue() && MusicRenderPipelines.isAvailable();
     }
 
     public int getPreviewWidth() {
-        return betterDisplay.getValue() ? BETTER_DISPLAY_WIDTH : mc.font.width(STANDARD_PREVIEW_LINE);
+        return isBetterDisplayEnabled() ? BETTER_DISPLAY_WIDTH : mc.font.width(STANDARD_PREVIEW_LINE);
     }
 
     public int getPreviewHeight() {
-        return betterDisplay.getValue() ? BETTER_DISPLAY_HEIGHT : mc.font.lineHeight;
+        return isBetterDisplayEnabled() ? BETTER_DISPLAY_HEIGHT : mc.font.lineHeight;
     }
 
     public void setHudOffsetX(int value) {
