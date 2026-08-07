@@ -51,6 +51,7 @@ public class SpotifyOverlayModule extends Module {
     private static final float PROGRESS_HEIGHT = 3.0f;
 
     private final BooleanSetting betterDisplay = new BooleanSetting("Better Display", false);
+    private final BooleanSetting hideWhenNotPlaying = new BooleanSetting("Hide When Not Playing", false);
     private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
     private final NumberSetting hudY = new NumberSetting("HUD Y", 84, -1000, 1000, 1);
     private final NumberSetting hudScale = new NumberSetting("HUD Scale", 1.0, 0.5, 6.0, 0.05);
@@ -72,10 +73,12 @@ public class SpotifyOverlayModule extends Module {
 
     public SpotifyOverlayModule() {
         super("Spotify Overlay", "Displays the current Spotify or compatible media track", Category.MISC);
+        hideWhenNotPlaying.setVisibility(betterDisplay::getValue);
         hudOffsetX.setVisibility(() -> false);
         hudY.setVisibility(() -> false);
         hudScale.setVisibility(() -> false);
         registerSetting(betterDisplay);
+        registerSetting(hideWhenNotPlaying);
         registerSetting(hudOffsetX);
         registerSetting(hudY);
         registerSetting(hudScale);
@@ -88,7 +91,9 @@ public class SpotifyOverlayModule extends Module {
         SpotifyNowPlaying.requestRefreshIfNeeded(useBetterDisplay);
 
         if (useBetterDisplay) {
-            renderBetterDisplay(graphics, SpotifyNowPlaying.getSnapshot());
+            SpotifyNowPlaying.Snapshot snapshot = SpotifyNowPlaying.getSnapshot();
+            if (isHiddenWhenNotPlaying(snapshot)) return;
+            renderBetterDisplay(graphics, snapshot);
             return;
         }
 
@@ -570,6 +575,15 @@ public class SpotifyOverlayModule extends Module {
 
     public boolean isBetterDisplayEnabled() {
         return betterDisplay.getValue() && MusicRenderPipelines.isAvailable();
+    }
+
+    public boolean shouldRenderBetterDisplay() {
+        if (!shouldRenderInGameHud() || !isBetterDisplayEnabled()) return false;
+        return !isHiddenWhenNotPlaying(SpotifyNowPlaying.getSnapshot());
+    }
+
+    private boolean isHiddenWhenNotPlaying(SpotifyNowPlaying.Snapshot snapshot) {
+        return hideWhenNotPlaying.getValue() && !snapshot.isPlaying();
     }
 
     public int getPreviewWidth() {
