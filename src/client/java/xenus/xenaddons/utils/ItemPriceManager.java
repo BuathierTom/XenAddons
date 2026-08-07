@@ -31,6 +31,7 @@ public final class ItemPriceManager {
     private static final long REFRESH_MS = 5 * 60 * 1000L;
     private static final Pattern PET_LEVEL_PREFIX_PATTERN = Pattern.compile("^\\s*\\[\\s*Lvl\\s+\\d+\\s*]\\s*", Pattern.CASE_INSENSITIVE);
     private static final Pattern PET_SUFFIX_PATTERN = Pattern.compile("\\s+Pet\\s*$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SHARD_NAME_PATTERN = Pattern.compile("^(.+?)\\s+Shard$", Pattern.CASE_INSENSITIVE);
     private static final String[] PET_RARITIES = {
         "VERY SPECIAL",
         "SPECIAL",
@@ -148,6 +149,9 @@ public final class ItemPriceManager {
             if (converted != null) return converted;
             if ("ENCHANTED_BOOK".equals(sbId)) return sbId;
         }
+
+        String shardPricingId = resolveShardPricingId(stack);
+        if (shardPricingId != null) return shardPricingId;
 
         return sbId;
     }
@@ -279,6 +283,22 @@ public final class ItemPriceManager {
         if (normalizedPet.isBlank()) return null;
 
         return normalizedPet + "_PET_" + normalizedRarity;
+    }
+
+    private static String resolveShardPricingId(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+
+        String displayName = stripFormatting(stack.getHoverName().getString());
+        if (displayName == null || displayName.isBlank()) return null;
+
+        var matcher = SHARD_NAME_PATTERN.matcher(displayName);
+        if (!matcher.matches()) return null;
+
+        String shardName = normalizeApiPart(matcher.group(1));
+        if (shardName == null) return null;
+
+        String shardId = "SHARD_" + shardName;
+        return BAZAAR_BY_ID.containsKey(shardId) ? shardId : null;
     }
 
     private static String normalizeApiPart(String value) {

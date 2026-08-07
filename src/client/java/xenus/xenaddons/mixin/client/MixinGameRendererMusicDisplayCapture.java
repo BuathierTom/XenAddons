@@ -16,7 +16,7 @@ public class MixinGameRendererMusicDisplayCapture {
     @Inject(method = "renderLevel", at = @At("TAIL"))
     private void xenaddons$captureWorldForMusicLiquidGlass(DeltaTracker deltaTracker, CallbackInfo ci) {
         SpotifyOverlayModule module = ModuleManager.getModule(SpotifyOverlayModule.class);
-        if (module != null && module.shouldRenderInGameHud() && module.isBetterDisplayEnabled()) {
+        if (module != null && module.shouldRenderBetterDisplay()) {
             MusicCaptureManager.update(Minecraft.getInstance());
         } else {
             MusicCaptureManager.cleanup();
