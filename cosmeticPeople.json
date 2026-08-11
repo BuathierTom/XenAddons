@@ -115,7 +115,10 @@
       "wWuzax_"
     ],
     "username": "wWuzax_",
-    "displayName": "&#FD9916&lw&#FBA813&lW&#F8B60F&lu&#F6C50C&lz&#F3D408&la&#F1E205&lx&#EEF101&l_&r"
+    "displayName": "&#FFD700&ld&#F5C500&lt&#EBB300&lB&#E1A100&le&#D78F00&lr&#CD7D00&ls&r",
+    "sizeX": 2,
+    "sizeY": 0.5,
+    "sizeZ": 1
   },
   "2cf1f467-102b-4a56-b463-de07c9a9de4f": {
     "aliases": [
@@ -123,5 +126,15 @@
     ],
     "username": "wWuzax__",
     "displayName": "&#FD9916&lw&#FBA813&lW&#F8B60F&lu&#F6C50C&lz&#F3D408&la&#F1E205&lx&#EEF101&l__&r"
+  },
+  "fce8dcae-dfcb-4cb9-b960-5be9d2136f49": {
+    "aliases": [
+      "Pierre8063"
+    ],
+    "username": "Pierre8063",
+    "displayName": "&#C43CE2G&#C344D6r&#C24CCBo&#C153BFz&#C05BB4o&#BF63A8u&#BE6B9Dr&#BC7291s&#BB7A85o&#BA827An&#B98A6EU&#B89163w&#B79957U&r",
+    "sizeX": 0.5,
+    "sizeY": 0.5,
+    "sizeZ": 0.5
   }
 }
