@@ -22,6 +22,7 @@ public class CommandAliasesModule extends Module {
     public final BooleanSetting partyTransfer = new BooleanSetting("/pt", true);
     public final BooleanSetting lobbySb = new BooleanSetting("/lsb, /ld", true);
     public final BooleanSetting floorShortcuts = new BooleanSetting("/f1-f7, /m1-m7", true);
+    public final BooleanSetting chatChannels = new BooleanSetting("/ca, /cp, /cg, /cc", true);
 
     public CommandAliasesModule() {
         super("Command Aliases", "Useful warp and utility command shortcuts", Category.MISC);
@@ -33,6 +34,7 @@ public class CommandAliasesModule extends Module {
         this.registerSetting(partyTransfer);
         this.registerSetting(lobbySb);
         this.registerSetting(floorShortcuts);
+        this.registerSetting(chatChannels);
     }
     
     private static CommandAliasesModule getInstance() {
@@ -99,6 +101,12 @@ public class CommandAliasesModule extends Module {
                  return 1;
              });
              
+             // Chat channels -> chat <channel>
+             registerChatChannel(dispatcher, "ca", "all");
+             registerChatChannel(dispatcher, "cp", "party");
+             registerChatChannel(dispatcher, "cg", "guild");
+             registerChatChannel(dispatcher, "cc", "coop");
+
              // Floors
              registerJoinCommand(dispatcher, "f1", "CATACOMBS_FLOOR_ONE");
              registerJoinCommand(dispatcher, "f2", "CATACOMBS_FLOOR_TWO");
@@ -125,6 +133,13 @@ public class CommandAliasesModule extends Module {
         return 1;
     }
     
+    private static void registerChatChannel(CommandDispatcher<FabricClientCommandSource> dispatcher, String alias, String channel) {
+        registerSimple(dispatcher, alias, context -> {
+            if (!isEnabled(getInstance().chatChannels)) return 0;
+            return runCommand("chat " + channel);
+        });
+    }
+
     private static void registerJoinCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, String alias, String floor) {
         registerSimple(dispatcher, alias, context -> {
             if (!isEnabled(getInstance().floorShortcuts)) return 0;
