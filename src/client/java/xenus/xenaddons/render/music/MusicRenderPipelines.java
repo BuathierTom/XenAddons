@@ -123,8 +123,11 @@ public final class MusicRenderPipelines {
         int found = 0;
 
         // Custom vertex element IDs are global across every installed mod. Search
-        // from the high end to avoid the low IDs most mods allocate first.
-        for (int id = VertexFormatElement.MAX_COUNT - 1; id >= FIRST_CUSTOM_ELEMENT_ID; id--) {
+        // from the low end: other mods (e.g. SkyHanni) claim their own custom
+        // elements from the high end, so scanning downward from MAX_COUNT races
+        // them for the same slots and can leave them without the ID they expect,
+        // crashing them at init (ExceptionInInitializerError/NoSuchElementException).
+        for (int id = FIRST_CUSTOM_ELEMENT_ID; id < VertexFormatElement.MAX_COUNT; id++) {
             if (VertexFormatElement.byId(id) == null) {
                 result[found++] = id;
                 if (found == result.length) return result;
