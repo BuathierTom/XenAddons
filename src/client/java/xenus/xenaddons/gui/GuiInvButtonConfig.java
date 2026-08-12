@@ -6,7 +6,6 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import xenus.xenaddons.utils.RenderUtils;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -21,24 +20,39 @@ public class GuiInvButtonConfig extends Screen {
 
     private static final Identifier TRASH_ICON = Identifier.fromNamespaceAndPath("xenaddons", "textures/gui/icons/delete_trashcan.png");
 
+    private static final int PANEL_W = 272;
+    private static final int PANEL_H = 196;
+    private static final int PAD = 12;
+    private static final int HEADER_H = 24;
+
+    private static final int TABS_Y = 34;
+    private static final int TABS_H = 20;
+    private static final int CONTENT_Y = 64;
+
+    private static final int ROW_H = 24;
+
+    private static final int FIELD_Y = 76;
+    private static final int FIELD_H = 20;
+    private static final int SAVE_W = 66;
+    private static final int LIST_Y = 116;
+    private static final int LIST_H = 62;
+    private static final int PROFILE_ROW_H = 20;
+    private static final int PROFILE_ROW_GAP = 2;
+    private static final int TRASH_W = 20;
+
     private final Screen parent;
     private Tab currentTab = Tab.GENERAL;
 
-    // Layout
-    private int boxX, boxY, boxW, boxH;
+    private int boxX, boxY;
 
-    // Components
-    private final List<ConfigToggle> generalButtons = new ArrayList<>();
-    private final List<ProfileButton> profileButtons = new ArrayList<>();
-    private final List<ProfileButton> deleteButtons = new ArrayList<>();
+    private final List<Toggle> toggles = new ArrayList<>();
+    private final List<String> profiles = new ArrayList<>();
     private EditBox profileNameField;
-    private ProfileButton profileSaveBtn;
 
-    // Scrolling for profiles
     private final LerpingInteger profileScroll = new LerpingInteger(0, 0);
 
-    // Status Component Logic (Time-based)
     private String statusText = "";
+    private int statusColor = InvButtonsUi.SUCCESS;
     private long statusEndTime = 0;
 
     public GuiInvButtonConfig(Screen parent) {
@@ -46,320 +60,301 @@ public class GuiInvButtonConfig extends Screen {
         this.parent = parent;
     }
 
-    private enum Tab { GENERAL, PROFILES }
+    private enum Tab {
+        GENERAL("General"),
+        PROFILES("Profiles");
+
+        final String label;
+        Tab(String label) { this.label = label; }
+    }
 
     protected void init() {
-        // Define AABB Dimensions
-        boxW = 240;
-        boxH = 160;
-        boxX = (this.width - boxW) / 2;
-        boxY = (this.height - boxH) / 2;
+        boxX = (this.width - PANEL_W) / 2;
+        boxY = (this.height - PANEL_H) / 2;
 
-        // --- General Tab ---
-        generalButtons.clear();
-        int startY = boxY + 30; // padding below tabs
-        int spacing = 22;
-        int btnW = 50;
-        int btnH = 16;
-        int btnX = boxX + boxW - btnW - 10; // Right align
+        toggles.clear();
+        toggles.add(new Toggle("Inventory Buttons", "Master switch for every button",
+                () -> XenAddons.instance.enabled, v -> XenAddons.instance.enabled = v));
+        toggles.add(new Toggle("Show Tooltips", "Reveal the command on hover",
+                () -> XenAddons.instance.showTooltips, v -> XenAddons.instance.showTooltips = v));
+        toggles.add(new Toggle("Hide in Creative", "Keep the creative tabs clear",
+                () -> XenAddons.instance.hideInCreative, v -> XenAddons.instance.hideInCreative = v));
+        toggles.add(new Toggle("Grid Snap Default", "Start the editor with snapping on",
+                () -> XenAddons.instance.gridSnap, v -> XenAddons.instance.gridSnap = v));
+        toggles.add(new Toggle("Hide Recipe Book", "Remove the vanilla recipe toggle",
+                () -> XenAddons.instance.hideRecipeBook, v -> XenAddons.instance.hideRecipeBook = v));
 
-        addGeneralSetting(boxX + 10, startY, btnX, btnW, btnH, "Inventory Buttons",
-                () -> XenAddons.instance.enabled, v -> XenAddons.instance.enabled = v);
-        startY += spacing;
-
-        addGeneralSetting(boxX + 10, startY, btnX, btnW, btnH, "Show Tooltips",
-                () -> XenAddons.instance.showTooltips, v -> XenAddons.instance.showTooltips = v);
-        startY += spacing;
-
-        addGeneralSetting(boxX + 10, startY, btnX, btnW, btnH, "Hide in Creative Mode",
-                () -> XenAddons.instance.hideInCreative, v -> XenAddons.instance.hideInCreative = v);
-        startY += spacing;
-
-        addGeneralSetting(boxX + 10, startY, btnX, btnW, btnH, "Grid Snap Default",
-                () -> XenAddons.instance.gridSnap, v -> XenAddons.instance.gridSnap = v);
-        startY += spacing;
-
-        addGeneralSetting(boxX + 10, startY, btnX, btnW, btnH, "Hide Recipe Book",
-                () -> XenAddons.instance.hideRecipeBook, v -> XenAddons.instance.hideRecipeBook = v);
-
-        // --- Profiles Tab ---
-        // TextField
-        int fieldW = 140;
-        this.profileNameField = new EditBox(this.font, boxX + 10, boxY + 42, fieldW, 16, Component.literal("Profile Name"));
+        int fieldW = PANEL_W - (PAD * 2) - SAVE_W - 6;
+        this.profileNameField = new EditBox(this.font, boxX + PAD + 7, boxY + FIELD_Y + (FIELD_H - 8) / 2, fieldW - 14, 10, Component.literal("Profile Name"));
         this.profileNameField.setMaxLength(32);
-
-        // Save Button
-        this.profileSaveBtn = new ProfileButton(boxX + 10 + fieldW + 5, boxY + 42, 75, 16, "Save Profile", () -> {
-            String name = profileNameField.getValue().trim();
-            if (!name.isEmpty()) {
-                XenAddons.saveProfile(name);
-                setStatus("Saved: " + name);
-                refreshProfileList();
-                profileNameField.setValue("");
-            }
-        });
+        this.profileNameField.setBordered(false);
+        this.profileNameField.setTextColor(InvButtonsUi.TEXT);
+        this.profileNameField.setHint(Component.literal("New profile name"));
 
         refreshProfileList();
     }
 
-    private void addGeneralSetting(int labelX, int y, int btnX, int btnW, int btnH, String label, BooleanSupplier get, BooleanConsumer set) {
-        generalButtons.add(new ConfigToggle(labelX, y, btnX, btnW, btnH, label, get, set));
-    }
-
     private void refreshProfileList() {
-        profileButtons.clear();
-        deleteButtons.clear();
-        List<String> profiles = XenAddons.getProfileNames();
-        int itemH = 18;
-        int listY = 0;
-
-        int deleteW = 18;
-        int spacing = 4;
-        int loadW = boxW - 30 - deleteW - spacing;
-
-        for (String p : profiles) {
-            String fName = p;
-
-            // Load Button
-            profileButtons.add(new ProfileButton(boxX + 10, listY, loadW, itemH, "Load: " + p, () -> {
-                XenAddons.loadProfile(fName);
-                setStatus("Loaded: " + fName);
-            }));
-
-            // Delete Button
-            deleteButtons.add(new ProfileButton(boxX + 10 + loadW + spacing, listY, deleteW, itemH, "", () -> {
-                XenAddons.deleteProfile(fName);
-                setStatus("Deleted: " + fName);
-                refreshProfileList();
-            }));
-
-            listY += itemH + 2;
-        }
+        profiles.clear();
+        profiles.addAll(XenAddons.getProfileNames());
+        clampScroll();
     }
 
-    private void setStatus(String msg) {
+    private void setStatus(String msg, int color) {
         this.statusText = msg;
+        this.statusColor = color;
         this.statusEndTime = System.currentTimeMillis() + 3000;
     }
 
+    // --- Layout helpers, shared by rendering and hit testing ---
+
+    private int tabX(int index) {
+        return boxX + PAD + (index * ((PANEL_W - (PAD * 2)) / Tab.values().length));
+    }
+
+    private int tabWidth() {
+        return (PANEL_W - (PAD * 2)) / Tab.values().length;
+    }
+
+    private int rowY(int index) {
+        return boxY + CONTENT_Y + (index * ROW_H);
+    }
+
+    private int contentWidth() {
+        return PANEL_W - (PAD * 2);
+    }
+
+    private int fieldWidth() {
+        return contentWidth() - SAVE_W - 6;
+    }
+
+    private int saveX() {
+        return boxX + PAD + fieldWidth() + 6;
+    }
+
+    private int profileContentHeight() {
+        return profiles.size() * (PROFILE_ROW_H + PROFILE_ROW_GAP);
+    }
+
+    private void clampScroll() {
+        int max = Math.max(0, profileContentHeight() - LIST_H);
+        if (profileScroll.getTarget() > max) profileScroll.setTarget(max);
+    }
+
+    @Override
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         super.extractRenderState(context, mouseX, mouseY, delta);
 
-        context.pose().pushMatrix();
-        context.pose().translate(this.width / 2.0f, (float)boxY - 25);
-        float scale = 1.5f;
-        context.pose().scale(scale, scale);
-        String titleText = "Configuration";
-        int tW = this.font.width(titleText);
-        context.text(this.font, titleText, -tW / 2, -this.font.lineHeight / 2, 0xFFFFFFFF, true);
-        context.pose().popMatrix();
+        context.fill(0, 0, this.width, this.height, InvButtonsUi.SCRIM);
 
-        // Background
-        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
-        context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xDD000000);
-        RenderUtils.drawBorder(context, boxX, boxY, boxW, boxH, themeColor);
+        InvButtonsUi.panel(context, boxX, boxY, PANEL_W, PANEL_H);
+        InvButtonsUi.header(context, font, boxX, boxY, PANEL_W, HEADER_H, "Inventory Buttons");
 
-        // Render Tabs
-        int tabH = 16;
-        int tabW = boxW / 2;
+        String hint = "ESC to close";
+        context.text(font, hint, boxX + PANEL_W - 10 - font.width(hint), boxY + (HEADER_H - font.lineHeight) / 2 + 1, InvButtonsUi.TEXT_DIM, false);
 
-        // Tab 1: General
-        boolean hoverGen = (mouseX >= boxX && mouseX < boxX + tabW && mouseY >= boxY && mouseY < boxY + tabH);
-        int colorGen = (currentTab == Tab.GENERAL) ? themeColor : (hoverGen ? 0xAA303030 : 0x88202020);
-        context.fill(boxX, boxY, boxX + tabW, boxY + tabH, colorGen);
-        context.text(font, "GENERAL", boxX + tabW / 2 - font.width("GENERAL") / 2, boxY + 4, 0xFFFFFFFF);
+        renderTabs(context, mouseX, mouseY);
 
-        // Tab 2: Profiles
-        boolean hoverProf = (mouseX >= boxX + tabW && mouseX < boxX + boxW && mouseY >= boxY && mouseY < boxY + tabH);
-        int colorProf = (currentTab == Tab.PROFILES) ? themeColor : (hoverProf ? 0xAA303030 : 0x88202020);
-        context.fill(boxX + tabW, boxY, boxX + boxW, boxY + tabH, colorProf);
-        context.text(font, "PROFILES", boxX + tabW + tabW / 2 - font.width("PROFILES") / 2, boxY + 4, 0xFFFFFFFF);
-
-        context.fill(boxX, boxY + tabH, boxX + boxW, boxY + tabH + 1, themeColor);
-
-        // Render Content
         if (currentTab == Tab.GENERAL) {
             renderGeneral(context, mouseX, mouseY);
-        } else {
-            renderProfiles(context, mouseX, mouseY);
+            return;
+        }
+
+        renderProfiles(context, mouseX, mouseY, delta);
+        if (System.currentTimeMillis() < statusEndTime) {
+            context.text(font, statusText, boxX + PAD, boxY + PANEL_H - 14, statusColor, false);
+        }
+    }
+
+    private void renderTabs(GuiGraphicsExtractor context, int mouseX, int mouseY) {
+        int tabW = tabWidth();
+        InvButtonsUi.rect(context, boxX + PAD, boxY + TABS_Y, contentWidth(), TABS_H, InvButtonsUi.RADIUS - 1, InvButtonsUi.SUNKEN);
+
+        for (int i = 0; i < Tab.values().length; i++) {
+            Tab tab = Tab.values()[i];
+            int x = tabX(i);
+            boolean selected = currentTab == tab;
+            boolean hover = InvButtonsUi.hovered(mouseX, mouseY, x, boxY + TABS_Y, tabW, TABS_H);
+
+            if (selected) {
+                InvButtonsUi.rect(context, x + 2, boxY + TABS_Y + 2, tabW - 4, TABS_H - 4, InvButtonsUi.RADIUS - 2, InvButtonsUi.alpha(InvButtonsUi.accent(), 0xE0));
+            } else if (hover) {
+                InvButtonsUi.rect(context, x + 2, boxY + TABS_Y + 2, tabW - 4, TABS_H - 4, InvButtonsUi.RADIUS - 2, InvButtonsUi.RAISED);
+            }
+
+            int color = selected ? InvButtonsUi.TEXT : (hover ? InvButtonsUi.TEXT : InvButtonsUi.TEXT_MUTED);
+            context.text(font, tab.label, x + (tabW - font.width(tab.label)) / 2, boxY + TABS_Y + (TABS_H - font.lineHeight) / 2 + 1, color, false);
         }
     }
 
     private void renderGeneral(GuiGraphicsExtractor context, int mouseX, int mouseY) {
-        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
-        for (ConfigToggle btn : generalButtons) {
-            context.pose().pushMatrix();
-            context.pose().translate(btn.labelX, btn.y + 4);
-            context.pose().scale(0.8f, 0.8f);
-            context.text(font, btn.label, 0, 0, 0xFFFFFFFF);
-            context.pose().popMatrix();
+        for (int i = 0; i < toggles.size(); i++) {
+            Toggle toggle = toggles.get(i);
+            int y = rowY(i);
+            boolean hover = InvButtonsUi.hovered(mouseX, mouseY, boxX + PAD, y, contentWidth(), ROW_H);
 
-            boolean isHovered = mouseX >= btn.btnX && mouseX < btn.btnX + btn.btnW && mouseY >= btn.y && mouseY < btn.y + btn.btnH;
-            
-            boolean state = btn.getter.get();
-            int bgColor = state ? themeColor : (isHovered ? 0x22FFFFFF : 0x80000000);
-            context.fill(btn.btnX, btn.y, btn.btnX + btn.btnW, btn.y + btn.btnH, bgColor);
+            if (hover) {
+                InvButtonsUi.rect(context, boxX + PAD, y, contentWidth(), ROW_H, InvButtonsUi.RADIUS - 1, InvButtonsUi.alpha(0xFFFFFFFF, 0x0C));
+            }
 
-            String stateTxt = state ? "ON" : "OFF";
-            int txtW = font.width(stateTxt);
-            context.text(font, stateTxt, btn.btnX + (btn.btnW - txtW) / 2, btn.y + 4, 0xFFFFFFFF, false);
+            context.text(font, toggle.label, boxX + PAD + 8, y + 4, InvButtonsUi.TEXT, false);
+            context.text(font, toggle.description, boxX + PAD + 8, y + 14, InvButtonsUi.TEXT_DIM, false);
+
+            int toggleX = boxX + PAD + contentWidth() - 8 - InvButtonsUi.TOGGLE_W;
+            InvButtonsUi.toggle(context, toggleX, y + (ROW_H - InvButtonsUi.TOGGLE_H) / 2, toggle.getter.get(), hover);
         }
     }
 
-    private void renderProfiles(GuiGraphicsExtractor context, int mouseX, int mouseY) {
-        int themeColor = xenus.xenaddons.features.ModuleManager.colors.getColor();
-        // Render "Profile Name" label
-        context.text(font, "Profile Name", boxX + 10, boxY + 30, 0xFFA0A0A0);
+    private void renderProfiles(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        InvButtonsUi.label(context, font, "Save current layout", boxX + PAD, boxY + CONTENT_Y);
 
-        this.profileNameField.extractWidgetRenderState(context, mouseX, mouseY, 0);
+        boolean focused = profileNameField.isFocused();
+        InvButtonsUi.field(context, boxX + PAD, boxY + FIELD_Y, fieldWidth(), FIELD_H, focused);
+        profileNameField.extractWidgetRenderState(context, mouseX, mouseY, delta);
 
-        // Save Button
-        ProfileButton saveBtn = this.profileSaveBtn;
-        boolean hoverSave = mouseX >= saveBtn.x && mouseX < saveBtn.x + saveBtn.w && mouseY >= saveBtn.y && mouseY < saveBtn.y + saveBtn.h;
-        context.fill(saveBtn.x, saveBtn.y, saveBtn.x + saveBtn.w, saveBtn.y + saveBtn.h, hoverSave ? themeColor : 0x80000000);
-        int saveTW = font.width(saveBtn.label);
-        context.text(font, saveBtn.label, saveBtn.x + (saveBtn.w - saveTW) / 2, saveBtn.y + 4, 0xFFFFFFFF, false);
+        boolean hoverSave = InvButtonsUi.hovered(mouseX, mouseY, saveX(), boxY + FIELD_Y, SAVE_W, FIELD_H);
+        InvButtonsUi.button(context, font, saveX(), boxY + FIELD_Y, SAVE_W, FIELD_H, "Save", hoverSave, InvButtonsUi.Tone.ACCENT);
 
-        // Status
-        if (System.currentTimeMillis() < statusEndTime) {
-            context.text(font, statusText, boxX + 10, boxY + boxH - 12, 0xFF55FF55);
+        InvButtonsUi.label(context, font, "Saved profiles", boxX + PAD, boxY + LIST_Y - 12);
+
+        int listX = boxX + PAD;
+        int listY = boxY + LIST_Y;
+        int listW = contentWidth();
+        InvButtonsUi.rect(context, listX, listY, listW, LIST_H, InvButtonsUi.RADIUS - 1, InvButtonsUi.SUNKEN);
+
+        if (profiles.isEmpty()) {
+            String empty = "No profile saved yet";
+            context.text(font, empty, listX + (listW - font.width(empty)) / 2, listY + (LIST_H - font.lineHeight) / 2, InvButtonsUi.TEXT_DIM, false);
+            return;
         }
 
-        // List Area
-        int listY = boxY + 70;
-        int listH = boxH - 85;
-        int listW = boxW - 20;
-
-        context.enableScissor(boxX + 10, listY, boxX + 10 + listW, listY + listH);
         profileScroll.tick();
+        context.enableScissor(listX, listY, listX + listW, listY + LIST_H);
 
-        int currentY = listY - profileScroll.getValue();
+        int rowW = listW - 8 - TRASH_W - 4;
+        for (int i = 0; i < profiles.size(); i++) {
+            int rowY = profileRowY(i);
+            if (rowY + PROFILE_ROW_H < listY || rowY > listY + LIST_H) continue;
 
-        // Render List Buttons
-        for (int i = 0; i < profileButtons.size(); i++) {
-            ProfileButton btn = profileButtons.get(i);
-            ProfileButton delBtn = deleteButtons.get(i);
+            boolean inList = mouseY >= listY && mouseY < listY + LIST_H;
+            boolean hoverRow = inList && InvButtonsUi.hovered(mouseX, mouseY, listX + 4, rowY, rowW, PROFILE_ROW_H);
+            boolean hoverTrash = inList && InvButtonsUi.hovered(mouseX, mouseY, listX + 4 + rowW + 4, rowY, TRASH_W, PROFILE_ROW_H);
 
-            if (currentY + btn.h < listY) {
-                currentY += btn.h + 2;
-                continue;
+            InvButtonsUi.rect(context, listX + 4, rowY, rowW, PROFILE_ROW_H, InvButtonsUi.RADIUS - 2,
+                    hoverRow ? InvButtonsUi.RAISED_HOVER : InvButtonsUi.RAISED);
+            context.text(font, profiles.get(i), listX + 12, rowY + (PROFILE_ROW_H - font.lineHeight) / 2 + 1, InvButtonsUi.TEXT, false);
+
+            if (hoverRow) {
+                String load = "Load";
+                context.text(font, load, listX + 4 + rowW - 8 - font.width(load), rowY + (PROFILE_ROW_H - font.lineHeight) / 2 + 1, InvButtonsUi.accent(), false);
             }
-            if (currentY > listY + listH) break;
 
-            int drawY = currentY;
-
-            // --- Load Button ---
-            boolean isHovered = mouseX >= btn.x && mouseX < btn.x + btn.w && mouseY >= drawY && mouseY < drawY + btn.h;
-            if (mouseY < listY || mouseY > listY + listH) isHovered = false;
-
-            context.fill(btn.x, drawY, btn.x + btn.w, drawY + btn.h, isHovered ? themeColor : 0x80000000);
-            context.text(font, btn.label, btn.x + 5, drawY + 5, 0xFFFFFFFF, false);
-
-            // --- Delete Button ---
-            boolean isDelHovered = mouseX >= delBtn.x && mouseX < delBtn.x + delBtn.w && mouseY >= drawY && mouseY < drawY + delBtn.h;
-            if (mouseY < listY || mouseY > listY + listH) isDelHovered = false;
-
-            context.fill(delBtn.x, drawY, delBtn.x + delBtn.w, drawY + delBtn.h, isDelHovered ? 0xFFFF5555 : 0x80000000);
-
-            // Draw Trashcan Icon
-            XenDrawContextCompat.drawTexture(context, TRASH_ICON, delBtn.x + 1, drawY + 1, 0.0f, 0.0f, 16, 16, 16, 16);
-
-            currentY += btn.h + 2;
+            InvButtonsUi.rect(context, listX + 4 + rowW + 4, rowY, TRASH_W, PROFILE_ROW_H, InvButtonsUi.RADIUS - 2,
+                    hoverTrash ? InvButtonsUi.DANGER : InvButtonsUi.RAISED);
+            XenDrawContextCompat.drawTexture(context, TRASH_ICON, listX + 4 + rowW + 6, rowY + 2, 0.0f, 0.0f, 16, 16, 16, 16);
         }
 
         context.disableScissor();
 
-        int totalH = profileButtons.size() * 20;
-        if (totalH > listH) {
-            int barH = (int)((float)listH / totalH * listH);
-            if (barH < 10) barH = 10;
-            int barTrackH = listH;
-            float ratio = (float)profileScroll.getValue() / (totalH - listH);
-            int barY = listY + (int)((barTrackH - barH) * ratio);
-            context.fill(boxX + boxW - 8, barY, boxX + boxW - 4, barY + barH, 0xFF808080);
-        }
+        InvButtonsUi.scrollbar(context, listX + listW - 5, listY + 2, LIST_H - 4, profileContentHeight(), LIST_H, profileScroll.getValue());
+    }
+
+    private int profileRowY(int index) {
+        return boxY + LIST_Y + 4 + (index * (PROFILE_ROW_H + PROFILE_ROW_GAP)) - profileScroll.getValue();
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         double mouseX = click.x();
         double mouseY = click.y();
-        int button = click.button();
-        if (button == 0) {
-            int tabW = boxW / 2;
-            if (mouseY >= boxY && mouseY < boxY + 16) {
-                if (mouseX >= boxX && mouseX < boxX + tabW) {
-                    currentTab = Tab.GENERAL;
-                    if(profileNameField != null) profileNameField.setFocused(false);
-                    if(this.minecraft != null) XenSoundCompat.playButtonClick(this.minecraft);
-                    return true;
-                }
-                if (mouseX >= boxX + tabW && mouseX < boxX + boxW) {
-                    currentTab = Tab.PROFILES;
-                    if(this.minecraft != null) XenSoundCompat.playButtonClick(this.minecraft);
+        if (click.button() != 0) return super.mouseClicked(click, doubled);
+
+        int tabW = tabWidth();
+        for (int i = 0; i < Tab.values().length; i++) {
+            if (InvButtonsUi.hovered(mouseX, mouseY, tabX(i), boxY + TABS_Y, tabW, TABS_H)) {
+                currentTab = Tab.values()[i];
+                profileNameField.setFocused(false);
+                playClick();
+                return true;
+            }
+        }
+
+        if (currentTab == Tab.GENERAL) {
+            for (int i = 0; i < toggles.size(); i++) {
+                if (InvButtonsUi.hovered(mouseX, mouseY, boxX + PAD, rowY(i), contentWidth(), ROW_H)) {
+                    Toggle toggle = toggles.get(i);
+                    toggle.setter.accept(!toggle.getter.get());
+                    playClick();
                     return true;
                 }
             }
+            return super.mouseClicked(click, doubled);
+        }
 
-            if (currentTab == Tab.GENERAL) {
-                for (ConfigToggle btn : generalButtons) {
-                    if (mouseX >= btn.btnX && mouseX < btn.btnX + btn.btnW && mouseY >= btn.y && mouseY < btn.y + btn.btnH) {
-                        btn.setter.accept(!btn.getter.get());
-                        if(this.minecraft != null) XenSoundCompat.playButtonClick(this.minecraft);
-                        return true;
-                    }
-                }
-            } else {
-                boolean fieldClicked = profileNameField.mouseClicked(click, doubled);
-                profileNameField.setFocused(fieldClicked);
-                if (fieldClicked) return true;
+        boolean inField = InvButtonsUi.hovered(mouseX, mouseY, boxX + PAD, boxY + FIELD_Y, fieldWidth(), FIELD_H);
+        profileNameField.setFocused(inField);
+        if (inField) {
+            profileNameField.mouseClicked(click, doubled);
+            return true;
+        }
 
-                if (mouseX >= profileSaveBtn.x && mouseX < profileSaveBtn.x + profileSaveBtn.w && mouseY >= profileSaveBtn.y && mouseY < profileSaveBtn.y + profileSaveBtn.h) {
-                    profileSaveBtn.action.run();
-                    if(this.minecraft != null) XenSoundCompat.playButtonClick(this.minecraft);
+        if (InvButtonsUi.hovered(mouseX, mouseY, saveX(), boxY + FIELD_Y, SAVE_W, FIELD_H)) {
+            saveCurrentProfile();
+            playClick();
+            return true;
+        }
+
+        int listX = boxX + PAD;
+        int listY = boxY + LIST_Y;
+        int rowW = contentWidth() - 8 - TRASH_W - 4;
+        if (mouseY >= listY && mouseY < listY + LIST_H) {
+            for (int i = 0; i < profiles.size(); i++) {
+                int rowY = profileRowY(i);
+                String name = profiles.get(i);
+
+                if (InvButtonsUi.hovered(mouseX, mouseY, listX + 4, rowY, rowW, PROFILE_ROW_H)) {
+                    XenAddons.loadProfile(name);
+                    setStatus("Loaded " + name, InvButtonsUi.SUCCESS);
+                    playClick();
                     return true;
                 }
 
-                int listY = boxY + 70; // Adjusted for label
-                int listH = boxH - 85;
-                if (mouseY >= listY && mouseY <= listY + listH) {
-                    int currentY = listY - profileScroll.getValue();
-                    for (int i = 0; i < profileButtons.size(); i++) {
-                        ProfileButton btn = profileButtons.get(i);
-                        ProfileButton delBtn = deleteButtons.get(i);
-
-                        if (mouseX >= btn.x && mouseX < btn.x + btn.w && mouseY >= currentY && mouseY < currentY + btn.h) {
-                            btn.action.run();
-                            if(this.minecraft != null) XenSoundCompat.playButtonClick(this.minecraft);
-                            return true;
-                        }
-
-                        if (mouseX >= delBtn.x && mouseX < delBtn.x + delBtn.w && mouseY >= currentY && mouseY < currentY + delBtn.h) {
-                            delBtn.action.run();
-                            if(this.minecraft != null) XenSoundCompat.playButtonClick(this.minecraft);
-                            return true;
-                        }
-
-                        currentY += btn.h + 2;
-                    }
+                if (InvButtonsUi.hovered(mouseX, mouseY, listX + 4 + rowW + 4, rowY, TRASH_W, PROFILE_ROW_H)) {
+                    XenAddons.deleteProfile(name);
+                    setStatus("Deleted " + name, InvButtonsUi.DANGER);
+                    refreshProfileList();
+                    playClick();
+                    return true;
                 }
             }
         }
+
         return super.mouseClicked(click, doubled);
+    }
+
+    private void saveCurrentProfile() {
+        String name = profileNameField.getValue().trim();
+        if (name.isEmpty()) {
+            setStatus("Name the profile first", InvButtonsUi.DANGER);
+            return;
+        }
+
+        XenAddons.saveProfile(name);
+        setStatus("Saved " + name, InvButtonsUi.SUCCESS);
+        refreshProfileList();
+        profileNameField.setValue("");
+    }
+
+    private void playClick() {
+        if (this.minecraft != null) XenSoundCompat.playButtonClick(this.minecraft);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         if (currentTab == Tab.PROFILES) {
-            int scroll = (int)(-verticalAmount * 10);
-            int target = profileScroll.getTarget() + scroll;
-            int totalH = profileButtons.size() * 20;
-            int listH = boxH - 85;
-            int maxScroll = Math.max(0, totalH - listH);
-
-            if (target < 0) target = 0;
-            if (target > maxScroll) target = maxScroll;
-            profileScroll.setTarget(target);
+            int max = Math.max(0, profileContentHeight() - LIST_H);
+            int target = profileScroll.getTarget() + (int) (-verticalAmount * 10);
+            profileScroll.setTarget(Math.max(0, Math.min(max, target)));
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
@@ -373,6 +368,10 @@ public class GuiInvButtonConfig extends Screen {
             return true;
         }
         if (currentTab == Tab.PROFILES && profileNameField.isFocused()) {
+            if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+                saveCurrentProfile();
+                return true;
+            }
             if (profileNameField.keyPressed(input)) return true;
         }
         return super.keyPressed(input);
@@ -395,8 +394,7 @@ public class GuiInvButtonConfig extends Screen {
     interface BooleanSupplier { boolean get(); }
     interface BooleanConsumer { void accept(boolean val); }
 
-    private record ConfigToggle(int labelX, int y, int btnX, int btnW, int btnH, String label, BooleanSupplier getter, BooleanConsumer setter) {}
-    private record ProfileButton(int x, int y, int w, int h, String label, Runnable action) {}
+    private record Toggle(String label, String description, BooleanSupplier getter, BooleanConsumer setter) {}
 
     private static class LerpingInteger {
         private int value, target;

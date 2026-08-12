@@ -22,31 +22,38 @@ public class GuiInvButtonMenu extends Screen {
         super(Component.literal("Inventory Buttons"));
     }
 
+    private static final int PANEL_W = 226;
+    private static final int PANEL_H = 142;
+    private static final int PAD = 14;
+    private static final int HEADER_H = 24;
+    private static final int BTN_H = 22;
+    private static final int BTN_GAP = 8;
+
+    private int panelX;
+    private int panelY;
+
     protected void init() {
         menuButtons.clear();
-        int btnWidth = 200;
-        int btnHeight = 20;
-        int spacing = 24;
+        panelX = (this.width - PANEL_W) / 2;
+        panelY = (this.height - PANEL_H) / 2;
 
-        int startY = this.height / 4 + 40;
-        int centerX = this.width / 2 - btnWidth / 2;
+        int btnWidth = PANEL_W - (PAD * 2);
+        int startY = panelY + HEADER_H + 14;
+        int centerX = panelX + PAD;
 
-        // Config Button
-        menuButtons.add(new MenuButton(centerX, startY, btnWidth, btnHeight, "Config", () -> {
+        menuButtons.add(new MenuButton(centerX, startY, btnWidth, BTN_H, "Configuration", () -> {
             if (this.minecraft != null) {
                 this.minecraft.setScreen(new GuiInvButtonConfig(this));
             }
         }));
 
-        // Edit Buttons Button
-        menuButtons.add(new MenuButton(centerX, startY + spacing, btnWidth, btnHeight, "Edit Buttons", () -> {
+        menuButtons.add(new MenuButton(centerX, startY + BTN_H + BTN_GAP, btnWidth, BTN_H, "Edit Buttons", () -> {
             if (this.minecraft != null) {
                 this.minecraft.setScreen(new GuiInvButtonEditor(this));
             }
         }));
 
-        // Open Config Folder Button
-        menuButtons.add(new MenuButton(centerX, startY + spacing * 2, btnWidth, btnHeight, "Open Config Folder", () -> {
+        menuButtons.add(new MenuButton(centerX, startY + (BTN_H + BTN_GAP) * 2, btnWidth, BTN_H, "Open Config Folder", () -> {
             Path configDir = FabricLoader.getInstance().getConfigDir().resolve("xenaddons");
             File file = configDir.toFile();
             if (!file.exists()) {
@@ -59,33 +66,16 @@ public class GuiInvButtonMenu extends Screen {
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         super.extractRenderState(context, mouseX, mouseY, delta);
 
-        // --- Render Title ---
-        context.pose().pushMatrix();
-        context.pose().translate(this.width / 2.0f, 60.0f);
-        float scale = 2.0f;
-        context.pose().scale(scale, scale);
-        context.text(this.font, title, -this.font.width(title) / 2, 0, 0xFFFFFFFF, true);
-        context.pose().popMatrix();
+        context.fill(0, 0, this.width, this.height, InvButtonsUi.SCRIM);
 
-        // --- Render Custom Buttons ---
-        // draw each button in list
-        for (MenuButton btn : menuButtons) {
-            boolean isHovered = mouseX >= btn.x && mouseX < btn.x + btn.width &&
-                    mouseY >= btn.y && mouseY < btn.y + btn.height;
+        InvButtonsUi.panel(context, panelX, panelY, PANEL_W, PANEL_H);
+        InvButtonsUi.header(context, font, panelX, panelY, PANEL_W, HEADER_H, "Inventory Buttons");
 
-            // Style: Darker transparent black
-            // Normal: 0x80 (50% opacity) | Hover: 0xA0 (62% opacity)
-            int color = isHovered ? 0xA0000000 : 0x80000000;
-
-            context.fill(btn.x, btn.y, btn.x + btn.width, btn.y + btn.height, color);
-
-            // button
-            int textWidth = this.font.width(btn.label);
-            int textX = btn.x + (btn.width - textWidth) / 2;
-            int textY = btn.y + (btn.height - this.font.lineHeight) / 2;
-
-            // label
-            context.text(this.font, btn.label, textX, textY, 0xFFFFFFFF, false);
+        for (int i = 0; i < menuButtons.size(); i++) {
+            MenuButton btn = menuButtons.get(i);
+            boolean hover = InvButtonsUi.hovered(mouseX, mouseY, btn.x, btn.y, btn.width, btn.height);
+            InvButtonsUi.button(context, font, btn.x, btn.y, btn.width, btn.height, btn.label, hover,
+                    i == 0 ? InvButtonsUi.Tone.ACCENT : InvButtonsUi.Tone.NEUTRAL);
         }
     }
 
