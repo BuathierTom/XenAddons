@@ -4,7 +4,7 @@
     "aliases": [
       "dtXen"
     ],
-    "displayName": "&#F45454&ld&#EE4671&lt&#E9388D&lX&#E32AAA&le&#DD1CC6&ln&r"
+    "displayName": {"text":"","extra":[{"text":"d","color":"#F45454","bold":true},{"text":"t","color":"#EE4671","bold":true},{"text":"X","color":"#E9388D","bold":true},{"text":"e","color":"#E32AAA","bold":true},{"text":"n","color":"#DD1CC6","bold":true}]}
   },
   "c7b5e04d-eaea-46a8-8440-5930b5c53b85": {
     "username": "DungeonsRat",
@@ -21,17 +21,17 @@
     "aliases": [
       "dtNyro"
     ],
-    "displayName": "&#000000&l&od&l&ot&#4DBEFF&l&oN&#7AB9DE&l&oy&#9CD9EF&l&or&#BBFFFB&l&oo&r",
+    "displayName": {"text":"","extra":[{"text":"d","color":"#000000","bold":true,"italic":true},{"text":"t","color":"#000000","bold":true,"italic":true},{"text":"N","color":"#4DBEFF","bold":true,"italic":true},{"text":"y","color":"#7AB9DE","bold":true,"italic":true},{"text":"r","color":"#9CD9EF","bold":true,"italic":true},{"text":"o","color":"#BBFFFB","bold":true,"italic":true}]},
     "sizeX": 0.3,
     "sizeY": 0.2,
     "sizeZ": 0.3
   },
   "cb8733b5-f63b-4c5a-97ad-67ced72b6e7c": {
-    "username": "Ziimou",
+    "username": "Proot2Rue",
     "aliases": [
-      "Ziimou"
+      "Proot2Rue"
     ],
-    "displayName": "ZiziToutDur"
+    "displayName": "Proot2Rue"
   },
   "77f4a9c2-e32b-4486-85de-d940fdeed7aa": {
     "username": "E0le_",
@@ -52,7 +52,7 @@
     "aliases": [
       "3h58"
     ],
-    "displayName": "&#55FFFF&lC&#5EFEFE&lh&#67FEFE&lo&#70FDFD&lu&#79FDFD&lc&#81FCFC&lh&#8AFCFC&lo&#93FBFB&lu &#A5FAFA&ld&#AEF9F9&le&#B7F9F9&ls &#C9F8F8&lB&#D1F7F7&la&#DAF7F7&lb&#E3F6F6&ly&#ECF6F6&l'&#F5F5F5&ls&r",
+    "displayName": {"text":"","extra":[{"text":"C","color":"#55FFFF","bold":true},{"text":"h","color":"#5EFEFE","bold":true},{"text":"o","color":"#67FEFE","bold":true},{"text":"u","color":"#70FDFD","bold":true},{"text":"c","color":"#79FDFD","bold":true},{"text":"h","color":"#81FCFC","bold":true},{"text":"o","color":"#8AFCFC","bold":true},{"text":"u","color":"#93FBFB","bold":true},{"text":" ","color":"#93FBFB","bold":true},{"text":"d","color":"#A5FAFA","bold":true},{"text":"e","color":"#AEF9F9","bold":true},{"text":"s","color":"#B7F9F9","bold":true},{"text":" ","color":"#B7F9F9","bold":true},{"text":"B","color":"#C9F8F8","bold":true},{"text":"a","color":"#D1F7F7","bold":true},{"text":"b","color":"#DAF7F7","bold":true},{"text":"y","color":"#E3F6F6","bold":true},{"text":"'","color":"#ECF6F6","bold":true},{"text":"s","color":"#F5F5F5","bold":true}]},
     "sizeX": 1.3,
     "sizeY": -0.2,
     "sizeZ": 0.7
@@ -62,7 +62,7 @@
     "aliases": [
       "GetWipedTwice"
     ],
-    "displayName": "&#CB51B2&oG&#B041C2&oe&#9532D2&ot&#7922E1&oW&#5E12F1&oi&#6F2DED&op&#7F48E8&oe&#9062E4&od&#A07DDF&oT&#7B90CB&ow&#57A3B8&oi&#32B6A4&oc&#0DC990&oe&r",
+    "displayName": {"text":"","extra":[{"text":"G","color":"#CB51B2","italic":true},{"text":"e","color":"#B041C2","italic":true},{"text":"t","color":"#9532D2","italic":true},{"text":"W","color":"#7922E1","italic":true},{"text":"i","color":"#5E12F1","italic":true},{"text":"p","color":"#6F2DED","italic":true},{"text":"e","color":"#7F48E8","italic":true},{"text":"d","color":"#9062E4","italic":true},{"text":"T","color":"#A07DDF","italic":true},{"text":"w","color":"#7B90CB","italic":true},{"text":"i","color":"#57A3B8","italic":true},{"text":"c","color":"#32B6A4","italic":true},{"text":"e","color":"#0DC990","italic":true}]},
     "sizeX": 0.1,
     "sizeY": 0.1,
     "sizeZ": 0.1
@@ -72,7 +72,7 @@
     "aliases": [
       "LeFiong"
     ],
-    "displayName": "&#CEE191&lL&#B5E098&le&#9CDEA0&lF&#83DDA7&li&#6BDCAE&lo&#52DAB5&ln&#39D9BD&lg (Wiped)&r",
+    "displayName": {"text":"","extra":[{"text":"L","color":"#CEE191","bold":true},{"text":"e","color":"#B5E098","bold":true},{"text":"F","color":"#9CDEA0","bold":true},{"text":"i","color":"#83DDA7","bold":true},{"text":"o","color":"#6BDCAE","bold":true},{"text":"n","color":"#52DAB5","bold":true},{"text":"g (Wiped)","color":"#39D9BD","bold":true}]},
     "sizeX": 2,
     "sizeY": 0.3,
     "sizeZ": 1
@@ -82,40 +82,31 @@
       "Swagigs360"
     ],
     "username": "Swagigs360",
-    "displayName": "&#DA700B&lL&#DB7F0F&le &#DE9E16&lJ&#DFAD1A&lu&#E0BD1D&li&#E1CC21&lf&r"
+    "displayName": {"text":"","extra":[{"text":"L","color":"#DA700B","bold":true},{"text":"e","color":"#DB7F0F","bold":true},{"text":"J","color":"#DE9E16","bold":true},{"text":"u","color":"#DFAD1A","bold":true},{"text":"i","color":"#E0BD1D","bold":true},{"text":"f","color":"#E1CC21","bold":true}]}
   },
   "85b23324-e42f-4af6-97c1-6e94fbde4192": {
     "aliases": [
       "dtXenus"
     ],
     "username": "dtXenus",
-    "displayName": "&#F45454&ld&#F14C62&lt&#ED4475&lX&#E93C8A&le&#E534A0&ln&#DD2CC0&lu&#D826E6&ls&r"
+    "displayName": {"text":"","extra":[{"text":"d","color":"#F45454","bold":true},{"text":"t","color":"#F14C62","bold":true},{"text":"X","color":"#ED4475","bold":true},{"text":"e","color":"#E93C8A","bold":true},{"text":"n","color":"#E534A0","bold":true},{"text":"u","color":"#DD2CC0","bold":true},{"text":"s","color":"#D826E6","bold":true}]}
   },
   "bed21919-20ad-4df8-b959-23af7f37db16": {
     "aliases": [
       "GwerShowerDiff"
     ],
     "username": "GwerShowerDiff",
-    "displayName": "&#54DAF4&ld&#769FEE&lt&#9863E7&lS&#A355C9&lh&#AE47AB&lo&#B8398D&lw&#C32B6F&le&#C7367A&lr&#CC4185&lD&#D04B90&li&#D4569B&lf&#D4569B&lf&r",
+    "displayName": {"text":"","extra":[{"text":"d","color":"#54DAF4","bold":true},{"text":"t","color":"#769FEE","bold":true},{"text":"S","color":"#9863E7","bold":true},{"text":"h","color":"#A355C9","bold":true},{"text":"o","color":"#AE47AB","bold":true},{"text":"w","color":"#B8398D","bold":true},{"text":"e","color":"#C32B6F","bold":true},{"text":"r","color":"#C7367A","bold":true},{"text":"D","color":"#CC4185","bold":true},{"text":"i","color":"#D04B90","bold":true},{"text":"f","color":"#D4569B","bold":true},{"text":"f","color":"#D4569B","bold":true}]},
     "sizeX": 1,
     "sizeY": 0.6,
     "sizeZ": 1
-  },
-  "7ab34814-ef33-4745-9af3-dd3fde6c57cd": {
-    "aliases": [
-      "Noamm"
-    ],
-    "username": "Noamm",
-    "sizeX": 2.3,
-    "sizeY": 1.2,
-    "sizeZ": 2.3
   },
   "a9e45b99-d523-4303-bd34-080691a86db1": {
     "aliases": [
       "wWuzax_"
     ],
     "username": "wWuzax_",
-    "displayName": "&#FFD700&ld&#F5C500&lt&#EBB300&lB&#E1A100&le&#D78F00&lr&#CD7D00&ls&r",
+    "displayName": {"text":"","extra":[{"text":"w","color":"#FD9916","bold":true},{"text":"W","color":"#FBA813","bold":true},{"text":"u","color":"#F8B60F","bold":true},{"text":"z","color":"#F6C50C","bold":true},{"text":"a","color":"#F3D408","bold":true},{"text":"x","color":"#F1E205","bold":true},{"text":"_","color":"#EEF101","bold":true}]},
     "sizeX": 2,
     "sizeY": 0.5,
     "sizeZ": 1
@@ -125,14 +116,14 @@
       "wWuzax__"
     ],
     "username": "wWuzax__",
-    "displayName": "&#FD9916&lw&#FBA813&lW&#F8B60F&lu&#F6C50C&lz&#F3D408&la&#F1E205&lx&#EEF101&l__&r"
+    "displayName": {"text":"","extra":[{"text":"w","color":"#FD9916","bold":true},{"text":"W","color":"#FBA813","bold":true},{"text":"u","color":"#F8B60F","bold":true},{"text":"z","color":"#F6C50C","bold":true},{"text":"a","color":"#F3D408","bold":true},{"text":"x","color":"#F1E205","bold":true},{"text":"__","color":"#EEF101","bold":true}]}
   },
   "fce8dcae-dfcb-4cb9-b960-5be9d2136f49": {
     "aliases": [
       "Pierre8063"
     ],
     "username": "Pierre8063",
-    "displayName": "&#C43CE2G&#C344D6r&#C24CCBo&#C153BFz&#C05BB4o&#BF63A8u&#BE6B9Dr&#BC7291s&#BB7A85o&#BA827An&#B98A6EU&#B89163w&#B79957U&r",
+    "displayName": {"text":"","extra":[{"text":"G","color":"#C43CE2"},{"text":"r","color":"#C344D6"},{"text":"o","color":"#C24CCB"},{"text":"z","color":"#C153BF"},{"text":"o","color":"#C05BB4"},{"text":"u","color":"#BF63A8"},{"text":"r","color":"#BE6B9D"},{"text":"s","color":"#BC7291"},{"text":"o","color":"#BB7A85"},{"text":"n","color":"#BA827A"},{"text":"U","color":"#B98A6E"},{"text":"w","color":"#B89163"},{"text":"U","color":"#B79957"}]},
     "sizeX": 0.5,
     "sizeY": 0.5,
     "sizeZ": 0.5
@@ -142,6 +133,6 @@
       "qtXenus"
     ],
     "username": "qtXenus",
-    "displayName": "qtXenus"
+    "displayName": {"text":"","extra":[{"text":"q","color":"#AA0000","bold":true,"shadow_color":[0.51,0.09,0.26,1]},{"text":"t","color":"#B80E0E","bold":true,"shadow_color":[0.59,0.19,0.36,1]},{"text":"X","color":"#C61C1C","bold":true,"shadow_color":[0.67,0.28,0.45,1]},{"text":"e","color":"#D52B2B","bold":true,"shadow_color":[0.75,0.38,0.55,1]},{"text":"n","color":"#E33939","bold":true,"shadow_color":[0.82,0.47,0.64,1]},{"text":"u","color":"#F14747","bold":true,"shadow_color":[0.9,0.56,0.74,1]},{"text":"s","color":"#FF5555","bold":true,"shadow_color":[0.98,0.66,0.83,1]}]}
   }
 }
