@@ -82,13 +82,23 @@ public final class CosmeticsSnapshotParser {
 
         List<String> aliases = readAliases(obj);
 
-        String displayName = readNullableString(obj, "displayName");
+        String displayName = readDisplayName(obj, "displayName");
         if (displayName == null) {
-            displayName = readNullableString(obj, "name");
+            displayName = readDisplayName(obj, "name");
         }
 
         CosmeticsSnapshot.PlayerScale scale = readScale(obj);
         return new CosmeticsSnapshot.PlayerCosmetic(username, aliases, displayName, scale);
+    }
+
+    private static String readDisplayName(JsonObject obj, String key) {
+        if (!obj.has(key)) return null;
+
+        JsonElement element = obj.get(key);
+        if (element == null || element.isJsonNull()) return null;
+        if (element.isJsonObject() || element.isJsonArray()) return element.toString();
+
+        return readNullableString(obj, key);
     }
 
     private static List<String> readAliases(JsonObject obj) {
