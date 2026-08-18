@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xenus.xenaddons.compat.XenTextCompat;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.dungeons.ItemQualityTooltip;
+import xenus.xenaddons.features.impl.misc.HidePartsOnRodModule;
 import xenus.xenaddons.features.impl.misc.ItemPriceModule;
 import xenus.xenaddons.utils.ItemPriceManager;
 
@@ -27,6 +28,7 @@ public class MixinScreenTooltipVisualWords {
         if (isPartyFinderScreen(client)) return;
 
         List<Component> replaced = XenTextCompat.replaceTooltipList(original);
+        HidePartsOnRodModule.hideRodParts(replaced, stack);
 
         ItemPriceModule itemPrice = ModuleManager.getModule(ItemPriceModule.class);
         if (itemPrice != null && itemPrice.isEnabled()) {
