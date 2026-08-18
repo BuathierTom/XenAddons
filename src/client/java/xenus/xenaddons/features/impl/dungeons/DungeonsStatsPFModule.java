@@ -51,10 +51,11 @@ public class DungeonsStatsPFModule extends Module {
     );
     private static final Pattern MINECRAFT_NAME_PATTERN = Pattern.compile("[A-Za-z0-9_]{2,16}");
     private static final Pattern COMPACT_UUID_PATTERN = Pattern.compile("^[0-9a-fA-F]{32}$");
-    private static final String ODIN_HYPIXEL_API = "https://api.odtheking.com/hypixel/get/";
+    private static final String ODIN_HYPIXEL_API = "https://hypixel.odtheking.com/get/";
 
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
+            .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
 
     private static final String MINECRAFT_SERVICES_UUID_API = "https://api.minecraftservices.com/minecraft/profile/lookup/name/";
