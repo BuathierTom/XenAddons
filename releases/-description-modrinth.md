@@ -39,10 +39,12 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Cursor 1.8.9**: Restores inventory cursor behavior closer to Minecraft 1.8.9.
 - **Custom Hyperion Sound**: Replaces Wither Blade sounds with selectable custom sounds.
 - **Exp Table Addons**: Keeps Experimentation Table items visible.
+- **Hide Parts on Rod**: Hides the empty Hook, Line, and Sinker lines from fishing rod tooltips.
 - **Inventory Buttons**: Adds configurable inventory buttons.
 - **Item Price**: Shows item prices in tooltips.
 - **Peek Chat**: Temporarily displays expanded chat without opening chat.
 - **Spotify Overlay**: Displays Spotify on macOS and Spotify/Deezer media sessions on Windows, with an optional Liquid Glass HUD.
+- **Visitor Garden**: Right-click a Garden visitor offer to search the Bazaar for the item it needs, with the amount copied to your clipboard.
 - **ZguegAddons**: Extra chat, dungeon, and party utilities.
 
 ### Category: DUNGEONS
