@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import xenus.xenaddons.XenAddons;
 import xenus.xenaddons.features.impl.misc.ExperimentationTableSolverTracker;
+import xenus.xenaddons.features.impl.misc.VisitorGardenModule;
 import xenus.xenaddons.mixin.client.HandledScreenAccessor;
 
 import java.util.ArrayList;
@@ -99,6 +100,10 @@ public final class XenHandledScreenCompat {
 
     public static boolean handleMouseClicked(Screen screen, MouseButtonEvent click) {
         if (screen instanceof AbstractContainerScreen<?> handled && ExperimentationTableSolverTracker.onHandledScreenMouseClicked(handled, click.button())) {
+            return true;
+        }
+
+        if (screen instanceof AbstractContainerScreen<?> visitor && VisitorGardenModule.onMouseClicked(visitor, click.button())) {
             return true;
         }
 

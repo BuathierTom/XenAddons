@@ -14,6 +14,7 @@ import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.dungeons.ItemQualityTooltip;
 import xenus.xenaddons.features.impl.misc.HidePartsOnRodModule;
 import xenus.xenaddons.features.impl.misc.ItemPriceModule;
+import xenus.xenaddons.features.impl.misc.VisitorGardenModule;
 import xenus.xenaddons.utils.ItemPriceManager;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class MixinScreenTooltipVisualWords {
 
         List<Component> replaced = XenTextCompat.replaceTooltipList(original);
         HidePartsOnRodModule.hideRodParts(replaced, stack);
+        VisitorGardenModule.appendHint(replaced, stack);
 
         ItemPriceModule itemPrice = ModuleManager.getModule(ItemPriceModule.class);
         if (itemPrice != null && itemPrice.isEnabled()) {
@@ -39,7 +41,6 @@ public class MixinScreenTooltipVisualWords {
                 int count = Math.max(1, stack.getCount());
                 ItemPriceManager.BazaarPrice bazaar = itemPrice.showBzPrice.getValue() ? ItemPriceManager.getBazaarPrice(itemId) : null;
 
-                // Bazaar has priority; if missing, fallback to Lowest BIN.
                 if (bazaar != null) {
                     int stackAmountForShift = count > 1 ? count : 64;
                     boolean showStack = !itemId.startsWith("ENCHANTMENT_");
