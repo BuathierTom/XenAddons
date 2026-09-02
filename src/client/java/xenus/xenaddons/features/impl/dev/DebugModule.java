@@ -2,7 +2,11 @@ package xenus.xenaddons.features.impl.dev;
 
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
+import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.settings.BooleanSetting;
+import xenus.xenaddons.utils.CommandTreeRefresher;
+
+import java.util.function.Predicate;
 
 public class DebugModule extends Module {
 
@@ -25,5 +29,30 @@ public class DebugModule extends Module {
         this.registerSetting(enableGateTest);
         this.registerSetting(enableMilestoneTest);
         this.registerSetting(enablePfStatsTest);
+
+        // Each toggle changes which subcommands /xa should suggest, so rebuild the tree on change.
+        for (xenus.xenaddons.settings.Setting<?> setting : this.settings) {
+            setting.setListener(value -> CommandTreeRefresher.refresh());
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        CommandTreeRefresher.refresh();
+    }
+
+    @Override
+    public void onDisable() {
+        CommandTreeRefresher.refresh();
+    }
+
+    /**
+     * Whether a dev subcommand should exist at all: the module has to be on, and so does its own
+     * toggle. Used as the commands' requires() predicate, so a disabled one is neither suggested
+     * nor runnable.
+     */
+    public static boolean allows(Predicate<DebugModule> toggle) {
+        DebugModule debug = ModuleManager.getModule(DebugModule.class);
+        return debug != null && debug.isEnabled() && toggle.test(debug);
     }
 }
