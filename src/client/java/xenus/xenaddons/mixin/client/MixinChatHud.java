@@ -13,6 +13,7 @@ import xenus.xenaddons.compat.XenTextCompat;
 import xenus.xenaddons.config.VisualWordsChatStore;
 import xenus.xenaddons.config.VisualWordsRenderState;
 import xenus.xenaddons.features.impl.misc.CompactPotionMessageProcessor;
+import xenus.xenaddons.features.impl.misc.PrivateMessageProcessor;
 
 @Mixin(net.minecraft.client.gui.components.ChatComponent.class)
 public class MixinChatHud {
@@ -24,7 +25,8 @@ public class MixinChatHud {
     )
     private Component xenaddons$replaceChatText(Component text) {
         Component compacted = CompactPotionMessageProcessor.compact(text);
-        Component replaced = XenTextCompat.replaceText(compacted);
+        Component formatted = PrivateMessageProcessor.format(compacted);
+        Component replaced = XenTextCompat.replaceText(formatted);
         VisualWordsChatStore.put(replaced, text);
         return replaced;
     }
