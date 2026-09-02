@@ -41,8 +41,10 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Exp Table Addons**: Keeps Experimentation Table items visible.
 - **Hide Parts on Rod**: Hides the empty Hook, Line, and Sinker lines from fishing rod tooltips.
 - **Inventory Buttons**: Adds configurable inventory buttons.
+- **No Glint**: Removes the enchantment glint from every item.
 - **Item Price**: Shows item prices in tooltips.
 - **Peek Chat**: Temporarily displays expanded chat without opening chat.
+- **Private Message Format**: Rewrites private messages as `Msg > To/From <player>: message` with the text in white.
 - **Spotify Overlay**: Displays Spotify on macOS and Spotify/Deezer media sessions on Windows, with an optional Liquid Glass HUD.
 - **Visitor Garden**: Right-click a Garden visitor offer to search the Bazaar for the item it needs, with the amount copied to your clipboard.
 - **ZguegAddons**: Extra chat, dungeon, and party utilities.
@@ -64,6 +66,13 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Reminder Gate**: Shows gate reminders based on lever progress messages.
 - **SecretRoutes**: Renders dungeon routes, secrets, waypoints, and room helpers, with current and legacy route sets.
 - **Show Ultimate Enchant**: Marks a Terminator carrying Soul Eater or Duplex directly on its item slot.
+
+### Category: SLAYER
+
+- **Slayer Boss HUD**: Shows your slayer boss's nametag and health on screen.
+- **Boss Alert**: HUD alert and ping when your slayer boss spawns.
+- **Mini-Boss Alert**: HUD alert and ping when a slayer mini-boss spawns.
+- **Cocoon Alert**: HUD alert and ping when you cocoon a slayer mob, with an optional party chat announce.
 
 ### Category: DEV
 
