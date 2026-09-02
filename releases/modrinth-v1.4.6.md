@@ -8,7 +8,7 @@
   - Removes the enchantment glint from every item at once, without touching your vanilla Glint Strength setting.
 
 - **Private Message Format**
-  - Rewrites private messages as `Msg > From [MVP+] Player: message` with the text in white, so they stop blending into the rest of chat. Ranks keep their colours.
+  - Rewrites private messages as `Msg > From [MVP+] Player: message` with the text in white.
 
 ## Changed
 
