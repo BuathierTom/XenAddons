@@ -36,7 +36,8 @@
 		"MixinSoundManagerCustomHyperionSound",
 		"MixinClientPlayerInteractionManagerCooldownItems",
 		"MixinClientWorldBatDeathAlert",
-		"MixinClientPlayNetworkHandlerBatDeathAlert"
+		"MixinClientPlayNetworkHandlerBatDeathAlert",
+		"MixinGlobalSettingsUniformNoGlint"
 	],
 	"injectors": {
 		"defaultRequire": 1
