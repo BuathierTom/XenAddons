@@ -46,12 +46,18 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.RefillModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.ShowUltimateEnchantModule());
         
+        modules.add(new xenus.xenaddons.features.impl.slayer.SlayerBossHudModule());
+        modules.add(new xenus.xenaddons.features.impl.slayer.SlayerBossAlertModule());
+        modules.add(new xenus.xenaddons.features.impl.slayer.SlayerMiniBossAlertModule());
+        modules.add(new xenus.xenaddons.features.impl.slayer.SlayerCocoonAlertModule());
+        
         modules.add(new xenus.xenaddons.features.impl.misc.CommandAliasesModule());
         modules.add(new xenus.xenaddons.features.impl.dev.EditHudModule());
         modules.add(new xenus.xenaddons.features.impl.dev.DebugModule()); // Register DebugModule
         
         xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsFeatures.init();
         xenus.xenaddons.features.impl.misc.CommandAliasesModule.init();
+        xenus.xenaddons.utils.slayer.SlayerTracker.init();
     }
 
     public static List<Module> getModulesByCategory(Category category) {

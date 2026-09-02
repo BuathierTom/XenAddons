@@ -59,7 +59,7 @@ object ClickGUI : Screen(Component.literal("MouseButtonEvent GUI")) {
     private const val FIELD_CUT = 6f
     private const val CHOICE_ROW_HEIGHT = 22f
 
-    private val categoryOrder = listOf("misc", "dungeons", "dev")
+    private val categoryOrder = listOf("misc", "dungeons", "slayer", "dev")
     private val configListeners = mutableMapOf<String, MutableList<(Any) -> Unit>>()
     private val closeListeners = mutableListOf<() -> Unit>()
     private val elementRefs = mutableMapOf<String, ConfigElement>()

@@ -16,6 +16,7 @@ import xenus.xenaddons.settings.ActionSetting;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ModeSetting;
 import xenus.xenaddons.settings.NumberSetting;
+import xenus.xenaddons.utils.AlertSounds;
 import xenus.xenaddons.utils.DungeonUtils;
 
 import java.util.Locale;
@@ -291,11 +292,9 @@ public class InvisibilityTimerModule extends Module {
 
     private void playProcSound() {
         if (mc.player == null) return;
-        SoundEvent event = resolveProcSound(procSound.getValue());
-        if (event == null) return;
-        float volume = procSoundVolume.getValue().floatValue();
-        float pitch = procSoundPitch.getValue().floatValue();
-        mc.player.playSound(event, volume, pitch);
+        // Shared player: a single sound instance is capped at volume 1.0 by the engine, so the
+        // slider only goes past that by layering instances.
+        AlertSounds.play(resolveProcSound(procSound.getValue()), procSoundVolume.getValue(), procSoundPitch.getValue());
     }
 
     private SoundEvent resolveProcSound(String selected) {
@@ -315,6 +314,11 @@ public class InvisibilityTimerModule extends Module {
         return BuiltInRegistries.SOUND_EVENT.get(id)
                 .map(holder -> holder.value())
                 .orElse(SoundEvent.createVariableRangeEvent(id));
+    }
+
+    /** The proc alert HUD only draws when this is on, so the HUD editor hides it too. */
+    public boolean isProcAlertEnabled() {
+        return maskProcsAlert.getValue();
     }
 
     public int getHudOffsetX() {

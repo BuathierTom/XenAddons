@@ -18,6 +18,11 @@ import xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule
 import xenus.xenaddons.features.impl.dungeons.PosTitlesModule
 import xenus.xenaddons.features.impl.dungeons.ReminderGateModule
 import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule
+import xenus.xenaddons.features.impl.slayer.SlayerAlertModule
+import xenus.xenaddons.features.impl.slayer.SlayerBossAlertModule
+import xenus.xenaddons.features.impl.slayer.SlayerBossHudModule
+import xenus.xenaddons.features.impl.slayer.SlayerCocoonAlertModule
+import xenus.xenaddons.features.impl.slayer.SlayerMiniBossAlertModule
 import xenus.xenaddons.hud.HudState
 import xenus.xenaddons.utils.RenderUtils
 import java.util.Locale
@@ -49,6 +54,10 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
     private var milestoneDisplayModule: MilestoneDisplayModule? = null
     private var reminderGateModule: ReminderGateModule? = null
     private var spotifyOverlayModule: SpotifyOverlayModule? = null
+    private var slayerBossHudModule: SlayerBossHudModule? = null
+    private var cocoonAlertModule: SlayerCocoonAlertModule? = null
+    private var miniBossAlertModule: SlayerMiniBossAlertModule? = null
+    private var bossAlertModule: SlayerBossAlertModule? = null
 
     private var dragging: ComponentType? = null
     private var dragOffsetX = 0
@@ -68,6 +77,10 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         milestoneDisplayModule = ModuleManager.getModule(MilestoneDisplayModule::class.java)
         reminderGateModule = ModuleManager.getModule(ReminderGateModule::class.java)
         spotifyOverlayModule = ModuleManager.getModule(SpotifyOverlayModule::class.java)
+        slayerBossHudModule = ModuleManager.getModule(SlayerBossHudModule::class.java)
+        cocoonAlertModule = ModuleManager.getModule(SlayerCocoonAlertModule::class.java)
+        miniBossAlertModule = ModuleManager.getModule(SlayerMiniBossAlertModule::class.java)
+        bossAlertModule = ModuleManager.getModule(SlayerBossAlertModule::class.java)
     }
 
     override fun extractRenderState(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, delta: Float) {
@@ -90,6 +103,10 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         renderComponent(context, mouseX, mouseY, ComponentType.MASK_PROC_ALERT, getMaskProcAlertBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.REMINDER_GATE, getReminderGateBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.SPOTIFY_OVERLAY, getSpotifyBounds())
+        renderComponent(context, mouseX, mouseY, ComponentType.SLAYER_BOSS_HUD, getSlayerBossBounds())
+        renderComponent(context, mouseX, mouseY, ComponentType.BOSS_ALERT, getBossAlertBounds())
+        renderComponent(context, mouseX, mouseY, ComponentType.MINIBOSS_ALERT, getMiniBossAlertBounds())
+        renderComponent(context, mouseX, mouseY, ComponentType.COCOON_ALERT, getCocoonAlertBounds())
 
         renderResetButton(context, mouseX, mouseY)
         renderHelpButton(context, mouseX, mouseY)
@@ -200,6 +217,9 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
     }
 
     private fun renderComponent(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
+        // An element that cannot show up in game has no business cluttering the editor either.
+        if (!isComponentEnabled(type)) return
+
         if (type == ComponentType.SPOTIFY_OVERLAY && spotifyOverlayModule?.isBetterDisplayEnabled == true) {
             renderSpotifyPreview(context, bounds)
             renderComponentBox(context, mouseX, mouseY, type, bounds)
@@ -216,6 +236,10 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.MASK_PROC_ALERT -> renderMaskProcAlertPreview(context, bounds)
             ComponentType.REMINDER_GATE -> renderReminderGatePreview(context, bounds)
             ComponentType.SPOTIFY_OVERLAY -> renderSpotifyPreview(context, bounds)
+            ComponentType.SLAYER_BOSS_HUD -> renderSlayerBossPreview(context, bounds)
+            ComponentType.COCOON_ALERT -> renderCocoonAlertPreview(context, bounds)
+            ComponentType.MINIBOSS_ALERT -> renderMiniBossAlertPreview(context, bounds)
+            ComponentType.BOSS_ALERT -> renderBossAlertPreview(context, bounds)
         }
     }
 
@@ -294,6 +318,26 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
                 spotifyOverlayModule?.setHudY(84)
                 spotifyOverlayModule?.setHudScale(1.0)
             }
+            ComponentType.SLAYER_BOSS_HUD -> {
+                slayerBossHudModule?.setHudOffsetX(0)
+                slayerBossHudModule?.setHudY(60)
+                slayerBossHudModule?.setHudScale(1.0)
+            }
+            ComponentType.COCOON_ALERT -> {
+                cocoonAlertModule?.setHudOffsetX(0)
+                cocoonAlertModule?.setHudY(190)
+                cocoonAlertModule?.setHudScale(3.0)
+            }
+            ComponentType.MINIBOSS_ALERT -> {
+                miniBossAlertModule?.setHudOffsetX(0)
+                miniBossAlertModule?.setHudY(165)
+                miniBossAlertModule?.setHudScale(3.0)
+            }
+            ComponentType.BOSS_ALERT -> {
+                bossAlertModule?.setHudOffsetX(0)
+                bossAlertModule?.setHudY(140)
+                bossAlertModule?.setHudScale(3.0)
+            }
         }
     }
 
@@ -311,6 +355,10 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.alertHudScale ?: 4.0
             ComponentType.REMINDER_GATE -> reminderGateModule?.hudScale ?: 5.0
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.hudScale ?: 1.0
+            ComponentType.SLAYER_BOSS_HUD -> slayerBossHudModule?.hudScale ?: 1.0
+            ComponentType.COCOON_ALERT -> cocoonAlertModule?.hudScale ?: 3.0
+            ComponentType.MINIBOSS_ALERT -> miniBossAlertModule?.hudScale ?: 3.0
+            ComponentType.BOSS_ALERT -> bossAlertModule?.hudScale ?: 3.0
         }
     }
 
@@ -325,11 +373,19 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.setAlertHudScale(clamped)
             ComponentType.REMINDER_GATE -> reminderGateModule?.setHudScale(clamped)
             ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.setHudScale(clamped)
+            ComponentType.SLAYER_BOSS_HUD -> slayerBossHudModule?.setHudScale(clamped)
+            ComponentType.COCOON_ALERT -> cocoonAlertModule?.setHudScale(clamped)
+            ComponentType.MINIBOSS_ALERT -> miniBossAlertModule?.setHudScale(clamped)
+            ComponentType.BOSS_ALERT -> bossAlertModule?.setHudScale(clamped)
         }
     }
 
     private fun getActiveComponent(mouseX: Int, mouseY: Int): ComponentType? {
         val priority = listOf(
+            ComponentType.COCOON_ALERT,
+            ComponentType.MINIBOSS_ALERT,
+            ComponentType.BOSS_ALERT,
+            ComponentType.SLAYER_BOSS_HUD,
             ComponentType.SPOTIFY_OVERLAY,
             ComponentType.MASK_PROC_ALERT,
             ComponentType.INVISIBILITY_TIMER,
@@ -339,8 +395,26 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.AUTOPET_TITLE,
             ComponentType.POS_TITLES
         )
-        return priority.firstOrNull { getBounds(it).contains(mouseX, mouseY) }
+        return priority.firstOrNull { isComponentEnabled(it) && getBounds(it).contains(mouseX, mouseY) }
     }
+
+    private fun isComponentEnabled(type: ComponentType): Boolean = when (type) {
+        ComponentType.POS_TITLES -> posTitlesModule?.isEnabled == true
+        ComponentType.AUTOPET_TITLE -> autoPetModule?.isEnabled == true
+        ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.isEnabled == true
+        ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.isEnabled == true
+        ComponentType.MILESTONE_DISPLAY -> milestoneDisplayModule?.isEnabled == true
+        ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.let { it.isEnabled && it.isProcAlertEnabled } == true
+        ComponentType.REMINDER_GATE -> reminderGateModule?.isEnabled == true
+        ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.isEnabled == true
+        ComponentType.SLAYER_BOSS_HUD -> slayerBossHudModule?.isEnabled == true
+        ComponentType.COCOON_ALERT -> alertEnabled(cocoonAlertModule)
+        ComponentType.MINIBOSS_ALERT -> alertEnabled(miniBossAlertModule)
+        ComponentType.BOSS_ALERT -> alertEnabled(bossAlertModule)
+    }
+
+    private fun alertEnabled(module: SlayerAlertModule?): Boolean =
+        module?.let { it.isEnabled && it.isHudEnabled } == true
 
     private fun getBounds(type: ComponentType): Bounds {
         return when (type) {
@@ -352,6 +426,10 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.MASK_PROC_ALERT -> getMaskProcAlertBounds()
             ComponentType.REMINDER_GATE -> getReminderGateBounds()
             ComponentType.SPOTIFY_OVERLAY -> getSpotifyBounds()
+            ComponentType.SLAYER_BOSS_HUD -> getSlayerBossBounds()
+            ComponentType.COCOON_ALERT -> getCocoonAlertBounds()
+            ComponentType.MINIBOSS_ALERT -> getMiniBossAlertBounds()
+            ComponentType.BOSS_ALERT -> getBossAlertBounds()
         }
     }
 
@@ -402,6 +480,26 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.SPOTIFY_OVERLAY -> {
                 spotifyOverlayModule?.setHudOffsetX(x - (width / 2))
                 spotifyOverlayModule?.setHudY(y)
+            }
+            ComponentType.SLAYER_BOSS_HUD -> {
+                val centerX = x + (referenceBounds.w / 2)
+                slayerBossHudModule?.setHudOffsetX(centerX - (width / 2))
+                slayerBossHudModule?.setHudY(y)
+            }
+            ComponentType.COCOON_ALERT -> {
+                val centerX = x + (referenceBounds.w / 2)
+                cocoonAlertModule?.setHudOffsetX(centerX - (width / 2))
+                cocoonAlertModule?.setHudY(y)
+            }
+            ComponentType.MINIBOSS_ALERT -> {
+                val centerX = x + (referenceBounds.w / 2)
+                miniBossAlertModule?.setHudOffsetX(centerX - (width / 2))
+                miniBossAlertModule?.setHudY(y)
+            }
+            ComponentType.BOSS_ALERT -> {
+                val centerX = x + (referenceBounds.w / 2)
+                bossAlertModule?.setHudOffsetX(centerX - (width / 2))
+                bossAlertModule?.setHudY(y)
             }
         }
     }
@@ -703,6 +801,78 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         context.matrices.popMatrix()
     }
 
+    private fun getSlayerBossBounds(): Bounds {
+        val lines = slayerBossHudModule?.previewLines ?: listOf(Component.literal(SLAYER_BOSS_PREVIEW))
+        val scale = (slayerBossHudModule?.hudScale ?: 1.0).toFloat()
+        val widest = lines.maxOfOrNull { textRenderer.width(it) } ?: 0
+        val scaledWidth = kotlin.math.ceil(widest * scale).toInt()
+        var x = (width - scaledWidth) / 2
+        var y = 60
+        slayerBossHudModule?.let {
+            x += it.hudOffsetX
+            y = it.hudY
+        }
+        val lineHeight = textRenderer.fontHeight + 1
+        return Bounds(x, y, scaledWidth, kotlin.math.ceil(lineHeight * lines.size * scale).toInt())
+    }
+
+    // The three slayer alerts are the same widget with a different trigger, so they share these.
+    private fun alertBounds(module: SlayerAlertModule?, defaultY: Int, fallbackText: String): Bounds {
+        val preview = module?.alertText ?: fallbackText
+        val textWidth = textRenderer.getWidth(preview)
+        val scale = (module?.hudScale ?: 3.0).toFloat()
+        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
+        var x = (width - scaledWidth) / 2
+        var y = defaultY
+        module?.let {
+            x += it.hudOffsetX
+            y = it.hudY
+        }
+        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
+    }
+
+    private fun renderAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds, module: SlayerAlertModule?, fallbackText: String) {
+        val preview = module?.alertText ?: fallbackText
+        val scale = (module?.hudScale ?: 3.0).toFloat()
+        val inv = 1.0f / scale
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.drawTextWithShadow(textRenderer, preview, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFFFFF.toInt())
+        context.matrices.popMatrix()
+    }
+
+    private fun getCocoonAlertBounds(): Bounds = alertBounds(cocoonAlertModule, 190, COCOON_PREVIEW)
+
+    private fun getMiniBossAlertBounds(): Bounds = alertBounds(miniBossAlertModule, 165, MINIBOSS_PREVIEW)
+
+    private fun getBossAlertBounds(): Bounds = alertBounds(bossAlertModule, 140, BOSS_ALERT_PREVIEW)
+
+    private fun renderSlayerBossPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
+        val lines = slayerBossHudModule?.previewLines ?: listOf(Component.literal(SLAYER_BOSS_PREVIEW))
+        val scale = (slayerBossHudModule?.hudScale ?: 1.0).toFloat()
+        val inv = 1.0f / scale
+        val centerX = bounds.x + (bounds.w / 2)
+        val lineHeight = textRenderer.fontHeight + 1
+
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        lines.forEachIndexed { index, line ->
+            val x = ((centerX * inv) - (textRenderer.width(line) / 2f)).toInt()
+            val y = (bounds.y * inv).toInt() + (index * lineHeight)
+            context.text(textRenderer, line, x, y, 0xFFFFFFFF.toInt(), true)
+        }
+        context.matrices.popMatrix()
+    }
+
+    private fun renderCocoonAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds) =
+        renderAlertPreview(context, bounds, cocoonAlertModule, COCOON_PREVIEW)
+
+    private fun renderMiniBossAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds) =
+        renderAlertPreview(context, bounds, miniBossAlertModule, MINIBOSS_PREVIEW)
+
+    private fun renderBossAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds) =
+        renderAlertPreview(context, bounds, bossAlertModule, BOSS_ALERT_PREVIEW)
+
     private fun renderComponentBox(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
         val hovered = bounds.contains(mouseX, mouseY)
         val active = dragging == type
@@ -730,7 +900,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         MILESTONE_DISPLAY("Milestone Reminder"),
         MASK_PROC_ALERT("Mask proc alert"),
         REMINDER_GATE("Reminder Gate"),
-        SPOTIFY_OVERLAY("Spotify Overlay")
+        SPOTIFY_OVERLAY("Spotify Overlay"),
+        SLAYER_BOSS_HUD("Slayer Boss HUD"),
+        COCOON_ALERT("Cocoon Alert"),
+        MINIBOSS_ALERT("Mini-Boss Alert"),
+        BOSS_ALERT("Boss Alert")
     }
 
     private data class Bounds(val x: Int, val y: Int, val w: Int, val h: Int) {
@@ -746,6 +920,10 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         private const val PLAYERS_LEAPED_PREVIEW = "2/4 Players Leaped"
         private const val REMINDER_GATE_PREVIEW = "GATEEEEEE !!!!!!!"
         private const val SPOTIFY_PREVIEW = "Spotify > Author - Song Title"
+        private const val SLAYER_BOSS_PREVIEW = "§c☠ §bRevenant Horror I §a500§c❤"
+        private const val COCOON_PREVIEW = "§cCocoon!"
+        private const val MINIBOSS_PREVIEW = "§6Mini-Boss!"
+        private const val BOSS_ALERT_PREVIEW = "§cBoss!"
 
         private const val RESET_BTN_W = 120
         private const val RESET_BTN_H = 16

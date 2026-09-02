@@ -37,7 +37,9 @@
 		"MixinClientPlayerInteractionManagerCooldownItems",
 		"MixinClientWorldBatDeathAlert",
 		"MixinClientPlayNetworkHandlerBatDeathAlert",
-		"MixinGlobalSettingsUniformNoGlint"
+		"MixinGlobalSettingsUniformNoGlint",
+		"MixinEntitySlayerNametags",
+		"MixinClientPacketListenerCommandTree"
 	],
 	"injectors": {
 		"defaultRequire": 1

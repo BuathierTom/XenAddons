@@ -11,6 +11,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import xenus.xenaddons.features.impl.dev.DebugModule;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.PictureInPictureRendererRegistry;
@@ -91,7 +92,7 @@ public class XenAddonsClient implements ClientModInitializer {
 						return 1;
 					}))
 					.then(xenus.xenaddons.features.impl.dungeons.RefillModule.createCommand())
-					.then(literal("pf").executes(context -> {
+					.then(literal("pf").requires(source -> DebugModule.allows(debug -> debug.enablePfStatsTest.getValue())).executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug =
                                 xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
                         if (debug == null || !debug.isEnabled() || !debug.enablePfStatsTest.getValue()) {
@@ -111,7 +112,7 @@ public class XenAddonsClient implements ClientModInitializer {
                         xenus.xenaddons.utils.ChatUtils.info("PF debug launched for " + player);
                         return 1;
                     })))
-					.then(literal("title").executes(context -> {
+					.then(literal("title").requires(source -> DebugModule.allows(debug -> debug.enableTitleTest.getValue())).executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug = 
                             xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
                         
@@ -123,7 +124,7 @@ public class XenAddonsClient implements ClientModInitializer {
                         }
                         return 0;
                     }))
-                    .then(literal("petrule").executes(context -> {
+                    .then(literal("petrule").requires(source -> DebugModule.allows(debug -> debug.enablePetRuleTest.getValue())).executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug = 
                             xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
 
@@ -135,7 +136,7 @@ public class XenAddonsClient implements ClientModInitializer {
                         }
                         return 0;
                     }))
-                    .then(literal("ticlass").executes(context -> {
+                    .then(literal("ticlass").requires(source -> DebugModule.allows(debug -> debug.enableTiclassTest.getValue())).executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug = 
                             xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
 
@@ -188,7 +189,7 @@ public class XenAddonsClient implements ClientModInitializer {
                         }
                         return 1;
                     }))
-                    .then(literal("secretroom")
+                    .then(literal("secretroom").requires(source -> DebugModule.allows(debug -> debug.enableSecretRoomTest.getValue()))
                         .executes(context -> {
                             xenus.xenaddons.features.impl.dev.DebugModule debugModule = 
                                 xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
@@ -219,7 +220,7 @@ public class XenAddonsClient implements ClientModInitializer {
                             
                             return 1;
                         }))
-                    .then(literal("procs").executes(context -> {
+                    .then(literal("procs").requires(source -> DebugModule.allows(debug -> debug.enableProcsTest.getValue())).executes(context -> {
                         xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule module =
                                 xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule.class);
                         if (module == null) return 0;
@@ -244,7 +245,7 @@ public class XenAddonsClient implements ClientModInitializer {
                         module.debugTriggerProc(normalized);
                         return 1;
                     })))
-                    .then(literal("gate").executes(context -> {
+                    .then(literal("gate").requires(source -> DebugModule.allows(debug -> debug.enableGateTest.getValue())).executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug =
                                 xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
                         if (debug == null || !debug.isEnabled() || !debug.enableGateTest.getValue()) {
@@ -258,7 +259,7 @@ public class XenAddonsClient implements ClientModInitializer {
                         xenus.xenaddons.utils.ChatUtils.info("Reminder Gate test triggered.");
                         return 1;
                     }))
-                    .then(literal("milestone").executes(context -> {
+                    .then(literal("milestone").requires(source -> DebugModule.allows(debug -> debug.enableMilestoneTest.getValue())).executes(context -> {
                         xenus.xenaddons.features.impl.dev.DebugModule debug =
                                 xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dev.DebugModule.class);
                         if (debug == null || !debug.isEnabled() || !debug.enableMilestoneTest.getValue()) {
