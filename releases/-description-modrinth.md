@@ -42,7 +42,8 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Hide Parts on Rod**: Hides the empty Hook, Line, and Sinker lines from fishing rod tooltips.
 - **Inventory Buttons**: Adds configurable inventory buttons.
 - **No Glint**: Removes the enchantment glint from every item.
-- **Item Price**: Shows item prices in tooltips.
+- **Item Price**: Shows item prices in tooltips, including shards and sack contents.
+- **Pet Level**: Shows a pet's level in the corner of its slot, hidden once it is maxed.
 - **Peek Chat**: Temporarily displays expanded chat without opening chat.
 - **Private Message Format**: Rewrites private messages as `Msg > To/From <player>: message` with the text in white.
 - **Spotify Overlay**: Displays Spotify on macOS and Spotify/Deezer media sessions on Windows, with an optional Liquid Glass HUD.
