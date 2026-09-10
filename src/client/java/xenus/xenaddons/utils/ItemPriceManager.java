@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 public final class ItemPriceManager {
     private static final String HYPIXEL_BAZAAR_API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
-    private static final String LOWEST_BIN_API_URL = "https://whatyouth.ing/api/nofrills/v2/economy/get-item-pricing/";
+    private static final String LOWEST_BIN_API_URL = "https://api.xenus.fr/v1/skyblock/lowestbin";
     private static final long REFRESH_MS = 5 * 60 * 1000L;
     private static final Pattern PET_LEVEL_PREFIX_PATTERN = Pattern.compile("^\\s*\\[\\s*Lvl\\s+\\d+\\s*]\\s*", Pattern.CASE_INSENSITIVE);
     private static final Pattern PET_SUFFIX_PATTERN = Pattern.compile("\\s+Pet\\s*$", Pattern.CASE_INSENSITIVE);
