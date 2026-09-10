@@ -42,8 +42,9 @@ public class MixinScreenTooltipVisualWords {
                 ItemPriceManager.BazaarPrice bazaar = itemPrice.showBzPrice.getValue() ? ItemPriceManager.getBazaarPrice(itemId) : null;
 
                 if (bazaar != null) {
-                    int stackAmountForShift = count > 1 ? count : 64;
-                    boolean showStack = !itemId.startsWith("ENCHANTMENT_");
+                    int stackAmountForShift = ItemPriceModule.resolveShiftAmount(replaced, count);
+                    // A sack holding a single item would only offer a pointless "x1" line.
+                    boolean showStack = !itemId.startsWith("ENCHANTMENT_") && stackAmountForShift > 1;
                     long handle = client.getWindow().handle();
                     boolean shiftDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
                         || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;

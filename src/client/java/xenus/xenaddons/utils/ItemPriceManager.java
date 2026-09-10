@@ -17,7 +17,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +34,8 @@ public final class ItemPriceManager {
     private static final Pattern PET_LEVEL_PREFIX_PATTERN = Pattern.compile("^\\s*\\[\\s*Lvl\\s+\\d+\\s*]\\s*", Pattern.CASE_INSENSITIVE);
     private static final Pattern PET_SUFFIX_PATTERN = Pattern.compile("\\s+Pet\\s*$", Pattern.CASE_INSENSITIVE);
     private static final Pattern SHARD_NAME_PATTERN = Pattern.compile("^(.+?)\\s+Shard$", Pattern.CASE_INSENSITIVE);
+    // The "COMMON FOREST SHARD (ID C49)" footer every shard entry carries.
+    private static final Pattern SHARD_FOOTER_PATTERN = Pattern.compile("\\bSHARD\\b\\s*\\(\\s*ID\\s+[^)]+\\)", Pattern.CASE_INSENSITIVE);
     private static final String[] PET_RARITIES = {
         "VERY SPECIAL",
         "SPECIAL",
@@ -288,17 +292,48 @@ public final class ItemPriceManager {
     private static String resolveShardPricingId(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return null;
 
-        String displayName = stripFormatting(stack.getHoverName().getString());
+        String shardId = shardIdCandidate(stripFormatting(stack.getHoverName().getString()), readLoreLines(stack));
+        if (shardId == null) return null;
+
+        // Guard: a name that merely looks like a shard resolves to no price rather than a wrong one.
+        return BAZAAR_BY_ID.containsKey(shardId) ? shardId : null;
+    }
+
+    /**
+     * The Bazaar id a shard would have. Held as an item the entry is named "Foxtrot Shard", but in
+     * the shard menu it is named after the attribute alone and only the trailing
+     * "COMMON FOREST SHARD (ID C49)" line says what it really is.
+     */
+    static String shardIdCandidate(String displayName, List<String> loreLines) {
         if (displayName == null || displayName.isBlank()) return null;
 
         var matcher = SHARD_NAME_PATTERN.matcher(displayName);
-        if (!matcher.matches()) return null;
-
-        String shardName = normalizeApiPart(matcher.group(1));
+        String shardName = matcher.matches()
+            ? normalizeApiPart(matcher.group(1))
+            : (hasShardFooter(loreLines) ? normalizeApiPart(displayName) : null);
         if (shardName == null) return null;
 
-        String shardId = "SHARD_" + shardName;
-        return BAZAAR_BY_ID.containsKey(shardId) ? shardId : null;
+        return "SHARD_" + shardName;
+    }
+
+    private static boolean hasShardFooter(List<String> loreLines) {
+        if (loreLines == null) return false;
+
+        for (String line : loreLines) {
+            if (line != null && SHARD_FOOTER_PATTERN.matcher(line).find()) return true;
+        }
+        return false;
+    }
+
+    private static List<String> readLoreLines(ItemStack stack) {
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null || lore.lines().isEmpty()) return List.of();
+
+        List<String> lines = new ArrayList<>(lore.lines().size());
+        for (Component line : lore.lines()) {
+            if (line != null) lines.add(stripFormatting(line.getString()));
+        }
+        return lines;
     }
 
     private static String normalizeApiPart(String value) {
