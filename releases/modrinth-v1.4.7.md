@@ -11,4 +11,4 @@
 
 ## Fixed
 
-- Lowest BIN prices now come from `api.xenus.fr` instead of the third party endpoint used before.
+- Lowest BIN prices API.
