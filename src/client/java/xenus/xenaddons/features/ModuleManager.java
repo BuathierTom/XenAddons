@@ -46,6 +46,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.ReminderGateModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.RefillModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.ShowUltimateEnchantModule());
+        modules.add(new xenus.xenaddons.features.impl.dungeons.MuteBarkRuneModule());
         
         modules.add(new xenus.xenaddons.features.impl.slayer.SlayerBossHudModule());
         modules.add(new xenus.xenaddons.features.impl.slayer.SlayerBossAlertModule());

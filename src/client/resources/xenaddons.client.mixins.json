@@ -35,6 +35,7 @@
 		"MixinGameRendererMusicDisplayCapture",
 		"MixinMousePeekChat",
 		"MixinSoundManagerCustomHyperionSound",
+		"MixinSoundManagerMuteBarkRune",
 		"MixinClientPlayerInteractionManagerCooldownItems",
 		"MixinClientWorldBatDeathAlert",
 		"MixinClientPlayNetworkHandlerBatDeathAlert",
