@@ -36,6 +36,7 @@
 		"MixinMousePeekChat",
 		"MixinSoundManagerCustomHyperionSound",
 		"MixinSoundManagerMuteBarkRune",
+		"MixinKeyMappingFarmingToolKeys",
 		"MixinClientPlayerInteractionManagerCooldownItems",
 		"MixinClientWorldBatDeathAlert",
 		"MixinClientPlayNetworkHandlerBatDeathAlert",

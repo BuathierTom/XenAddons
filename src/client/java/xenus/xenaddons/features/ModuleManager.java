@@ -30,6 +30,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.misc.NoGlintModule());
         modules.add(new xenus.xenaddons.features.impl.misc.PrivateMessageModule());
         modules.add(new xenus.xenaddons.features.impl.misc.PetLevelModule());
+        modules.add(new xenus.xenaddons.features.impl.misc.FarmingToolKeysModule());
         
         modules.add(new xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.LoadoutTitleModule());
@@ -60,6 +61,7 @@ public class ModuleManager {
         xenus.xenaddons.features.impl.misc.zguegaddons.ZguegAddonsFeatures.init();
         xenus.xenaddons.features.impl.misc.CommandAliasesModule.init();
         xenus.xenaddons.utils.slayer.SlayerTracker.init();
+        xenus.xenaddons.utils.GardenUtils.init();
     }
 
     public static List<Module> getModulesByCategory(Category category) {
