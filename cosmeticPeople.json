@@ -1,16 +1,10 @@
 {
   "24c56ab5-b504-4d38-bd06-e5af6686fcaa": {
     "username": "dtXen",
-    "aliases": [
-      "dtXen"
-    ],
     "displayName": {"text":"","extra":[{"text":"d","color":"#F45454","bold":true},{"text":"t","color":"#EE4671","bold":true},{"text":"X","color":"#E9388D","bold":true},{"text":"e","color":"#E32AAA","bold":true},{"text":"n","color":"#DD1CC6","bold":true}]}
   },
   "c7b5e04d-eaea-46a8-8440-5930b5c53b85": {
     "username": "DungeonsRat",
-    "aliases": [
-      "DungeonsRat"
-    ],
     "displayName": "nigga",
     "sizeX": 1,
     "sizeY": 0.1,
@@ -18,9 +12,6 @@
   },
   "9cabcea5-d888-4835-b2d4-7b8442fe68d0": {
     "username": "dtNyro",
-    "aliases": [
-      "dtNyro"
-    ],
     "displayName": {"text":"","extra":[{"text":"d","color":"#000000","bold":true,"italic":true},{"text":"t","color":"#000000","bold":true,"italic":true},{"text":"N","color":"#4DBEFF","bold":true,"italic":true},{"text":"y","color":"#7AB9DE","bold":true,"italic":true},{"text":"r","color":"#9CD9EF","bold":true,"italic":true},{"text":"o","color":"#BBFFFB","bold":true,"italic":true}]},
     "sizeX": 0.3,
     "sizeY": 0.2,
@@ -28,30 +19,18 @@
   },
   "cb8733b5-f63b-4c5a-97ad-67ced72b6e7c": {
     "username": "Proot2Rue",
-    "aliases": [
-      "Proot2Rue"
-    ],
     "displayName": "Proot2Rue"
   },
   "77f4a9c2-e32b-4486-85de-d940fdeed7aa": {
     "username": "E0le_",
-    "aliases": [
-      "E0le_"
-    ],
     "displayName": "uwuE0le"
   },
   "370b896c-257d-4707-b40a-996be37769a6": {
     "username": "Antorak",
-    "aliases": [
-      "Antorak"
-    ],
     "displayName": "Antorak {capy}"
   },
   "2b3e2f5c-3a22-4deb-8e10-5ed44ecee463": {
     "username": "dtGuigui",
-    "aliases": [
-      "dtGuigui"
-    ],
     "displayName": {"text":"","extra":[{"text":"C","color":"#E855FF","bold":true},{"text":"h","color":"#E855FF","bold":true},{"text":"i","color":"#E855FF","bold":true},{"text":"m","color":"#E855FF","bold":true},{"text":"e","color":"#E855FF","bold":true},{"text":"r","color":"#E855FF","bold":true},{"text":"a","color":"#E855FF","bold":true},{"text":" "},{"text":"V","color":"#E855FF","bold":true}]},
     "sizeX": 1.3,
     "sizeY": 0.2,
@@ -59,9 +38,6 @@
   },
   "800590cf-767e-4168-8630-4a0b3ba3233a": {
     "username": "GetWipedTwice",
-    "aliases": [
-      "GetWipedTwice"
-    ],
     "displayName": {"text":"","extra":[{"text":"d","color":"#54DAF4","bold":true,"italic":true,"shadow_color":[0.24,0.71,0.18,1]},{"text":"t","color":"#54C1E8","bold":true,"italic":true,"shadow_color":[0.24,0.74,0.26,1]},{"text":"W","color":"#54A8DB","bold":true,"italic":true,"shadow_color":[0.24,0.76,0.35,1]},{"text":"i","color":"#5490CF","bold":true,"italic":true,"shadow_color":[0.24,0.8,0.43,1]},{"text":"p","color":"#5477C2","bold":true,"italic":true,"shadow_color":[0.25,0.82,0.51,1]},{"text":"e","color":"#545EB6","bold":true,"italic":true,"shadow_color":[0.25,0.85,0.6,1]}]},
     "sizeX": 0.1,
     "sizeY": 0.1,
@@ -69,32 +45,20 @@
   },
   "a84316c8-6677-4e18-bc22-71c8d9662b49": {
     "username": "LeFiong",
-    "aliases": [
-      "LeFiong"
-    ],
     "displayName": {"text":"","extra":[{"text":"L","color":"#CEE191","bold":true},{"text":"e","color":"#B5E098","bold":true},{"text":"F","color":"#9CDEA0","bold":true},{"text":"i","color":"#83DDA7","bold":true},{"text":"o","color":"#6BDCAE","bold":true},{"text":"n","color":"#52DAB5","bold":true},{"text":"g (Wiped)","color":"#39D9BD","bold":true}]},
     "sizeX": 2,
     "sizeY": 0.3,
     "sizeZ": 1
   },
   "1cb184a2-cecf-45e2-ae1d-dc7f8dff042e": {
-    "aliases": [
-      "Swagigs360"
-    ],
     "username": "Swagigs360",
     "displayName": {"text":"","extra":[{"text":"L","color":"#DA700B","bold":true},{"text":"'","color":"#DB7C0E","bold":true},{"text":"i","color":"#DC8711","bold":true},{"text":"m","color":"#DD9313","bold":true},{"text":"m","color":"#DE9E16","bold":true},{"text":"i","color":"#DEAA19","bold":true},{"text":"g","color":"#DFB51C","bold":true},{"text":"r","color":"#E0C11E","bold":true},{"text":"e","color":"#E1CC21","bold":true}]}
   },
   "85b23324-e42f-4af6-97c1-6e94fbde4192": {
-    "aliases": [
-      "dtFiong"
-    ],
     "username": "dtFiong",
     "displayName": {"text":"","extra":[{"text":"d","color":"#56C3BB","bold":true},{"text":"t","color":"#53B3BC","bold":true},{"text":"F","color":"#51A2BC","bold":true},{"text":"i","color":"#4E92BD","bold":true},{"text":"o","color":"#4B82BD","bold":true},{"text":"n","color":"#4971BE","bold":true},{"text":"g","color":"#4661BE","bold":true}]}
   },
   "bed21919-20ad-4df8-b959-23af7f37db16": {
-    "aliases": [
-      "GwerShowerDiff"
-    ],
     "username": "GwerShowerDiff",
     "displayName": {"text":"","extra":[{"text":"d","color":"#54DAF4","bold":true},{"text":"t","color":"#769FEE","bold":true},{"text":"S","color":"#9863E7","bold":true},{"text":"h","color":"#A355C9","bold":true},{"text":"o","color":"#AE47AB","bold":true},{"text":"w","color":"#B8398D","bold":true},{"text":"e","color":"#C32B6F","bold":true},{"text":"r","color":"#C7367A","bold":true},{"text":"D","color":"#CC4185","bold":true},{"text":"i","color":"#D04B90","bold":true},{"text":"f","color":"#D4569B","bold":true},{"text":"f","color":"#D4569B","bold":true}]},
     "sizeX": 1,
@@ -102,26 +66,14 @@
     "sizeZ": 1
   },
   "a9e45b99-d523-4303-bd34-080691a86db1": {
-    "aliases": [
-      "wWuzax_"
-    ],
     "username": "wWuzax_",
-    "displayName": {"text":"","extra":[{"text":"w","color":"#FD9916","bold":true},{"text":"W","color":"#FBA813","bold":true},{"text":"u","color":"#F8B60F","bold":true},{"text":"z","color":"#F6C50C","bold":true},{"text":"a","color":"#F3D408","bold":true},{"text":"x","color":"#F1E205","bold":true},{"text":"_","color":"#EEF101","bold":true}]},
-    "sizeX": 2,
-    "sizeY": 0.5,
-    "sizeZ": 1
+    "displayName": {"text":"","extra":[{"text":"w","color":"#FD9916","bold":true},{"text":"W","color":"#FBA813","bold":true},{"text":"u","color":"#F8B60F","bold":true},{"text":"z","color":"#F6C50C","bold":true},{"text":"a","color":"#F3D408","bold":true},{"text":"x","color":"#F1E205","bold":true},{"text":"_","color":"#EEF101","bold":true}]}
   },
   "2cf1f467-102b-4a56-b463-de07c9a9de4f": {
-    "aliases": [
-      "wWuzax__"
-    ],
     "username": "wWuzax__",
     "displayName": {"text":"","extra":[{"text":"w","color":"#FD9916","bold":true},{"text":"W","color":"#FBA813","bold":true},{"text":"u","color":"#F8B60F","bold":true},{"text":"z","color":"#F6C50C","bold":true},{"text":"a","color":"#F3D408","bold":true},{"text":"x","color":"#F1E205","bold":true},{"text":"__","color":"#EEF101","bold":true}]}
   },
   "fce8dcae-dfcb-4cb9-b960-5be9d2136f49": {
-    "aliases": [
-      "Pierre8063"
-    ],
     "username": "Pierre8063",
     "displayName": {"text":"","extra":[{"text":"G","color":"#C43CE2"},{"text":"r","color":"#C344D6"},{"text":"o","color":"#C24CCB"},{"text":"z","color":"#C153BF"},{"text":"o","color":"#C05BB4"},{"text":"u","color":"#BF63A8"},{"text":"r","color":"#BE6B9D"},{"text":"s","color":"#BC7291"},{"text":"o","color":"#BB7A85"},{"text":"n","color":"#BA827A"},{"text":"U","color":"#B98A6E"},{"text":"w","color":"#B89163"},{"text":"U","color":"#B79957"}]},
     "sizeX": 0.5,
@@ -129,9 +81,6 @@
     "sizeZ": 0.5
   },
   "f65b1227-6ba6-45ec-8737-69d2d689416b": {
-    "aliases": [
-      "qtXenus"
-    ],
     "username": "qtXenus",
     "displayName": {"text":"","extra":[{"text":"q","color":"#AA0000","bold":true,"shadow_color":[0.51,0.09,0.26,1]},{"text":"t","color":"#B80E0E","bold":true,"shadow_color":[0.59,0.19,0.36,1]},{"text":"X","color":"#C61C1C","bold":true,"shadow_color":[0.67,0.28,0.45,1]},{"text":"e","color":"#D52B2B","bold":true,"shadow_color":[0.75,0.38,0.55,1]},{"text":"n","color":"#E33939","bold":true,"shadow_color":[0.82,0.47,0.64,1]},{"text":"u","color":"#F14747","bold":true,"shadow_color":[0.9,0.56,0.74,1]},{"text":"s","color":"#FF5555","bold":true,"shadow_color":[0.98,0.66,0.83,1]}]}
   }
