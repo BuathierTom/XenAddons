@@ -20,6 +20,7 @@
 		"MixinPlayerEntityDisplayName",
 		"MixinPlayerListHudVisualWords",
 		"MixinPlayerEntityRendererCustomSize",
+		"MixinAvatarRendererWings",
 		"AccessorChatHud",
 		"HandledScreenAccessor",
 		"MixinInventoryScreen",

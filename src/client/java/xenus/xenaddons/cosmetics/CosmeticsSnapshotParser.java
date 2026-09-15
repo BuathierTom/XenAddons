@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class CosmeticsSnapshotParser {
+
+    private static final float DEFAULT_WING_SIZE = 1.0F;
+    private static final int DEFAULT_WING_COLOR = 0xFFFFFFFF;
     private CosmeticsSnapshotParser() {}
 
     public static CosmeticsSnapshot parseString(String json) {
@@ -88,7 +91,45 @@ public final class CosmeticsSnapshotParser {
         }
 
         CosmeticsSnapshot.PlayerScale scale = readScale(obj);
-        return new CosmeticsSnapshot.PlayerCosmetic(username, aliases, displayName, scale);
+        CosmeticsSnapshot.PlayerWings wings = readWings(obj);
+        return new CosmeticsSnapshot.PlayerCosmetic(username, aliases, displayName, scale, wings);
+    }
+
+    private static CosmeticsSnapshot.PlayerWings readWings(JsonObject obj) {
+        if (!obj.has("wings")) return null;
+
+        JsonElement wingsElement = obj.get("wings");
+        if (wingsElement == null || wingsElement.isJsonNull() || !wingsElement.isJsonObject()) return null;
+
+        JsonObject wings = wingsElement.getAsJsonObject();
+        Float size = readOptionalFloat(wings, "size");
+        Integer color = readColor(wings, "color");
+
+        return new CosmeticsSnapshot.PlayerWings(
+            size == null ? DEFAULT_WING_SIZE : size,
+            color == null ? DEFAULT_WING_COLOR : color
+        );
+    }
+
+    private static Integer readColor(JsonObject obj, String key) {
+        if (!obj.has(key)) return null;
+
+        JsonElement element = obj.get(key);
+        if (element == null || !element.isJsonPrimitive()) return null;
+
+        String raw = element.getAsString();
+        if (raw == null || raw.isBlank()) return null;
+
+        String hex = raw.trim();
+        if (hex.startsWith("#")) hex = hex.substring(1);
+        if (hex.length() != 6 && hex.length() != 8) return null;
+
+        try {
+            long value = Long.parseLong(hex, 16);
+            return hex.length() == 6 ? (int) (value | 0xFF000000L) : (int) value;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     private static String readDisplayName(JsonObject obj, String key) {

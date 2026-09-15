@@ -17,11 +17,13 @@ public record CosmeticsSnapshot(int version, String updatedAt, Map<UUID, PlayerC
         }
     }
 
-    public record PlayerCosmetic(String username, List<String> aliases, String displayName, PlayerScale scale) {
+    public record PlayerCosmetic(String username, List<String> aliases, String displayName, PlayerScale scale, PlayerWings wings) {
         public PlayerCosmetic {
             aliases = aliases == null || aliases.isEmpty() ? List.of() : List.copyOf(aliases);
         }
     }
 
     public record PlayerScale(float x, float y, float z) {}
+
+    public record PlayerWings(float size, int color) {}
 }

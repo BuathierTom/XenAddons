@@ -48,6 +48,7 @@ public class XenAddonsClient implements ClientModInitializer {
         xenus.xenaddons.features.impl.dungeons.BatDeathAlertModule.init();
         xenus.xenaddons.config.GoatedPlayersManager.init();
         xenus.xenaddons.config.CustomPlayerScaleManager.init();
+        xenus.xenaddons.config.CustomWingsManager.init();
         
 		// Load Config
 		xenus.xenaddons.config.ConfigManager.load();
@@ -279,6 +280,8 @@ public class XenAddonsClient implements ClientModInitializer {
 			);
 			dispatcher.register(literal("Xa").redirect(xaNode));
 		});
+
+		xenus.xenaddons.features.impl.misc.WarpShortcutsModule.init();
 
 		// Ticker to handle opening the screens safely on the client thread
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {

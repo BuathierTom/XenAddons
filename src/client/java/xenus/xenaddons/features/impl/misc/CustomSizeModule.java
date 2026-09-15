@@ -1,6 +1,7 @@
 package xenus.xenaddons.features.impl.misc;
 
 import xenus.xenaddons.config.CustomPlayerScaleManager;
+import xenus.xenaddons.config.CustomWingsManager;
 import xenus.xenaddons.config.GoatedPlayersManager;
 import xenus.xenaddons.cosmetics.CosmeticsRepository;
 import xenus.xenaddons.features.Category;
@@ -16,6 +17,7 @@ public class CustomSizeModule extends Module {
 
     public final BooleanSetting customNames = new BooleanSetting("Custom names", true);
     public final BooleanSetting customSize = new BooleanSetting("Custom Size", true);
+    public final BooleanSetting customWings = new BooleanSetting("Custom Wings", true);
     public final ActionSetting refreshCosmetics = new ActionSetting("Refresh Cosmetics", this::refreshCosmetics);
     private final AtomicBoolean refreshInProgress = new AtomicBoolean(false);
     private volatile long lastRefreshStartedAt = 0L;
@@ -24,6 +26,7 @@ public class CustomSizeModule extends Module {
         super("Cosmetics", "Apply custom player cosmetics", Category.DEV);
         this.registerSetting(customNames);
         this.registerSetting(customSize);
+        this.registerSetting(customWings);
         this.registerSetting(refreshCosmetics);
     }
 
@@ -33,6 +36,10 @@ public class CustomSizeModule extends Module {
 
     public boolean shouldApplyCustomSize() {
         return this.isEnabled() && customSize.getValue();
+    }
+
+    public boolean shouldApplyCustomWings() {
+        return this.isEnabled() && customWings.getValue();
     }
 
     private void refreshCosmetics() {
@@ -61,6 +68,7 @@ public class CustomSizeModule extends Module {
                 CosmeticsRepository.reload();
                 GoatedPlayersManager.init();
                 CustomPlayerScaleManager.init();
+                CustomWingsManager.init();
                 mc.execute(() -> {
                     if (CosmeticsRepository.isUsingFallbackResource()) {
                         ChatUtils.warning("Cosmetics refreshed from fallback resource.");
