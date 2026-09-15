@@ -4,7 +4,7 @@
 
 [![Downloads](https://img.shields.io/modrinth/dt/xenaddons?style=for-the-badge&logo=modrinth&logoColor=007F43&label=Downloads&color=00AF5C)](https://modrinth.com/mod/xenaddons)
 [![Discord](https://img.shields.io/discord/1473269453213925492?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=1E3A8A)](https://discord.gg/yRbJJwGTPG)
-[![GitHub Version](https://img.shields.io/badge/GitHub-v1.4.7-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
+[![GitHub Version](https://img.shields.io/badge/GitHub-v1.4.8-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
 [![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-Portal-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
 ### A Fabric mod for Minecraft 26.1.2 focused on Hypixel SkyBlock QoL
@@ -56,15 +56,17 @@ hidden from `/xa` autocompletion:
 - **Cursor 1.8.9** → Legacy-style inventory cursor behavior.
 - **Custom Hyperion Sound** → Replace Wither Blade sounds.
 - **Exp Table Addons** → Keeps Experimentation Table items visible.
+- **Farming Tools Keys** → Swaps your movement and break keys while you hold a farming tool in the Garden, with a toggle keybind.
 - **Hide Parts on Rod** → Hides the empty Hook, Line, and Sinker lines from fishing rod tooltips.
 - **Inventory Buttons** → Configurable inventory buttons.
 - **No Glint** → Removes the enchantment glint from every item.
 - **Item Price** → Bazaar & Lowest BIN tooltip prices, including shards and sack contents.
-- **Pet Level** → Shows a pet's level in the corner of its slot, hidden once it is maxed.
+- **Pet Level** → Shows a pet's level in the corner of its slot, hidden once it is maxed, with a color picker for the text.
 - **Peek Chat** → Temporarily expand chat without opening it.
 - **Private Message Format** → Rewrites private messages as `Msg > To/From <player>: message` with the text in white.
 - **Spotify Overlay** → Displays Spotify on macOS and Spotify/Deezer media sessions on Windows, with an optional Liquid Glass HUD.
 - **Visitor Garden** → Right-click a Garden visitor offer to search the Bazaar for the item it needs.
+- **Warps Shortcuts** → Warp with `/desert` instead of `/warp desert`, from a remote warp list.
 - **ZguegAddons** → Chat, dungeon, and party QoL tools.
 
 ### Category: DUNGEONS
@@ -75,8 +77,9 @@ hidden from `/xa` autocompletion:
 - **Dungeon Not Full Alert** → Warns if your party is incomplete.
 - **Invisibility Timer** → Tracks Bonzo, Spirit, and Phoenix invulnerability.
 - **Item Quality** → Dungeon item quality tooltip.
-- **Loadout Title** → Replaces loadout equip messages with a compact chat line and an optional HUD title.
+- **Loadout Title** → Replaces loadout equip messages with a compact chat line and an optional HUD title, and highlights the equipped loadout in `/loadout` with a pickable color.
 - **Milestone Reminder** → Dungeon milestone HUD reminders.
+- **Mute Bark Rune** → Mutes the wolf growl and bark sounds of the Bark Rune, optionally only in dungeons.
 - **Players Leaped** → Displays leap progress in F7 terms.
 - **Pos Message** → Party callouts at configured spots.
 - **Pos Titles** → Displays teammate callouts as HUD text.
@@ -95,7 +98,7 @@ hidden from `/xa` autocompletion:
 ### Category: DEV
 
 - **Config GUI** → Customize GUI appearance and theme settings.
-- **Cosmetics** → Custom names, player scaling, and cosmetics refresh with a 30s cooldown.
+- **Cosmetics** → Custom names, player scaling, dragon wings, and cosmetics refresh with a 30s cooldown.
 - **Edit HUD** → Move, scale, and reset HUD elements.
 - **Debug** → Internal testing and debugging tools.
 
@@ -121,6 +124,7 @@ Features:
 
 - Visual name replacements
 - Custom player scale
+- Dragon wings, with a per-player size and color
 - UUID-based mapping for stable behavior across nick/display changes
 
 ### Cosmetics Portal
@@ -128,6 +132,26 @@ Features:
 ```txt
 https://addons.xenus.fr/login
 ```
+
+---
+
+## Warp Shortcuts
+
+### Primary API
+
+```txt
+https://api.xenus.fr/v1/skyblock/warpshortcuts
+```
+
+### Fallback Source
+
+```txt
+assets/xenaddons/skyblock/warpShortcuts.json
+```
+
+The list maps a shortcut to a warp, so a shortcut can point elsewhere: `/atoll` warps to `lotus`,
+`/ch` to `crystals`. The list is fetched once per launch, and a shortcut whose name is already used
+by another XenAddons command is skipped.
 
 ---
 
