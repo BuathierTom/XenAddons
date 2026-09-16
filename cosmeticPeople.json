@@ -15,7 +15,10 @@
     "displayName": {"text":"","extra":[{"text":"d","color":"#000000","bold":true,"italic":true},{"text":"t","color":"#000000","bold":true,"italic":true},{"text":"N","color":"#4DBEFF","bold":true,"italic":true},{"text":"y","color":"#7AB9DE","bold":true,"italic":true},{"text":"r","color":"#9CD9EF","bold":true,"italic":true},{"text":"o","color":"#BBFFFB","bold":true,"italic":true}]},
     "sizeX": 0.3,
     "sizeY": 0.2,
-    "sizeZ": 0.3
+    "sizeZ": 0.3,
+    "wings": {
+      "size": 0.5
+    }
   },
   "cb8733b5-f63b-4c5a-97ad-67ced72b6e7c": {
     "username": "Proot2Rue",
@@ -36,7 +39,7 @@
     "sizeY": 0.2,
     "sizeZ": 0.4,
     "wings": {
-      "size": 1,
+      "size": 0.8,
       "color": "#E855FF"
     }
   },
