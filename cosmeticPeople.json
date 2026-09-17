@@ -48,7 +48,11 @@
     "displayName": {"text":"","extra":[{"text":"d","color":"#54DAF4","bold":true,"italic":true,"shadow_color":[0.24,0.71,0.18,1]},{"text":"t","color":"#54C1E8","bold":true,"italic":true,"shadow_color":[0.24,0.74,0.26,1]},{"text":"W","color":"#54A8DB","bold":true,"italic":true,"shadow_color":[0.24,0.76,0.35,1]},{"text":"i","color":"#5490CF","bold":true,"italic":true,"shadow_color":[0.24,0.8,0.43,1]},{"text":"p","color":"#5477C2","bold":true,"italic":true,"shadow_color":[0.25,0.82,0.51,1]},{"text":"e","color":"#545EB6","bold":true,"italic":true,"shadow_color":[0.25,0.85,0.6,1]}]},
     "sizeX": 0.1,
     "sizeY": 0.1,
-    "sizeZ": 0.1
+    "sizeZ": 0.1,
+    "wings": {
+      "size": 0.4,
+      "color": "#54DAF4"
+    }
   },
   "a84316c8-6677-4e18-bc22-71c8d9662b49": {
     "username": "TonkM7",
