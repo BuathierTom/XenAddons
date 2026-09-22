@@ -23,7 +23,7 @@ object ConfigManager {
 
     private val settingRefs: MutableMap<String, Setting<*>> = mutableMapOf()
     private val moduleEnabledRefs: MutableMap<String, xenus.xenaddons.features.Module> = mutableMapOf()
-    private val categoryOrder = listOf("misc", "dungeons", "slayer", "dev")
+    private val categoryOrder = listOf("misc", "dungeons", "slayer", "fishing", "dev")
 
     fun rebuildFromXenModules() {
         configValueMap.clear()
@@ -75,6 +75,7 @@ object ConfigManager {
             Category.MISC -> "Misc"
             Category.DUNGEON -> "Dungeons"
             Category.SLAYER -> "Slayer"
+            Category.FISHING -> "Fishing"
             Category.DEV -> "Dev"
         }
     }

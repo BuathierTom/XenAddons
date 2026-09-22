@@ -44,7 +44,9 @@
 		"MixinClientPlayNetworkHandlerBatDeathAlert",
 		"MixinGlobalSettingsUniformNoGlint",
 		"MixinEntitySlayerNametags",
-		"MixinClientPacketListenerCommandTree"
+		"MixinClientPacketListenerCommandTree",
+		"MixinClientPacketListenerHotspotParticles",
+		"MixinArmorStandRendererFishingHookNametag"
 	],
 	"injectors": {
 		"defaultRequire": 1

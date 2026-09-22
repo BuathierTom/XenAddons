@@ -3,6 +3,7 @@ package xenus.xenaddons.features;
 public enum Category {
     DUNGEON("Dungeon"),
     SLAYER("Slayer"),
+    FISHING("Fishing"),
     MISC("Misc"),
     DEV("Dev");
 

@@ -12,6 +12,7 @@ import org.lwjgl.glfw.GLFW
 import xenus.xenaddons.config.ConfigManager
 import xenus.xenaddons.features.ModuleManager
 import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule
+import xenus.xenaddons.features.impl.fishing.FishingHookDisplayModule
 import xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule
 import xenus.xenaddons.features.impl.dungeons.MilestoneDisplayModule
 import xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule
@@ -51,6 +52,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
     private var autoPetModule: AutoPetRuleTitleModule? = null
     private var playersLeapedModule: PlayersLeapedModule? = null
     private var invisibilityTimerModule: InvisibilityTimerModule? = null
+    private var fishingHookDisplayModule: FishingHookDisplayModule? = null
     private var milestoneDisplayModule: MilestoneDisplayModule? = null
     private var reminderGateModule: ReminderGateModule? = null
     private var spotifyOverlayModule: SpotifyOverlayModule? = null
@@ -74,6 +76,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         autoPetModule = ModuleManager.getModule(AutoPetRuleTitleModule::class.java)
         playersLeapedModule = ModuleManager.getModule(PlayersLeapedModule::class.java)
         invisibilityTimerModule = ModuleManager.getModule(InvisibilityTimerModule::class.java)
+        fishingHookDisplayModule = ModuleManager.getModule(FishingHookDisplayModule::class.java)
         milestoneDisplayModule = ModuleManager.getModule(MilestoneDisplayModule::class.java)
         reminderGateModule = ModuleManager.getModule(ReminderGateModule::class.java)
         spotifyOverlayModule = ModuleManager.getModule(SpotifyOverlayModule::class.java)
@@ -99,6 +102,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         renderComponent(context, mouseX, mouseY, ComponentType.AUTOPET_TITLE, getAutoPetBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.PLAYERS_LEAPED, getPlayersLeapedBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.INVISIBILITY_TIMER, getInvisibilityTimerBounds())
+        renderComponent(context, mouseX, mouseY, ComponentType.FISHING_HOOK_DISPLAY, getFishingHookDisplayBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.MILESTONE_DISPLAY, getMilestoneDisplayBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.MASK_PROC_ALERT, getMaskProcAlertBounds())
         renderComponent(context, mouseX, mouseY, ComponentType.REMINDER_GATE, getReminderGateBounds())
@@ -232,6 +236,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.AUTOPET_TITLE -> renderAutoPetPreview(context, bounds)
             ComponentType.PLAYERS_LEAPED -> renderPlayersLeapedPreview(context, bounds)
             ComponentType.INVISIBILITY_TIMER -> renderInvisibilityTimerPreview(context, bounds)
+            ComponentType.FISHING_HOOK_DISPLAY -> renderFishingHookDisplayPreview(context, bounds)
             ComponentType.MILESTONE_DISPLAY -> renderMilestoneDisplayPreview(context, bounds)
             ComponentType.MASK_PROC_ALERT -> renderMaskProcAlertPreview(context, bounds)
             ComponentType.REMINDER_GATE -> renderReminderGatePreview(context, bounds)
@@ -298,6 +303,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
                 invisibilityTimerModule?.setHudY(100)
                 invisibilityTimerModule?.setHudScale(1.0)
             }
+            ComponentType.FISHING_HOOK_DISPLAY -> {
+                fishingHookDisplayModule?.setHudOffsetX(0)
+                fishingHookDisplayModule?.setHudY(130)
+                fishingHookDisplayModule?.setHudScale(2.0)
+            }
             ComponentType.MILESTONE_DISPLAY -> {
                 milestoneDisplayModule?.setHudOffsetX(0)
                 milestoneDisplayModule?.setHudY(30)
@@ -351,6 +361,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.AUTOPET_TITLE -> autoPetModule?.hudScale ?: 2.5
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.hudScale ?: 1.0
             ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.hudScale ?: 1.0
+            ComponentType.FISHING_HOOK_DISPLAY -> fishingHookDisplayModule?.hudScale ?: 2.0
             ComponentType.MILESTONE_DISPLAY -> milestoneDisplayModule?.hudScale ?: 1.0
             ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.alertHudScale ?: 4.0
             ComponentType.REMINDER_GATE -> reminderGateModule?.hudScale ?: 5.0
@@ -369,6 +380,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.AUTOPET_TITLE -> autoPetModule?.setHudScale(clamped)
             ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.setHudScale(clamped)
             ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.setHudScale(clamped)
+            ComponentType.FISHING_HOOK_DISPLAY -> fishingHookDisplayModule?.setHudScale(clamped)
             ComponentType.MILESTONE_DISPLAY -> milestoneDisplayModule?.setHudScale(clamped)
             ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.setAlertHudScale(clamped)
             ComponentType.REMINDER_GATE -> reminderGateModule?.setHudScale(clamped)
@@ -386,6 +398,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.MINIBOSS_ALERT,
             ComponentType.BOSS_ALERT,
             ComponentType.SLAYER_BOSS_HUD,
+            ComponentType.FISHING_HOOK_DISPLAY,
             ComponentType.SPOTIFY_OVERLAY,
             ComponentType.MASK_PROC_ALERT,
             ComponentType.INVISIBILITY_TIMER,
@@ -403,6 +416,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         ComponentType.AUTOPET_TITLE -> autoPetModule?.isEnabled == true
         ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.isEnabled == true
         ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.isEnabled == true
+        ComponentType.FISHING_HOOK_DISPLAY -> fishingHookDisplayModule?.isEnabled == true
         ComponentType.MILESTONE_DISPLAY -> milestoneDisplayModule?.isEnabled == true
         ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.let { it.isEnabled && it.isProcAlertEnabled } == true
         ComponentType.REMINDER_GATE -> reminderGateModule?.isEnabled == true
@@ -422,6 +436,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
             ComponentType.AUTOPET_TITLE -> getAutoPetBounds()
             ComponentType.PLAYERS_LEAPED -> getPlayersLeapedBounds()
             ComponentType.INVISIBILITY_TIMER -> getInvisibilityTimerBounds()
+            ComponentType.FISHING_HOOK_DISPLAY -> getFishingHookDisplayBounds()
             ComponentType.MILESTONE_DISPLAY -> getMilestoneDisplayBounds()
             ComponentType.MASK_PROC_ALERT -> getMaskProcAlertBounds()
             ComponentType.REMINDER_GATE -> getReminderGateBounds()
@@ -461,6 +476,11 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
                 val centerX = x + (referenceBounds.w / 2)
                 invisibilityTimerModule?.setHudOffsetX(centerX - (width / 2))
                 invisibilityTimerModule?.setHudY(y)
+            }
+            ComponentType.FISHING_HOOK_DISPLAY -> {
+                val centerX = x + (referenceBounds.w / 2)
+                fishingHookDisplayModule?.setHudOffsetX(centerX - (width / 2))
+                fishingHookDisplayModule?.setHudY(y)
             }
             ComponentType.MILESTONE_DISPLAY -> {
                 val centerX = x + (referenceBounds.w / 2)
@@ -674,6 +694,20 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
     }
 
+    private fun getFishingHookDisplayBounds(): Bounds {
+        val preview = fishingHookDisplayModule?.previewText ?: "§e§l3.0"
+        val textWidth = textRenderer.getWidth(preview)
+        val scale = (fishingHookDisplayModule?.hudScale ?: 2.0).toFloat()
+        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
+        var x = (width - scaledWidth) / 2
+        var y = 130
+        fishingHookDisplayModule?.let {
+            x += it.hudOffsetX
+            y = it.hudY
+        }
+        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
+    }
+
     private fun getMilestoneDisplayBounds(): Bounds {
         val preview = milestoneDisplayModule?.let { "§bMilestone§f: §c2" } ?: "§bMilestone§f: §c2"
         val textWidth = textRenderer.getWidth(preview)
@@ -770,6 +804,16 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         context.matrices.pushMatrix()
         context.matrices.scale(scale, scale)
         context.drawTextWithShadow(textRenderer, preview, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFAA00.toInt())
+        context.matrices.popMatrix()
+    }
+
+    private fun renderFishingHookDisplayPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
+        val preview = fishingHookDisplayModule?.previewText ?: "§e§l3.0"
+        val scale = (fishingHookDisplayModule?.hudScale ?: 2.0).toFloat()
+        val inv = 1.0f / scale
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.drawTextWithShadow(textRenderer, preview, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFFFFF.toInt())
         context.matrices.popMatrix()
     }
 
@@ -897,6 +941,7 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         AUTOPET_TITLE("AutoPet / Loadout Titles"),
         PLAYERS_LEAPED("Players Leaped"),
         INVISIBILITY_TIMER("Invisibility timer"),
+        FISHING_HOOK_DISPLAY("Fishing Hook Display"),
         MILESTONE_DISPLAY("Milestone Reminder"),
         MASK_PROC_ALERT("Mask proc alert"),
         REMINDER_GATE("Reminder Gate"),
