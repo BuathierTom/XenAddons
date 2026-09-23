@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/modrinth/dt/xenaddons?style=for-the-badge&logo=modrinth&logoColor=007F43&label=Downloads&color=00AF5C)](https://modrinth.com/mod/xenaddons)
 [![Discord](https://img.shields.io/discord/1473269453213925492?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=1E3A8A)](https://discord.gg/yRbJJwGTPG)
 [![Version](https://img.shields.io/modrinth/v/xenaddons?style=for-the-badge&logo=modrinth&logoColor=white&label=Version&color=E67E22)](https://modrinth.com/mod/xenaddons)
-[![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-Portal-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
+[![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-click_here-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
 **A Fabric mod for Minecraft 26.1.2 focused on Hypixel SkyBlock QoL**
 
@@ -13,19 +13,12 @@
 
 XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock quality-of-life features.
 
-## Compatibility
-
-- Minecraft: `26.1.2`
-- Mod loader: `Fabric`
-- Java: `25+`
-
 ## Main Commands
 
 - `/xa` - Open XenAddons GUI
 - `/xenaddons` - Open XenAddons GUI
 - `/xa hud` - Open HUD editor
 - `/xa refill <pearl|tnt|leap|twap|tap|jerry|decoy> [amount]` - Refill a dungeon utility item to its default or custom target amount
-- `/pcc` - Shortcut for `/chat party`
 
 ## Features
 
@@ -58,6 +51,7 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Bat Death Alert**: Alerts when a bat dies in dungeons.
 - **Better Party Finder**: Improves Party Finder messages with player stats and quick actions.
 - **Dungeon Not Full Alert**: Warns at dungeon start if the party is not full.
+- **Highlight Pressure Plate**: Highlights the I4 room's Light Weighted Pressure Plate in green while it's pressed.
 - **Invisibility Timer**: Tracks Bonzo's Mask, Spirit Mask, and Phoenix Pet invulnerability timers.
 - **Item Quality**: Adds dungeon item quality information to item tooltips.
 - **Loadout Title**: Replaces loadout equip messages with a compact chat line and an optional HUD title, and highlights the equipped loadout in `/loadout` with a pickable color.
@@ -78,6 +72,12 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Mini-Boss Alert**: HUD alert and ping when a slayer mini-boss spawns.
 - **Cocoon Alert**: HUD alert and ping when you cocoon a slayer mob, with an optional party chat announce.
 
+### Category: FISHING
+
+- **Fishing Hook Display**: HUD for the Hypixel fishing timer and pull alert, with an editable alert text and the vanilla nametag hidden automatically.
+- **Hotspot Highlight**: Highlights fishing hotspots with a color per buff type, outline and/or filled circle, and hides their spawn particles.
+- **Hide Other Bobbers**: Hides every other player's fishing bobber.
+
 ### Category: DEV
 
 - **Config GUI**: Customize the GUI appearance and theme settings.
@@ -94,7 +94,6 @@ XenAddons uses a unified cosmetics snapshot.
 - Visual name replacements
 - Custom player scale
 - Dragon wings, with a per-player size and color
-- UUID-based mapping for stable behavior across nick/display changes
 
 ### Cosmetics Portal
 
@@ -102,15 +101,3 @@ XenAddons uses a unified cosmetics snapshot.
 https://addons.xenus.fr/login
 ```
 
-## Update Checker
-
-- Checks for updates once per launch.
-- Shows update status in chat.
-- Can download the latest release directly into the `mods/` folder.
-- Requires a restart after updating.
-
-## Config File
-
-```txt
-.minecraft/config/xenaddons_config.json
-```

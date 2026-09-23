@@ -4,7 +4,7 @@
 
 [![Downloads](https://img.shields.io/modrinth/dt/xenaddons?style=for-the-badge&logo=modrinth&logoColor=007F43&label=Downloads&color=00AF5C)](https://modrinth.com/mod/xenaddons)
 [![Discord](https://img.shields.io/discord/1473269453213925492?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=1E3A8A)](https://discord.gg/yRbJJwGTPG)
-[![GitHub Version](https://img.shields.io/badge/GitHub-v1.4.8-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
+[![GitHub Version](https://img.shields.io/badge/GitHub-v1.4.9-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
 [![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-Portal-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
 ### A Fabric mod for Minecraft 26.1.2 focused on Hypixel SkyBlock QoL
@@ -13,20 +13,11 @@
 
 ---
 
-## Compatibility
-
-- Minecraft: `26.1.2`
-- Mod loader: `Fabric`
-- Java: `25+`
-
----
-
 ## Commands
 
 - `/xa` or `/xenaddons` → Open GUI
 - `/xa hud` → Open HUD editor
 - `/xa refill <pearl|tnt|leap|twap|tap|jerry|decoy> [amount]` → Refill a dungeon utility item to its default or custom target amount
-- `/pcc` → Shortcut for `/chat party`
 
 ### Debug Commands
 
@@ -75,6 +66,7 @@ hidden from `/xa` autocompletion:
 - **Bat Death Alert** → Alerts when bats die in dungeons.
 - **Better Party Finder** → Enhanced PF stats and quick actions.
 - **Dungeon Not Full Alert** → Warns if your party is incomplete.
+- **Highlight Pressure Plate** → Highlights the I4 room's Light Weighted Pressure Plate in green while it's pressed.
 - **Invisibility Timer** → Tracks Bonzo, Spirit, and Phoenix invulnerability.
 - **Item Quality** → Dungeon item quality tooltip.
 - **Loadout Title** → Replaces loadout equip messages with a compact chat line and an optional HUD title, and highlights the equipped loadout in `/loadout` with a pickable color.
@@ -94,6 +86,12 @@ hidden from `/xa` autocompletion:
 - **Boss Alert** → HUD alert and ping when your slayer boss spawns.
 - **Mini-Boss Alert** → HUD alert and ping when a slayer mini-boss spawns.
 - **Cocoon Alert** → HUD alert and ping when you cocoon a slayer mob, with an optional party chat announce.
+
+### Category: FISHING
+
+- **Fishing Hook Display** → HUD for the Hypixel fishing timer and pull alert, with an editable alert text and the vanilla nametag hidden automatically.
+- **Hotspot Highlight** → Highlights fishing hotspots with a color per buff type, outline and/or filled circle, and hides their spawn particles.
+- **Hide Other Bobbers** → Hides every other player's fishing bobber.
 
 ### Category: DEV
 
