@@ -57,6 +57,7 @@ public class ModuleManager {
 
         modules.add(new xenus.xenaddons.features.impl.fishing.FishingHookDisplayModule());
         modules.add(new xenus.xenaddons.features.impl.fishing.HotspotHighlightModule());
+        modules.add(new xenus.xenaddons.features.impl.fishing.HideOtherBobbersModule());
 
         modules.add(new xenus.xenaddons.features.impl.misc.CommandAliasesModule());
         modules.add(new xenus.xenaddons.features.impl.dev.EditHudModule());

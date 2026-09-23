@@ -46,7 +46,8 @@
 		"MixinEntitySlayerNametags",
 		"MixinClientPacketListenerCommandTree",
 		"MixinClientPacketListenerHotspotParticles",
-		"MixinArmorStandRendererFishingHookNametag"
+		"MixinArmorStandRendererFishingHookNametag",
+		"MixinFishingHookRendererHideOtherBobbers"
 	],
 	"injectors": {
 		"defaultRequire": 1
