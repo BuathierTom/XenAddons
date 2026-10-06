@@ -1,0 +1,80 @@
+name: release
+
+on:
+  push:
+    branches: ["26.1.2"]
+    paths:
+      - "gradle.properties"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check-version:
+    name: Check for a version bump
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_new: ${{ steps.check.outputs.is_new }}
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: read mod version
+        id: version
+        run: |
+          VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: check for existing tag
+        id: check
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v${{ steps.version.outputs.version }}" > /dev/null 2>&1; then
+            echo "is_new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    name: Build and publish release
+    needs: check-version
+    if: needs.check-version.outputs.is_new == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: setup jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: build
+        run: ./gradlew build --build-cache
+
+      - name: create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.check-version.outputs.version }}
+          name: XenAddons v${{ needs.check-version.outputs.version }}
+          body_path: releases/github-v${{ needs.check-version.outputs.version }}.md
+          files: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
