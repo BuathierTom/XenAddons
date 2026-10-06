@@ -85,14 +85,60 @@ public final class CosmeticsSnapshotParser {
 
         List<String> aliases = readAliases(obj);
 
-        String displayName = readDisplayName(obj, "displayName");
-        if (displayName == null) {
-            displayName = readDisplayName(obj, "name");
+        CosmeticsSnapshot.PlayerAnimatedName animatedName = readAnimatedName(obj, "displayName");
+        if (animatedName == null) {
+            animatedName = readAnimatedName(obj, "name");
+        }
+
+        String displayName = null;
+        if (animatedName == null) {
+            displayName = readDisplayName(obj, "displayName");
+            if (displayName == null) {
+                displayName = readDisplayName(obj, "name");
+            }
         }
 
         CosmeticsSnapshot.PlayerScale scale = readScale(obj);
         CosmeticsSnapshot.PlayerWings wings = readWings(obj);
-        return new CosmeticsSnapshot.PlayerCosmetic(username, aliases, displayName, scale, wings);
+        return new CosmeticsSnapshot.PlayerCosmetic(username, aliases, displayName, animatedName, scale, wings);
+    }
+
+    private static CosmeticsSnapshot.PlayerAnimatedName readAnimatedName(JsonObject obj, String key) {
+        if (!obj.has(key)) return null;
+
+        JsonElement element = obj.get(key);
+        if (element == null || !element.isJsonObject()) return null;
+
+        JsonObject nameObj = element.getAsJsonObject();
+        JsonElement framesElement = nameObj.has("frames") ? nameObj.get("frames")
+            : nameObj.has("texts") ? nameObj.get("texts") : null;
+        if (framesElement == null || !framesElement.isJsonArray()) return null;
+
+        List<String> frames = new ArrayList<>();
+        for (JsonElement frame : framesElement.getAsJsonArray()) {
+            if (!frame.isJsonPrimitive()) continue;
+            String text = frame.getAsString();
+            if (text != null && !text.isBlank()) frames.add(text);
+        }
+        if (frames.isEmpty()) return null;
+
+        int interval = 50;
+        Integer parsedInterval = readOptionalInt(nameObj, "changeInterval");
+        if (parsedInterval == null) parsedInterval = readOptionalInt(nameObj, "change-interval");
+        if (parsedInterval != null) interval = parsedInterval;
+
+        return new CosmeticsSnapshot.PlayerAnimatedName(frames, interval);
+    }
+
+    private static Integer readOptionalInt(JsonObject obj, String key) {
+        if (!obj.has(key)) return null;
+        JsonElement element = obj.get(key);
+        if (element == null || !element.isJsonPrimitive()) return null;
+        try {
+            return element.getAsInt();
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private static CosmeticsSnapshot.PlayerWings readWings(JsonObject obj) {

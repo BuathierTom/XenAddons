@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 import net.minecraft.resources.Identifier;
 import xenus.xenaddons.cosmetics.CosmeticsRepository;
+import xenus.xenaddons.cosmetics.CosmeticsSnapshot.PlayerAnimatedName;
 import xenus.xenaddons.cosmetics.CosmeticsSnapshot.PlayerCosmetic;
 import xenus.xenaddons.cosmetics.CosmeticsSnapshot.PlayerScale;
 import xenus.xenaddons.features.ModuleManager;
@@ -62,6 +63,7 @@ public class GoatedPlayersManager {
     private static final String RICH_MARKER_SUFFIX = "}";
     private static final Map<String, String> RENDERED_FORM_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Component> RICH_DISPLAY_NAMES = new ConcurrentHashMap<>();
+    private static final Map<String, AnimatedRichName> ANIMATED_DISPLAY_NAMES = new ConcurrentHashMap<>();
     private static final Map<String, String> RICH_DISPLAY_PLAIN = new ConcurrentHashMap<>();
     private static final java.util.concurrent.atomic.AtomicInteger RICH_MARKER_SEQ = new java.util.concurrent.atomic.AtomicInteger();
 
@@ -88,6 +90,23 @@ public class GoatedPlayersManager {
         }
     });
 
+    private static final long VISUAL_REBUILD_THROTTLE_MS = 33L;
+    private static final int VISUAL_REBUILD_CACHE_MAX = 2048;
+    private static final Map<String, TimedValue<Component>> COMPONENT_REBUILD_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(VISUAL_REBUILD_CACHE_MAX, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, TimedValue<Component>> eldest) {
+            return size() > VISUAL_REBUILD_CACHE_MAX;
+        }
+    });
+    private static final Map<String, TimedValue<FormattedCharSequence>> SEQUENCE_REBUILD_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(VISUAL_REBUILD_CACHE_MAX, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, TimedValue<FormattedCharSequence>> eldest) {
+            return size() > VISUAL_REBUILD_CACHE_MAX;
+        }
+    });
+
+    private record TimedValue<T>(T value, long computedAt) {}
+
     public static boolean isGoated(String name) {
         return getEntryForName(name) != null;
     }
@@ -113,8 +132,6 @@ public class GoatedPlayersManager {
         return applyVisualWordsInternal(text, false);
     }
 
-    // Safe path for plain String rendering contexts (chat tabs filters, etc.).
-    // Never return raw legacy formatting markers here.
     public static String applyVisualWordsPlain(String text) {
         String replaced = applyVisualWordsInternal(text, false);
         return stripLegacyCodes(replaced);
@@ -193,7 +210,6 @@ public class GoatedPlayersManager {
             .replace(LIP_MARKER, "");
     }
 
-    // Plain-String contexts (chat filters, tab search) must see readable text, never a marker.
     private static String resolveRichMarkersToPlain(String text) {
         if (text == null || text.isEmpty() || RICH_DISPLAY_PLAIN.isEmpty()) return text;
         if (text.indexOf(RICH_MARKER_PREFIX) < 0) return text;
@@ -423,6 +439,8 @@ public class GoatedPlayersManager {
         TOKEN_NAME_COSMETICS = tokenEntries.isEmpty() ? Map.of() : tokenEntries;
         SPECIAL_NAME_ENTRIES = specialEntries.isEmpty() ? List.of() : specialEntries;
         VISUAL_STRING_CACHE.clear();
+        COMPONENT_REBUILD_CACHE.clear();
+        SEQUENCE_REBUILD_CACHE.clear();
         lastRuntimeRebuildMs = now;
         }
     }
@@ -481,11 +499,18 @@ public class GoatedPlayersManager {
         boolean hasLegacyMarkers = original.indexOf('§') >= 0 || original.indexOf('&') >= 0;
         if (replacedCombined.equals(original) && !hasLegacyMarkers) return text;
 
+        long now = System.currentTimeMillis();
+        TimedValue<Component> cached = COMPONENT_REBUILD_CACHE.get(original);
+        if (cached != null && now - cached.computedAt() < VISUAL_REBUILD_THROTTLE_MS) {
+            return cached.value();
+        }
+
         MutableComponent rebuilt = Component.empty();
         text.visit((style, string) -> {
             appendLegacyFormatted(rebuilt, applyVisualWordsInternal(string, true), style);
             return Optional.empty();
         }, Style.EMPTY);
+        COMPONENT_REBUILD_CACHE.put(original, new TimedValue<>(rebuilt, now));
         return rebuilt;
     }
 
@@ -501,6 +526,12 @@ public class GoatedPlayersManager {
         String replacedCombined = applyVisualWordsInternal(original, true);
         boolean hasLegacyMarkers = original.indexOf('§') >= 0 || original.indexOf('&') >= 0;
         if (replacedCombined.equals(original) && !hasLegacyMarkers) return text;
+
+        long now = System.currentTimeMillis();
+        TimedValue<FormattedCharSequence> cached = SEQUENCE_REBUILD_CACHE.get(original);
+        if (cached != null && now - cached.computedAt() < VISUAL_REBUILD_THROTTLE_MS) {
+            return cached.value();
+        }
 
         MutableComponent rebuilt = Component.empty();
         final Style[] currentStyle = new Style[] {null};
@@ -525,7 +556,9 @@ public class GoatedPlayersManager {
             rebuilt.append(Component.literal(buffer.toString()).setStyle(currentStyle[0] == null ? Style.EMPTY : currentStyle[0]));
         }
 
-        return applyVisualWords(rebuilt).getVisualOrderText();
+        FormattedCharSequence result = applyVisualWords(rebuilt).getVisualOrderText();
+        SEQUENCE_REBUILD_CACHE.put(original, new TimedValue<>(result, now));
+        return result;
     }
 
     public static Component applyVisualWordsForTooltip(Component text) {
@@ -625,7 +658,7 @@ public class GoatedPlayersManager {
         while (idx < plain.length()) {
             int start = plain.indexOf(RICH_MARKER_PREFIX, idx);
             int end = start < 0 ? -1 : plain.indexOf(RICH_MARKER_SUFFIX, start);
-            Component rich = end < 0 ? null : RICH_DISPLAY_NAMES.get(plain.substring(start, end + 1));
+            Component rich = end < 0 ? null : resolveRichComponent(plain.substring(start, end + 1));
 
             if (rich == null) {
                 appendIconTokensOnly(out, plain.substring(idx), style);
@@ -707,7 +740,10 @@ public class GoatedPlayersManager {
         TOKEN_NAME_COSMETICS = Map.of();
         SPECIAL_NAME_ENTRIES = List.of();
         VISUAL_STRING_CACHE.clear();
+        COMPONENT_REBUILD_CACHE.clear();
+        SEQUENCE_REBUILD_CACHE.clear();
         RICH_DISPLAY_NAMES.clear();
+        ANIMATED_DISPLAY_NAMES.clear();
         RICH_DISPLAY_PLAIN.clear();
         RENDERED_FORM_CACHE.clear();
         lastRuntimeRebuildMs = 0L;
@@ -799,16 +835,22 @@ public class GoatedPlayersManager {
     private static CosmeticEntry parseUuidCosmeticEntry(PlayerCosmetic player) {
         if (player == null) return null;
 
-        String display = player.displayName();
-        if (display != null && !display.isBlank()) {
-            Component rich = parseJsonDisplayName(display);
-            if (rich != null) {
-                display = registerRichDisplayName(rich);
-            } else if (LEGACY_DISPLAY_NAMES_ENABLED) {
-                display = sanitizeDisplayName(display);
-            } else if (hasLegacyFormatting(display)) {
-                // Legacy formatting is off: drop the entry rather than leaking raw codes.
-                display = null;
+        String display;
+        PlayerAnimatedName animatedName = player.animatedName();
+        if (animatedName != null && !animatedName.frames().isEmpty()) {
+            display = registerAnimatedDisplayName(animatedName);
+        } else {
+            display = player.displayName();
+            if (display != null && !display.isBlank()) {
+                Component rich = parseJsonDisplayName(display);
+                if (rich != null) {
+                    display = registerRichDisplayName(rich);
+                } else if (LEGACY_DISPLAY_NAMES_ENABLED) {
+                    display = sanitizeDisplayName(display);
+                } else if (hasLegacyFormatting(display)) {
+                    // Legacy formatting is off: drop the entry rather than leaking raw codes.
+                    display = null;
+                }
             }
         }
 
@@ -831,6 +873,149 @@ public class GoatedPlayersManager {
         RICH_DISPLAY_NAMES.put(marker, component);
         RICH_DISPLAY_PLAIN.put(marker, component.getString());
         return marker;
+    }
+
+    private static String registerAnimatedDisplayName(PlayerAnimatedName animated) {
+        List<List<ColoredPart>> frames = new ArrayList<>();
+        for (String frameText : animated.frames()) {
+            List<ColoredPart> parts = parseColoredParts(frameText);
+            if (!parts.isEmpty()) frames.add(parts);
+        }
+        if (frames.isEmpty()) return null;
+
+        String marker = RICH_MARKER_PREFIX + RICH_MARKER_SEQ.incrementAndGet() + RICH_MARKER_SUFFIX;
+        ANIMATED_DISPLAY_NAMES.put(marker, new AnimatedRichName(frames));
+        RICH_DISPLAY_PLAIN.put(marker, buildComponent(frames.get(0)).getString());
+        return marker;
+    }
+
+    private static List<ColoredPart> parseColoredParts(String input) {
+        List<ColoredPart> parts = new ArrayList<>();
+        if (input == null || input.isEmpty()) return parts;
+
+        String normalized = normalizeLegacyCodes(input);
+        StringBuilder plain = new StringBuilder();
+        Style currentStyle = Style.EMPTY;
+        int currentColor = 0xFFFFFF;
+
+        for (int i = 0; i < normalized.length(); i++) {
+            char c = normalized.charAt(i);
+            if (c == '§') {
+                if (i + 1 >= normalized.length()) break;
+
+                int rgb = parseLegacyHexColor(normalized, i);
+                if (rgb >= 0) {
+                    flushColoredPart(parts, plain, currentStyle, currentColor);
+                    currentColor = rgb;
+                    i += 13;
+                    continue;
+                }
+
+                flushColoredPart(parts, plain, currentStyle, currentColor);
+
+                ChatFormatting fmt = ChatFormatting.getByCode(normalized.charAt(i + 1));
+                if (fmt != null) {
+                    if (fmt == ChatFormatting.RESET) {
+                        currentStyle = Style.EMPTY;
+                        currentColor = 0xFFFFFF;
+                    } else if (!fmt.isColor()) {
+                        currentStyle = currentStyle.applyFormat(fmt);
+                    }
+                }
+                i++;
+                continue;
+            }
+            plain.append(c);
+        }
+        flushColoredPart(parts, plain, currentStyle, currentColor);
+        return parts;
+    }
+
+    private static void flushColoredPart(List<ColoredPart> parts, StringBuilder plain, Style style, int color) {
+        if (plain.isEmpty()) return;
+        parts.add(new ColoredPart(plain.toString(), style, color));
+        plain.setLength(0);
+    }
+
+    private static Component buildComponent(List<ColoredPart> parts) {
+        MutableComponent out = Component.empty();
+        for (ColoredPart part : parts) {
+            out.append(Component.literal(part.text()).setStyle(part.style().withColor(part.color())));
+        }
+        return out;
+    }
+
+    private static Component buildInterpolated(List<ColoredPart> from, List<ColoredPart> to, float t) {
+        if (from.size() != to.size()) return buildComponent(from);
+
+        MutableComponent out = Component.empty();
+        for (int i = 0; i < from.size(); i++) {
+            ColoredPart a = from.get(i);
+            ColoredPart b = to.get(i);
+            int color = lerpColor(a.color(), b.color(), t);
+            out.append(Component.literal(a.text()).setStyle(a.style().withColor(color)));
+        }
+        return out;
+    }
+
+    private static int lerpColor(int from, int to, float t) {
+        int r = lerpChannel((from >> 16) & 0xFF, (to >> 16) & 0xFF, t);
+        int g = lerpChannel((from >> 8) & 0xFF, (to >> 8) & 0xFF, t);
+        int b = lerpChannel(from & 0xFF, to & 0xFF, t);
+        return (r << 16) | (g << 8) | b;
+    }
+
+    private static int lerpChannel(int from, int to, float t) {
+        return Math.max(0, Math.min(255, Math.round(from + (to - from) * t)));
+    }
+
+    private record ColoredPart(String text, Style style, int color) {}
+
+    private static Component resolveRichComponent(String marker) {
+        AnimatedRichName animated = ANIMATED_DISPLAY_NAMES.get(marker);
+        if (animated != null) return animated.current();
+        return RICH_DISPLAY_NAMES.get(marker);
+    }
+
+    // The whole cycle (through every frame and back to the first) always takes this long,
+    // regardless of how many frames there are or what the data's own interval says.
+    private static final long ANIMATED_NAME_FULL_CYCLE_MS = 1500L;
+
+    // A name can be queried many times per frame (nametag, tab list, chat...). Recomputing and
+    // allocating a fresh Component on every single call would scale with render calls, not with
+    // actual visual change, so this throttles rebuilds to roughly the display's own frame rate.
+    private static final long ANIMATED_NAME_RECOMPUTE_INTERVAL_MS = 16L;
+
+    private static final class AnimatedRichName {
+        private final List<List<ColoredPart>> frames;
+        private Component cached;
+        private long cachedAt = -1L;
+
+        private AnimatedRichName(List<List<ColoredPart>> frames) {
+            this.frames = frames;
+        }
+
+        Component current() {
+            if (frames.isEmpty()) return Component.empty();
+            if (frames.size() == 1) return buildComponent(frames.get(0));
+
+            long now = System.currentTimeMillis();
+            if (cached != null && now - cachedAt < ANIMATED_NAME_RECOMPUTE_INTERVAL_MS) {
+                return cached;
+            }
+
+            long step = Math.max(1L, ANIMATED_NAME_FULL_CYCLE_MS / frames.size());
+            long cycleMs = step * frames.size();
+            long pos = now % cycleMs;
+            int index = (int) (pos / step);
+            float t = (pos % step) / (float) step;
+
+            List<ColoredPart> from = frames.get(index);
+            List<ColoredPart> to = frames.get((index + 1) % frames.size());
+            cached = buildInterpolated(from, to, t);
+            cachedAt = now;
+            return cached;
+        }
     }
 
     // Parses a vanilla JSON text component into a real Component, preserving shadow_color.
