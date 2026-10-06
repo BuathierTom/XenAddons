@@ -160,8 +160,6 @@ by another XenAddons command is skipped.
 - Shows update status in chat:
   - Checking update
   - Update available / Up-to-date
-- Downloads the latest jar directly to `mods/`
-- Requires restart after updating
 
 ---
 
