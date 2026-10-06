@@ -4,7 +4,7 @@
 
 [![Downloads](https://img.shields.io/modrinth/dt/xenaddons?style=for-the-badge&logo=modrinth&logoColor=007F43&label=Downloads&color=00AF5C)](https://modrinth.com/mod/xenaddons)
 [![Discord](https://img.shields.io/discord/1473269453213925492?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=1E3A8A)](https://discord.gg/yRbJJwGTPG)
-[![GitHub Version](https://img.shields.io/badge/GitHub-v1.4.9-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
+[![GitHub Version](https://img.shields.io/badge/GitHub-v1.4.10-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
 [![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-Portal-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
 ### A Fabric mod for Minecraft 26.1.2 focused on Hypixel SkyBlock QoL
@@ -120,7 +120,7 @@ assets/xenaddons/visual/cosmeticPeople.json
 
 Features:
 
-- Visual name replacements
+- Visual name replacements, static or animated
 - Custom player scale
 - Dragon wings, with a per-player size and color
 - UUID-based mapping for stable behavior across nick/display changes

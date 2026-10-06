@@ -91,7 +91,7 @@ XenAddons uses a unified cosmetics snapshot.
 
 ### Features:
 
-- Visual name replacements
+- Visual name replacements, static or animated
 - Custom player scale
 - Dragon wings, with a per-player size and color
 
