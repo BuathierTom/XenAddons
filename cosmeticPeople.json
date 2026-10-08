@@ -40,10 +40,10 @@
   },
   "2b3e2f5c-3a22-4deb-8e10-5ed44ecee463": {
     "username": "dtGuigui",
-    "displayName": {"text":"","extra":[{"text":"B","color":"#000000","bold":true,"shadow_color":[0.33,0.33,0.33,1]},{"text":"a","color":"#000000","bold":true,"shadow_color":[0.33,0.33,0.33,1]},{"text":"t","color":"#000000","bold":true,"shadow_color":[0.33,0.33,0.33,1]},{"text":"m","color":"#000000","bold":true,"shadow_color":[0.33,0.33,0.33,1]},{"text":"a","color":"#000000","bold":true,"shadow_color":[0.33,0.33,0.33,1]},{"text":"n","color":"#000000","bold":true,"shadow_color":[0.33,0.33,0.33,1]},{"text":" "},{"text":"🦇","color":"#000000","bold":true,"shadow_color":[0.33,0.33,0.33,1]}]},
+    "displayName": {"changeInterval":50,"frames":["&#FAE9BB&l&od&#FAEDCB&l&ot&#FAE9BB&l&oG&#FBE5AB&l&ou&#FBE19B&l&oi&#FBDC8C&l&og&#FBD87C&l&ou&#FCD46C&l&oi","&#FBE5AB&l&od&#FAE9BB&l&ot&#FAEDCB&l&oG&#FAE9BB&l&ou&#FBE5AB&l&oi&#FBE19B&l&og&#FBDC8C&l&ou&#FBD87C&l&oi","&#FBE19B&l&od&#FBE5AB&l&ot&#FAE9BB&l&oG&#FAEDCB&l&ou&#FAE9BB&l&oi&#FBE5AB&l&og&#FBE19B&l&ou&#FBDC8C&l&oi","&#FBDC8C&l&od&#FBE19B&l&ot&#FBE5AB&l&oG&#FAE9BB&l&ou&#FAEDCB&l&oi&#FAE9BB&l&og&#FBE5AB&l&ou&#FBE19B&l&oi","&#FBD87C&l&od&#FBDC8C&l&ot&#FBE19B&l&oG&#FBE5AB&l&ou&#FAE9BB&l&oi&#FAEDCB&l&og&#FAE9BB&l&ou&#FBE5AB&l&oi","&#FCD46C&l&od&#FBD87C&l&ot&#FBDC8C&l&oG&#FBE19B&l&ou&#FBE5AB&l&oi&#FAE9BB&l&og&#FAEDCB&l&ou&#FAE9BB&l&oi","&#FCD05C&l&od&#FCD46C&l&ot&#FBD87C&l&oG&#FBDC8C&l&ou&#FBE19B&l&oi&#FBE5AB&l&og&#FAE9BB&l&ou&#FAEDCB&l&oi","&#FCD46C&l&od&#FCD05C&l&ot&#FCD46C&l&oG&#FBD87C&l&ou&#FBDC8C&l&oi&#FBE19B&l&og&#FBE5AB&l&ou&#FAE9BB&l&oi","&#FBD87C&l&od&#FCD46C&l&ot&#FCD05C&l&oG&#FCD46C&l&ou&#FBD87C&l&oi&#FBDC8C&l&og&#FBE19B&l&ou&#FBE5AB&l&oi","&#FBDC8C&l&od&#FBD87C&l&ot&#FCD46C&l&oG&#FCD05C&l&ou&#FCD46C&l&oi&#FBD87C&l&og&#FBDC8C&l&ou&#FBE19B&l&oi","&#FBE19B&l&od&#FBDC8C&l&ot&#FBD87C&l&oG&#FCD46C&l&ou&#FCD05C&l&oi&#FCD46C&l&og&#FBD87C&l&ou&#FBDC8C&l&oi","&#FBE5AB&l&od&#FBE19B&l&ot&#FBDC8C&l&oG&#FBD87C&l&ou&#FCD46C&l&oi&#FCD05C&l&og&#FCD46C&l&ou&#FBD87C&l&oi","&#FAE9BB&l&od&#FBE5AB&l&ot&#FBE19B&l&oG&#FBDC8C&l&ou&#FBD87C&l&oi&#FCD46C&l&og&#FCD05C&l&ou&#FCD46C&l&oi","&#FAEDCB&l&od&#FAE9BB&l&ot&#FBE5AB&l&oG&#FBE19B&l&ou&#FBDC8C&l&oi&#FBD87C&l&og&#FCD46C&l&ou&#FCD05C&l&oi"]},
     "wings": {
       "size": 0.8,
-      "color": "#E855FF"
+      "color": "#FCD05C"
     },
     "sizeX": 1.3,
     "sizeY": -0.2,
