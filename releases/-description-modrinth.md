@@ -63,7 +63,7 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Refill**: Checks your inventory and requests only the missing items up to the default or custom target amount.
 - **Reminder Gate**: Shows gate reminders based on lever progress messages.
 - **SecretRoutes**: Renders dungeon routes, secrets, waypoints, and room helpers, with current and legacy route sets.
-- **Show Ultimate Enchant**: Marks a Terminator carrying Soul Eater or Duplex directly on its item slot.
+- **Show Ultimate Enchant**: Marks a Terminator or Hyperion carrying a tracked ultimate enchant directly on its item slot, with a customizable label color.
 
 ### Category: SLAYER
 
