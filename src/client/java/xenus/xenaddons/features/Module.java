@@ -20,7 +20,12 @@ public abstract class Module {
         return enabled;
     }
 
+    public boolean isToggleable() {
+        return true;
+    }
+
     public void setEnabled(boolean enabled) {
+        if (!enabled && !isToggleable()) return;
         if (this.enabled != enabled) {
             this.enabled = enabled;
             if (enabled) onEnable();

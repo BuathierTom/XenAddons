@@ -28,6 +28,7 @@ public class CustomSizeModule extends Module {
         this.registerSetting(customSize);
         this.registerSetting(customWings);
         this.registerSetting(refreshCosmetics);
+        this.setEnabled(true);
     }
 
     public boolean shouldApplyCustomNames() {

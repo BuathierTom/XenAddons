@@ -35,6 +35,7 @@ public class CommandAliasesModule extends Module {
         this.registerSetting(lobbySb);
         this.registerSetting(floorShortcuts);
         this.registerSetting(chatChannels);
+        this.setEnabled(true);
     }
     
     private static CommandAliasesModule getInstance() {

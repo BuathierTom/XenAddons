@@ -728,7 +728,9 @@ object ClickGUI : Screen(Component.literal("MouseButtonEvent GUI")) {
             if (mouseX in lastX..(lastX + lastWidth) && mouseY in lastY..(lastY + FEATURE_ROW_HEIGHT)) {
                 when (button) {
                     0 -> {
-                        ClickGUI.updateConfig(feature.configElement.configKey, !getFeatureEnabled())
+                        if (ConfigManager.isToggleable(feature.configElement.configKey)) {
+                            ClickGUI.updateConfig(feature.configElement.configKey, !getFeatureEnabled())
+                        }
                         return true
                     }
                     1 -> {

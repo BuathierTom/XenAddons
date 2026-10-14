@@ -15,8 +15,8 @@ public class ZguegAddonsModule extends Module {
     public final BooleanSetting hideRadioMessages = new BooleanSetting("Radio Msg", true); // Renamed
     public final BooleanSetting hideDiscordWarning = new BooleanSetting("Discord Warn", true); // Renamed
     
-    public final BooleanSetting cryptsNotify = new BooleanSetting("Crypts Notify", false);
-    public final BooleanSetting classNotify = new BooleanSetting("Class Notify", false);
+    public final BooleanSetting cryptsNotify = new BooleanSetting("Crypts Notify", true);
+    public final BooleanSetting classNotify = new BooleanSetting("Class Notify", true);
     public final BooleanSetting implosionText = new BooleanSetting("Ability damage", true);
     public final BooleanSetting annoyingMessages = new BooleanSetting("Annoying messages", true);
     
@@ -48,6 +48,7 @@ public class ZguegAddonsModule extends Module {
 
     public ZguegAddonsModule() {
         super("ZguegAddons", "Collection of ZguegAddons features", Category.MISC);
+        this.setEnabled(true);
         this.registerSetting(cryptsNotify);
         this.registerSetting(classNotify);
         this.registerSetting(implosionText);

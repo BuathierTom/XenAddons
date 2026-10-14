@@ -26,6 +26,12 @@ public class ColorsModule extends Module {
         this.registerSetting(menuColor);
         lastAppliedColor = menuColor.getValue();
         KotlinGuiBridge.applyMenuPrimary(lastAppliedColor);
+        this.setEnabled(true);
+    }
+
+    @Override
+    public boolean isToggleable() {
+        return false;
     }
 
     private void applyMenuColorWithDelay(Integer newColor) {

@@ -250,6 +250,10 @@ object ConfigManager {
         }
     }
 
+    fun isToggleable(configKey: String): Boolean {
+        return moduleEnabledRefs[configKey]?.isToggleable ?: true
+    }
+
     fun getConfigValue(configKey: String): Any? {
         val value = configValueMap[configKey]
         return when (value) {
