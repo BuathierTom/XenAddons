@@ -154,6 +154,9 @@ public final class ItemPriceManager {
             if ("ENCHANTED_BOOK".equals(sbId)) return sbId;
         }
 
+        String runePricingId = resolveRunePricingId(stack, sbId);
+        if (runePricingId != null) return runePricingId;
+
         String shardPricingId = resolveShardPricingId(stack);
         if (shardPricingId != null) return shardPricingId;
 
@@ -357,6 +360,26 @@ public final class ItemPriceManager {
         if (stack == null || stack.isEmpty()) return null;
         CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         return customData == null ? null : customData.copyTag();
+    }
+
+    private static String resolveRunePricingId(ItemStack stack, String sbId) {
+        if (!"RUNE".equals(sbId) && !"UNIQUE_RUNE".equals(sbId)) return null;
+
+        CompoundTag root = getCustomDataTag(stack);
+        if (root == null) return null;
+
+        CompoundTag extra = root.getCompound("ExtraAttributes")
+            .orElse(root.getCompound("extra_attributes").orElse(root));
+        CompoundTag runes = extra.getCompound("runes").orElse(null);
+        if (runes == null || runes.isEmpty()) return null;
+
+        for (String runeName : runes.keySet()) {
+            String runeType = normalizeApiPart(runeName);
+            int level = runes.getIntOr(runeName, 0);
+            if (runeType != null && level > 0) return sbId + "_" + runeType + "_" + level;
+        }
+
+        return null;
     }
 
     private static String resolveEnchantedBookPricingId(ItemStack stack) {
