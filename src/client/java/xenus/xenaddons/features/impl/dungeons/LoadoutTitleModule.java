@@ -31,6 +31,8 @@ public class LoadoutTitleModule extends Module {
     private static final String UNEQUIPPED_MARKER = "Left-click to equip!";
     private static final String UNUSED_MARKER = "You must customize this loadout";
     private static final int[] LOADOUT_ICON_SLOTS = {14, 15, 16, 23, 24, 25, 32, 33, 34, 41, 42, 43};
+    private static final Pattern PET_PART_PATTERN = Pattern.compile("^Pet:.*$");
+    private static final Pattern NONE_PART_PATTERN = Pattern.compile("^[^:]+:\\s*None$");
 
     private static final int SLOT_SIZE = 16;
     private static final int DEFAULT_HIGHLIGHT_COLOR = 0xC09BFF00;
@@ -38,12 +40,42 @@ public class LoadoutTitleModule extends Module {
     private final BooleanSetting inDungeonsOnly = new BooleanSetting("In Dungeons Only", false);
     private final BooleanSetting highlightActiveLoadout = new BooleanSetting("Highlight Active Loadout", true);
     public final ColorSetting highlightColor = new ColorSetting("Highlight Color", DEFAULT_HIGHLIGHT_COLOR);
+    private final BooleanSetting hideNoneParts = new BooleanSetting("Hide None Parts", true);
 
     public LoadoutTitleModule() {
         super("Loadout Title", "Shows a title when you equip a loadout", Category.DUNGEON);
         registerSetting(inDungeonsOnly);
         registerSetting(highlightActiveLoadout);
         registerSetting(highlightColor);
+        registerSetting(hideNoneParts);
+    }
+
+    public static void hideNoneParts(List<Component> tooltip) {
+        LoadoutTitleModule module = ModuleManager.getModule(LoadoutTitleModule.class);
+        if (module == null || !module.isEnabled() || !module.hideNoneParts.getValue()) return;
+        if (tooltip == null || tooltip.size() < 2 || !isInLoadoutsMenu()) return;
+
+        int start = -1;
+        for (int i = 1; i < tooltip.size(); i++) {
+            if (PET_PART_PATTERN.matcher(strip(tooltip.get(i).getString())).matches()) {
+                start = i;
+                break;
+            }
+        }
+        if (start < 0) return;
+
+        int end = start;
+        while (end < tooltip.size() && !strip(tooltip.get(end).getString()).isEmpty()) {
+            end++;
+        }
+
+        List<Component> section = tooltip.subList(start, end);
+        boolean removedAll = section.stream().allMatch(line -> NONE_PART_PATTERN.matcher(strip(line.getString())).matches());
+        section.removeIf(line -> NONE_PART_PATTERN.matcher(strip(line.getString())).matches());
+
+        if (removedAll && start > 1 && strip(tooltip.get(start - 1).getString()).isEmpty()) {
+            tooltip.remove(start - 1);
+        }
     }
 
     public static void renderActiveLoadoutHighlight(AbstractContainerScreen<?> screen, GuiGraphicsExtractor context) {

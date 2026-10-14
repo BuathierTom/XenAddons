@@ -32,6 +32,7 @@ public class MixinScreenTooltipVisualWords {
 
         List<Component> replaced = XenTextCompat.replaceTooltipList(original);
         HidePartsOnRodModule.hideRodParts(replaced, stack);
+        LoadoutTitleModule.hideNoneParts(replaced);
         VisitorGardenModule.appendHint(replaced, stack);
 
         ItemPriceModule itemPrice = ModuleManager.getModule(ItemPriceModule.class);
