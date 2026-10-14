@@ -4,15 +4,12 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.glfw.GLFW;
+import xenus.xenaddons.compat.XenInputCompat;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.utils.DungeonUtils;
-
-import java.nio.DoubleBuffer;
 
 public class Cursor189Module extends Module {
     public final BooleanSetting hardInDungeonsOnly = new BooleanSetting("Hard in dungeons only", true);
@@ -20,8 +17,6 @@ public class Cursor189Module extends Module {
     private static double rememberedY = -1;
     private static Screen lastScreen = null;
     private static boolean wasCursorVisible = false;
-    private static final DoubleBuffer X_POS = BufferUtils.createDoubleBuffer(1);
-    private static final DoubleBuffer Y_POS = BufferUtils.createDoubleBuffer(1);
 
     public Cursor189Module() {
         super("Cursor 1.8.9", "Centers cursor in dungeons and can optionally keep legacy inventory cursor behavior", Category.MISC);
@@ -82,11 +77,9 @@ public class Cursor189Module extends Module {
         if (!isLegacyInventoryCursorActive()) return;
         if (!(client.screen instanceof InventoryScreen)) return;
 
-        X_POS.rewind();
-        Y_POS.rewind();
-        GLFW.glfwGetCursorPos(client.getWindow().handle(), X_POS, Y_POS);
-        rememberedX = clamp(X_POS.get(0), 0.0, client.getWindow().getScreenWidth() - 1.0);
-        rememberedY = clamp(Y_POS.get(0), 0.0, client.getWindow().getScreenHeight() - 1.0);
+        double[] cursor = XenInputCompat.cursorPos();
+        rememberedX = clamp(cursor[0], 0.0, client.getWindow().getScreenWidth() - 1.0);
+        rememberedY = clamp(cursor[1], 0.0, client.getWindow().getScreenHeight() - 1.0);
     }
 
     @Override
@@ -113,8 +106,7 @@ public class Cursor189Module extends Module {
 
     private static void handleHardDungeonCursor(Minecraft client) {
         if (client == null || client.getWindow() == null) return;
-        int cursorMode = GLFW.glfwGetInputMode(client.getWindow().handle(), GLFW.GLFW_CURSOR);
-        boolean cursorVisible = cursorMode == GLFW.GLFW_CURSOR_NORMAL;
+        boolean cursorVisible = XenInputCompat.isCursorVisible();
         if (cursorVisible && !wasCursorVisible) {
             centerCursor(client);
         }
@@ -129,11 +121,9 @@ public class Cursor189Module extends Module {
     }
 
     private static void setCursorNormalAt(Minecraft client, double x, double y) {
-        long handle = client.getWindow().handle();
         double targetX = clamp(x, 0.0, client.getWindow().getScreenWidth() - 1.0);
         double targetY = clamp(y, 0.0, client.getWindow().getScreenHeight() - 1.0);
-        GLFW.glfwSetInputMode(handle, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
-        GLFW.glfwSetCursorPos(handle, targetX, targetY);
+        XenInputCompat.showCursorAt(targetX, targetY);
     }
 
     private static double centerX(Minecraft client) {

@@ -19,7 +19,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import xenus.xenaddons.compat.XenDrawContextCompat;
 
 import java.awt.Point;
@@ -1211,18 +1211,18 @@ public class GuiInvButtonEditor extends Screen {
 
         // Toggle Grid Snap
         boolean inputsFocused = isEditorOpen && (commandTextField.isFocused() || iconTextField.isFocused());
-        if (keyCode == GLFW.GLFW_KEY_S && !inputsFocused) {
+        if (keyCode == InputConstants.KEY_S && !inputsFocused) {
             this.localGridSnap = !this.localGridSnap;
             return true;
         }
 
         if (isSavePanelOpen) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            if (keyCode == InputConstants.KEY_ESCAPE) {
                 isSavePanelOpen = false;
                 saveProfileField.setFocused(false);
                 return true;
             }
-            if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+            if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
                 confirmSaveProfile();
                 return true;
             }
@@ -1233,7 +1233,7 @@ public class GuiInvButtonEditor extends Screen {
         if (editingButton != null) {
             if (isEditorOpen) {
                 if (commandTextField.isFocused()) {
-                    if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+                    if (keyCode == InputConstants.KEY_BACKSPACE) {
                         String txt = commandTextField.getValue();
                         int cursor = commandTextField.getCursorPosition();
                         if (txt.equals("/") || (cursor <= 1 && commandTextField.getHighlighted().isEmpty())) {
@@ -1244,7 +1244,7 @@ public class GuiInvButtonEditor extends Screen {
                 }
                 if (iconTextField.isFocused()) return iconTextField.keyPressed(input);
             }
-            if (keyCode == GLFW.GLFW_KEY_DELETE || keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+            if (keyCode == InputConstants.KEY_DELETE || keyCode == InputConstants.KEY_BACKSPACE) {
                 if (!isEditorOpen || (!commandTextField.isFocused() && !iconTextField.isFocused())) {
                     deleteEditingButton();
                     return true;
@@ -1252,7 +1252,7 @@ public class GuiInvButtonEditor extends Screen {
             }
         }
 
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE && isEditorOpen) {
+        if (keyCode == InputConstants.KEY_ESCAPE && isEditorOpen) {
             closeEditor();
             return true;
         }

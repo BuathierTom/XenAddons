@@ -1,7 +1,11 @@
 #version 330
+//? if >=26.3 {
+//#extension GL_ARB_separate_shader_objects : require
+//?}
 
 uniform sampler2D Sampler0;
 
+//? if <26.3 {
 in vec4 vertexColor;
 in vec2 texCoord;   // Lokalne współrzędne quada (0..1)
 in vec2 rectSize;   // Wymiary prostokąta [width, height]
@@ -9,6 +13,15 @@ in float radius;    // Promień zaokrąglenia
 in vec4 uvBounds;   // [uMin, vMin, uMax, vMax]
 
 out vec4 fragColor;
+//?} else {
+//layout(location = 0) in vec4 vertexColor;
+//layout(location = 1) in vec2 texCoord;   // Lokalne współrzędne quada (0..1)
+//layout(location = 2) in vec2 rectSize;   // Wymiary prostokąta [width, height]
+//layout(location = 3) in float radius;    // Promień zaokrąglenia
+//layout(location = 4) in vec4 uvBounds;   // [uMin, vMin, uMax, vMax]
+//
+//layout(location = 0) out vec4 fragColor;
+//?}
 
 // Signed Distance Field dla prostokąta z zaokrąglonymi rogami
 float sdRoundedBox(vec2 p, vec2 b, float r) {

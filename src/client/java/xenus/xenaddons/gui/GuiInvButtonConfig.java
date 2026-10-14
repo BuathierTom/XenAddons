@@ -9,7 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import xenus.xenaddons.compat.XenDrawContextCompat;
 import xenus.xenaddons.compat.XenSoundCompat;
 
@@ -363,12 +363,12 @@ public class GuiInvButtonConfig extends Screen {
     @Override
     public boolean keyPressed(KeyEvent input) {
         int keyCode = input.key();
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE && !profileNameField.isFocused()) {
+        if (keyCode == InputConstants.KEY_ESCAPE && !profileNameField.isFocused()) {
             this.onClose();
             return true;
         }
         if (currentTab == Tab.PROFILES && profileNameField.isFocused()) {
-            if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+            if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
                 saveCurrentProfile();
                 return true;
             }

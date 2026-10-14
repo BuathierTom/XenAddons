@@ -1,5 +1,9 @@
 #version 330
+//? if >=26.3 {
+//#extension GL_ARB_separate_shader_objects : require
+//?}
 
+//? if <26.3 {
 in vec4 vertexColor;
 in vec4 vertexColor2;
 in vec2 texCoord;
@@ -9,6 +13,17 @@ in float borderThickness;
 in vec4 shadowProps;
 
 out vec4 fragColor;
+//?} else {
+//layout(location = 0) in vec4 vertexColor;
+//layout(location = 1) in vec4 vertexColor2;
+//layout(location = 2) in vec2 texCoord;
+//layout(location = 3) in vec2 rectSize;
+//layout(location = 4) in float radius;
+//layout(location = 5) in float borderThickness;
+//layout(location = 6) in vec4 shadowProps;
+//
+//layout(location = 0) out vec4 fragColor;
+//?}
 
 float sdRoundedBox(vec2 p, vec2 b, float r) {
     vec2 q = abs(p) - b + r;

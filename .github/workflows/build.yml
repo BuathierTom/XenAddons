@@ -7,11 +7,13 @@ on:
       - ".github/workflows/build.yml"
       - "gradle/**"
       - "src/**"
-      - "build.gradle"
+      - "versions/**"
+      - "build.gradle.kts"
       - "gradle.properties"
       - "gradlew"
       - "LICENSE"
-      - "settings.gradle"
+      - "settings.gradle.kts"
+      - "stonecutter.gradle.kts"
   push:
     branches: ["26.1.2"]
     paths: *build-paths
@@ -27,7 +29,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: checkout repository
@@ -54,11 +56,23 @@ jobs:
       - name: build
         run: ./gradlew build --build-cache
 
-      - name: upload jar
+      - name: upload jar 26.1.2
         uses: actions/upload-artifact@v7.0.1
         with:
-          path: |
-            build/libs/*.jar
-            !build/libs/*-sources.jar
+          path: versions/26.1.2/build/libs/xenaddons-*.jar
+          if-no-files-found: error
+          archive: false
+
+      - name: upload jar 26.2
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          path: versions/26.2/build/libs/xenaddons-*.jar
+          if-no-files-found: error
+          archive: false
+
+      - name: upload jar 26.3
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          path: versions/26.3/build/libs/xenaddons-*.jar
           if-no-files-found: error
           archive: false

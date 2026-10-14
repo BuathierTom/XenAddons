@@ -14,7 +14,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
+import xenus.xenaddons.compat.XenInputCompat;
 import xenus.xenaddons.compat.XenChatHudCompat;
 import xenus.xenaddons.config.VisualWordsChatStore;
 import xenus.xenaddons.features.ModuleManager;
@@ -142,18 +143,16 @@ public class MixinChatScreenCopyChat {
 
     private boolean isAltOrOptionDown(Minecraft mc) {
         if (mc == null || mc.getWindow() == null) return false;
-        long handle = mc.getWindow().handle();
-        return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
+        return XenInputCompat.isKeyDown(InputConstants.KEY_LALT)
+                || XenInputCompat.isKeyDown(InputConstants.KEY_RALT);
     }
 
     private boolean isCopyModifierDown(Minecraft mc) {
         if (mc == null || mc.getWindow() == null) return false;
-        long handle = mc.getWindow().handle();
-        return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SUPER) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SUPER) == GLFW.GLFW_PRESS;
+        return XenInputCompat.isKeyDown(InputConstants.KEY_LCONTROL)
+                || XenInputCompat.isKeyDown(InputConstants.KEY_RCONTROL)
+                || XenInputCompat.isKeyDown(InputConstants.KEY_LSUPER)
+                || XenInputCompat.isKeyDown(InputConstants.KEY_RSUPER);
     }
 
     private String toLegacyFormatted(Component text) {

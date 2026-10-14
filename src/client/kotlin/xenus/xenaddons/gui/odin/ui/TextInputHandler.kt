@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.KeyEvent
 import net.minecraft.util.StringUtil
-import org.lwjgl.glfw.GLFW
+import com.mojang.blaze3d.platform.InputConstants
 import xenus.xenaddons.render.XenRenderer
 import kotlin.math.abs
 import kotlin.math.max
@@ -127,7 +127,7 @@ class TextInputHandler(
         val shift = input.hasShiftDown()
 
         val handled = when (input.key) {
-            GLFW.GLFW_KEY_BACKSPACE -> {
+            InputConstants.KEY_BACKSPACE -> {
                 if (selection != caret) deleteSelection()
                 else if (ctrl) {
                     val previousSpace = getPreviousSpace()
@@ -142,7 +142,7 @@ class TextInputHandler(
                 clearSelection()
                 true
             }
-            GLFW.GLFW_KEY_DELETE -> {
+            InputConstants.KEY_DELETE -> {
                 if (selection != caret) deleteSelection()
                 else if (ctrl) {
                     val nextSpace = getNextSpace()
@@ -155,67 +155,67 @@ class TextInputHandler(
                 clearSelection()
                 true
             }
-            GLFW.GLFW_KEY_RIGHT -> {
+            InputConstants.KEY_RIGHT -> {
                 if (caret != text.length) {
                     caret = if (ctrl) getNextSpace() else caret + 1
                     if (!shift) selection = caret
                     true
                 } else false
             }
-            GLFW.GLFW_KEY_LEFT -> {
+            InputConstants.KEY_LEFT -> {
                 if (caret != 0) {
                     caret = if (ctrl) getPreviousSpace() else caret - 1
                     if (!shift) selection = caret
                     true
                 } else false
             }
-            GLFW.GLFW_KEY_HOME -> {
+            InputConstants.KEY_HOME -> {
                 caret = 0
                 if (!shift) selection = 0
                 true
             }
-            GLFW.GLFW_KEY_END -> {
+            InputConstants.KEY_END -> {
                 caret = text.length
                 if (!shift) selection = caret
                 true
             }
-            GLFW.GLFW_KEY_ESCAPE, GLFW.GLFW_KEY_ENTER -> {
+            InputConstants.KEY_ESCAPE, InputConstants.KEY_RETURN -> {
                 stopListening()
                 true
             }
             else -> {
                 if (ctrl && !shift) {
                     when (input.key) {
-                        GLFW.GLFW_KEY_V -> {
+                        InputConstants.KEY_V -> {
                             insert(Minecraft.getInstance().keyboardHandler.clipboard)
                             true
                         }
-                        GLFW.GLFW_KEY_C -> {
+                        InputConstants.KEY_C -> {
                             if (caret != selection) {
                                 Minecraft.getInstance().keyboardHandler.clipboard = text.substringSafe(caret, selection)
                                 true
                             } else false
                         }
-                        GLFW.GLFW_KEY_X -> {
+                        InputConstants.KEY_X -> {
                             if (caret != selection) {
                                 Minecraft.getInstance().keyboardHandler.clipboard = text.substringSafe(caret, selection)
                                 deleteSelection()
                                 true
                             } else false
                         }
-                        GLFW.GLFW_KEY_A -> {
+                        InputConstants.KEY_A -> {
                             selectAll()
                             true
                         }
-                        GLFW.GLFW_KEY_W -> {
+                        InputConstants.KEY_W -> {
                             selectWord()
                             true
                         }
-                        GLFW.GLFW_KEY_Z -> {
+                        InputConstants.KEY_Z -> {
                             undo()
                             true
                         }
-                        GLFW.GLFW_KEY_Y -> {
+                        InputConstants.KEY_Y -> {
                             redo()
                             true
                         }

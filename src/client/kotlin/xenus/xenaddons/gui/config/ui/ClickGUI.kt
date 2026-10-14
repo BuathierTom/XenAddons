@@ -8,7 +8,6 @@ import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.KeyEvent
 import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.network.chat.Component
-import org.lwjgl.glfw.GLFW
 import xenus.xenaddons.gui.HudEditorScreen
 import xenus.xenaddons.gui.config.ui.elements.MCColorCode
 import xenus.xenaddons.gui.config.ui.elements.base.ElementType
@@ -185,7 +184,7 @@ object ClickGUI : Screen(Component.literal("MouseButtonEvent GUI")) {
             if (panels[i].keyPressed(input)) return true
         }
 
-        if (input.key == GLFW.GLFW_KEY_ESCAPE) {
+        if (input.key == InputConstants.KEY_ESCAPE) {
             onClose()
             return true
         }
@@ -1343,8 +1342,8 @@ object ClickGUI : Screen(Component.literal("MouseButtonEvent GUI")) {
         override fun keyPressed(input: KeyEvent): Boolean {
             if (!listening) return false
             val value = when (input.key) {
-                GLFW.GLFW_KEY_ESCAPE, GLFW.GLFW_KEY_BACKSPACE -> -1
-                GLFW.GLFW_KEY_ENTER -> {
+                InputConstants.KEY_ESCAPE, InputConstants.KEY_BACKSPACE -> -1
+                InputConstants.KEY_RETURN -> {
                     listening = false
                     return true
                 }

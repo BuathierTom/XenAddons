@@ -1,6 +1,5 @@
 package xenus.xenaddons.mixin.client;
 
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,7 +13,7 @@ import xenus.xenaddons.render.music.MusicCaptureManager;
 @Mixin(GameRenderer.class)
 public class MixinGameRendererMusicDisplayCapture {
     @Inject(method = "renderLevel", at = @At("TAIL"))
-    private void xenaddons$captureWorldForMusicLiquidGlass(DeltaTracker deltaTracker, CallbackInfo ci) {
+    private void xenaddons$captureWorldForMusicLiquidGlass(CallbackInfo ci) {
         SpotifyOverlayModule module = ModuleManager.getModule(SpotifyOverlayModule.class);
         if (module != null && module.shouldRenderBetterDisplay()) {
             MusicCaptureManager.update(Minecraft.getInstance());

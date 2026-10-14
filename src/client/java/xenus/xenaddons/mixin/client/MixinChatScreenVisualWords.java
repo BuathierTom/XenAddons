@@ -1,5 +1,6 @@
 package xenus.xenaddons.mixin.client;
 
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.components.EditBox;
@@ -62,7 +63,7 @@ public abstract class MixinChatScreenVisualWords {
                 if (fmt != null) {
                     if (fmt == ChatFormatting.RESET) {
                         currentStyle = Style.EMPTY;
-                    } else if (fmt.isColor()) {
+                    } else if (TextColor.fromLegacyFormat(fmt) != null) {
                         currentStyle = Style.EMPTY.applyFormat(fmt);
                     } else {
                         currentStyle = currentStyle.applyFormat(fmt);

@@ -634,7 +634,7 @@ public class GoatedPlayersManager {
                 if (fmt != null) {
                     if (fmt == ChatFormatting.RESET) {
                         currentStyle = baseStyle;
-                    } else if (fmt.isColor()) {
+                    } else if (TextColor.fromLegacyFormat(fmt) != null) {
                         currentStyle = baseStyle.applyFormat(fmt);
                     } else {
                         currentStyle = currentStyle.applyFormat(fmt);
@@ -918,7 +918,7 @@ public class GoatedPlayersManager {
                     if (fmt == ChatFormatting.RESET) {
                         currentStyle = Style.EMPTY;
                         currentColor = 0xFFFFFF;
-                    } else if (!fmt.isColor()) {
+                    } else if (TextColor.fromLegacyFormat(fmt) == null) {
                         currentStyle = currentStyle.applyFormat(fmt);
                     }
                 }

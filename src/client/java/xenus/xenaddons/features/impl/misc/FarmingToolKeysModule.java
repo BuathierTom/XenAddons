@@ -4,7 +4,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
+import xenus.xenaddons.compat.XenInputCompat;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
@@ -189,11 +189,10 @@ public class FarmingToolKeysModule extends Module {
         if (keyCode == UNBOUND || mc == null || mc.getWindow() == null) return false;
 
         try {
-            long handle = mc.getWindow().handle();
             if (keyCode >= LOWEST_MOUSE_CODE && keyCode <= HIGHEST_MOUSE_CODE) {
-                return GLFW.glfwGetMouseButton(handle, keyCode - MOUSE_BASE) == GLFW.GLFW_PRESS;
+                return XenInputCompat.isMouseButtonDown(keyCode - MOUSE_BASE);
             }
-            return GLFW.glfwGetKey(handle, keyCode) == GLFW.GLFW_PRESS;
+            return XenInputCompat.isKeyDown(keyCode);
         } catch (Exception ignored) {
             return false;
         }

@@ -16,9 +16,7 @@ import java.util.Optional;
 public final class PrivateMessageProcessor {
     private static final String SEPARATOR = ": ";
     private static final String[] DIRECTIONS = {"From ", "To "};
-    private static final int HYPIXEL_PM_COLOR = ChatFormatting.LIGHT_PURPLE.getColor() == null
-            ? 0xFF55FF
-            : ChatFormatting.LIGHT_PURPLE.getColor();
+    private static final int HYPIXEL_PM_COLOR = TextColor.fromLegacyFormat(ChatFormatting.LIGHT_PURPLE).getValue();
 
     private PrivateMessageProcessor() {
     }

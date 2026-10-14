@@ -5,8 +5,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Camera;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import xenus.xenaddons.features.Category;
@@ -35,7 +33,7 @@ public class PosMsgModule extends Module {
             if (this.isEnabled()) onTick();
         });
 
-        LevelRenderEvents.END_MAIN.register(this::onWorldRender);
+        LevelRenderEvents.COLLECT_SUBMITS.register(this::onWorldRender);
     }
 
     private void onTick() {
@@ -88,16 +86,11 @@ public class PosMsgModule extends Module {
         if (camera == null) return;
         Vec3 cameraPos = XenCameraCompat.getPos(camera);
 
-        try (ByteBufferBuilder allocator = new ByteBufferBuilder(131072)) {
-            MultiBufferSource.BufferSource consumers = MultiBufferSource.immediate(allocator);
-            AABB playerBox = mc.player.getBoundingBox();
+        AABB playerBox = mc.player.getBoundingBox();
 
-            for (AABB zone : ZONE_BOXES) {
-                int color = intersects(zone, playerBox) ? ZONE_COLOR_ACTIVE : ZONE_COLOR_IDLE;
-                RenderUtils.drawBox(context.poseStack(), consumers, cameraPos, zone, color, false);
-            }
-
-            consumers.endBatch();
+        for (AABB zone : ZONE_BOXES) {
+            int color = intersects(zone, playerBox) ? ZONE_COLOR_ACTIVE : ZONE_COLOR_IDLE;
+            RenderUtils.drawBox(context.poseStack(), context.submitNodeCollector(), cameraPos, zone, color, false);
         }
     }
 

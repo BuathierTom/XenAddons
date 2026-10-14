@@ -4,7 +4,7 @@ import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.KeybindSetting;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import org.lwjgl.glfw.GLFW;
+import xenus.xenaddons.compat.XenInputCompat;
 
 public class CommandKeybindsModule extends Module {
     
@@ -45,17 +45,16 @@ public class CommandKeybindsModule extends Module {
         int key = setting.getKey();
         if (key == -1) return false;
         
-        long handle = mc.getWindow().handle();
         boolean isPressed = false;
         try {
             if (key < 0) {
                 // MouseHandler Button
                 int btn = -100 - key;
                 if (btn >= 0) {
-                     isPressed = GLFW.glfwGetMouseButton(handle, btn) == GLFW.GLFW_PRESS;
+                     isPressed = XenInputCompat.isMouseButtonDown(btn);
                 }
             } else {
-                isPressed = GLFW.glfwGetKey(handle, key) == GLFW.GLFW_PRESS;
+                isPressed = XenInputCompat.isKeyDown(key);
             }
         } catch (Exception e) {}
         

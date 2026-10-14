@@ -1,10 +1,8 @@
 package xenus.xenaddons.features.impl.dungeons;
 
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.WeightedPressurePlateBlock;
@@ -24,7 +22,7 @@ public class HighlightPressurePlateModule extends Module {
     public HighlightPressurePlateModule() {
         super("Highlight Pressure Plate", "Highlights the I4 Light Weighted Pressure Plate in green while pressed", Category.DUNGEON);
 
-        LevelRenderEvents.END_MAIN.register(this::onWorldRender);
+        LevelRenderEvents.COLLECT_SUBMITS.register(this::onWorldRender);
     }
 
     private void onWorldRender(LevelRenderContext context) {
@@ -41,10 +39,6 @@ public class HighlightPressurePlateModule extends Module {
 
         AABB box = state.getShape(mc.level, I4_PLATE_POS).bounds().move(I4_PLATE_POS).inflate(0.002);
 
-        try (ByteBufferBuilder allocator = new ByteBufferBuilder(4096)) {
-            MultiBufferSource.BufferSource consumers = MultiBufferSource.immediate(allocator);
-            RenderUtils.drawBox(context.poseStack(), consumers, cameraPos, box, HIGHLIGHT_COLOR, true);
-            consumers.endBatch();
-        }
+        RenderUtils.drawBox(context.poseStack(), context.submitNodeCollector(), cameraPos, box, HIGHLIGHT_COLOR, true);
     }
 }

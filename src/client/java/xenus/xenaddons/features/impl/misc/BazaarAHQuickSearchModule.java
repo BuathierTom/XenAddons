@@ -6,7 +6,8 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
+import xenus.xenaddons.compat.XenInputCompat;
 import xenus.xenaddons.compat.XenHandledScreenCompat;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
@@ -16,7 +17,7 @@ import xenus.xenaddons.utils.ItemPriceManager;
 import java.util.Locale;
 
 public class BazaarAHQuickSearchModule extends Module {
-    public final KeybindSetting searchKey = new KeybindSetting("Search Key", GLFW.GLFW_KEY_M);
+    public final KeybindSetting searchKey = new KeybindSetting("Search Key", InputConstants.KEY_M);
 
     private boolean wasPressed = false;
 
@@ -48,13 +49,12 @@ public class BazaarAHQuickSearchModule extends Module {
 
     private boolean isKeyPressed(int key) {
         if (key == -1 || mc == null || mc.getWindow() == null) return false;
-        long handle = mc.getWindow().handle();
         try {
             if (key < 0) {
                 int btn = -100 - key;
-                return btn >= 0 && GLFW.glfwGetMouseButton(handle, btn) == GLFW.GLFW_PRESS;
+                return btn >= 0 && XenInputCompat.isMouseButtonDown(btn);
             }
-            return GLFW.glfwGetKey(handle, key) == GLFW.GLFW_PRESS;
+            return XenInputCompat.isKeyDown(key);
         } catch (Exception ignored) {
             return false;
         }

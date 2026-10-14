@@ -1,5 +1,10 @@
 #version 150
+//? if >=26.3 {
+//#extension GL_ARB_separate_shader_objects : require
+//#extension GL_ARB_explicit_attrib_location : require
+//?}
 
+//? if <26.3 {
 #moj_import <xenaddons:common.glsl>
 
 in vec2 FragCoord;
@@ -12,6 +17,20 @@ in vec4 vShadowProps;
 uniform sampler2D Sampler0;
 
 out vec4 OutColor;
+//?} else {
+//#include <xenaddons:common.glsl>
+//
+//layout(location = 0) in vec2 FragCoord;
+//layout(location = 1) in vec2 TexCoord;
+//layout(location = 2) in vec4 FragColor;
+//layout(location = 3) in vec4 vCustomData;
+//layout(location = 4) in vec4 vColor2;
+//layout(location = 5) in vec4 vShadowProps;
+//
+//uniform sampler2D Sampler0;
+//
+//layout(location = 0) out vec4 OutColor;
+//?}
 
 void main() {
     vec2 size = vCustomData.xy;

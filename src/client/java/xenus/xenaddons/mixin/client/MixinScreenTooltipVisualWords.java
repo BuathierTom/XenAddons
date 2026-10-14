@@ -4,7 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
+import xenus.xenaddons.compat.XenInputCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -46,9 +47,8 @@ public class MixinScreenTooltipVisualWords {
                     int stackAmountForShift = ItemPriceModule.resolveShiftAmount(replaced, count);
                     // A sack holding a single item would only offer a pointless "x1" line.
                     boolean showStack = !itemId.startsWith("ENCHANTMENT_") && stackAmountForShift > 1;
-                    long handle = client.getWindow().handle();
-                    boolean shiftDown = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-                        || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+                    boolean shiftDown = XenInputCompat.isKeyDown(InputConstants.KEY_LSHIFT)
+                        || XenInputCompat.isKeyDown(InputConstants.KEY_RSHIFT);
                     int multiplier = (showStack && shiftDown) ? stackAmountForShift : 1;
 
                     addPriceSectionSpacer(replaced);

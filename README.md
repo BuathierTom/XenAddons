@@ -7,7 +7,7 @@
 [![GitHub Version](https://img.shields.io/badge/GitHub-v1.4.11-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
 [![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-Portal-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
-### A Fabric mod for Minecraft 26.1.2 focused on Hypixel SkyBlock QoL
+### A Fabric mod for Minecraft 26.1.2, 26.2 and 26.3 focused on Hypixel SkyBlock QoL
 
 </div>
 
@@ -171,17 +171,50 @@ by another XenAddons command is skipped.
 
 ---
 
+## Multi-version
+
+The project uses [Stonecutter](https://stonecutter.kikugie.dev/) to build one jar per Minecraft version from the same sources.
+
+| Minecraft | Fabric API     | Folder            |
+|-----------|----------------|-------------------|
+| 26.1.2    | 0.155.3+26.1.2 | `versions/26.1.2` |
+| 26.2      | 0.161.0+26.2   | `versions/26.2`   |
+| 26.3      | 0.162.0+26.3   | `versions/26.3`   |
+
+- The code in `src/` is the active version, **26.1.2**.
+- API renames between versions are declared in `stonecutter.gradle.kts`, per-version dependencies in `versions/<version>/gradle.properties`.
+- Code that differs between versions uses Stonecutter blocks (`//? if >=26.2 {`).
+- Switch the active version: `./gradlew "Set active project to 26.3"`, then `./gradlew "Reset active project"` before committing.
+
+---
+
+## Run
+
+```bash
+./gradlew :26.1.2:runClient
+./gradlew :26.1.2:runClient -P devauth_account=<pseudo>
+```
+
+Always prefix the task with the version: `./gradlew runClient` would launch the three versions one after the other.
+Each version has its own game folder in `versions/<version>/run`.
+
+---
+
 ## Build
 
 ```bash
 ./gradlew build
 ```
 
-Output:
+Output, one jar per version (no sources jar):
 
 ```txt
-build/libs/
+versions/26.1.2/build/libs/xenaddons-<mod_version>-mc26.1.2.jar
+versions/26.2/build/libs/xenaddons-<mod_version>-mc26.2.jar
+versions/26.3/build/libs/xenaddons-<mod_version>-mc26.3.jar
 ```
+
+The release workflow publishes these three jars.
 
 ---
 
@@ -192,6 +225,7 @@ vim ~/.devauth/config.toml
 
 [accounts.<pseudo>]
 type = "microsoft"
-
-export XENADDONS_DEVAUTH_ACCOUNT=<pseudo>
 ```
+
+Pick the account with `-P devauth_account=<pseudo>` (see Run), or `export XENADDONS_DEVAUTH_ACCOUNT=<pseudo>`.
+Without either, DevAuth uses `defaultAccount` from `~/.devauth/config.toml`.

@@ -3,7 +3,7 @@ package xenus.xenaddons.compat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.util.Mth;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.misc.PeekChatController;
 import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule;
@@ -15,7 +15,7 @@ public final class XenMouseCompat {
 
     public static boolean handleSpotifyOverlayClick(Minecraft client, long window, MouseButtonInfo input, int action) {
         if (window != client.getWindow().handle()) return false;
-        if (action != GLFW.GLFW_PRESS) return false;
+        if (action != InputConstants.PRESS) return false;
         if (client.getOverlay() != null || !SpotifyOverlayModule.isInteractiveScreen(client.screen)) return false;
 
         SpotifyOverlayModule module = ModuleManager.getModule(SpotifyOverlayModule.class);

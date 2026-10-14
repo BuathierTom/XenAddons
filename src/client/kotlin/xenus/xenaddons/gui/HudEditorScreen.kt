@@ -8,7 +8,7 @@ import net.minecraft.client.input.KeyEvent
 import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.network.chat.Component
 import net.minecraft.util.Mth as Mth
-import org.lwjgl.glfw.GLFW
+import com.mojang.blaze3d.platform.InputConstants
 import xenus.xenaddons.config.ConfigManager
 import xenus.xenaddons.features.ModuleManager
 import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule
@@ -173,18 +173,18 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         val keyCode = input.key
         val modifiers = input.modifiers
 
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == InputConstants.KEY_ESCAPE) {
             onClose()
             return true
         }
 
-        if (keyCode == GLFW.GLFW_KEY_G) {
-            if ((modifiers and GLFW.GLFW_MOD_CONTROL) != 0) snapToGrid = !snapToGrid
+        if (keyCode == InputConstants.KEY_G) {
+            if ((modifiers and InputConstants.MOD_CONTROL) != 0) snapToGrid = !snapToGrid
             else gridEnabled = !gridEnabled
             return true
         }
 
-        if (keyCode == GLFW.GLFW_KEY_F1) {
+        if (keyCode == InputConstants.KEY_F1) {
             showHelp = !showHelp
             return true
         }
@@ -192,17 +192,17 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         val target = dragging ?: getActiveComponent(lastMouseX, lastMouseY)
         if (target == null) return super.keyPressed(input)
 
-        val step = if ((modifiers and GLFW.GLFW_MOD_SHIFT) != 0) 8 else 1
+        val step = if ((modifiers and InputConstants.MOD_SHIFT) != 0) 8 else 1
         when (keyCode) {
-            GLFW.GLFW_KEY_H -> centerHorizontally(target)
-            GLFW.GLFW_KEY_V -> centerVertically(target)
-            GLFW.GLFW_KEY_LEFT -> moveBy(target, -step, 0)
-            GLFW.GLFW_KEY_RIGHT -> moveBy(target, step, 0)
-            GLFW.GLFW_KEY_UP -> moveBy(target, 0, -step)
-            GLFW.GLFW_KEY_DOWN -> moveBy(target, 0, step)
-            GLFW.GLFW_KEY_R -> {
-                val ctrl = (modifiers and GLFW.GLFW_MOD_CONTROL) != 0
-                val shift = (modifiers and GLFW.GLFW_MOD_SHIFT) != 0
+            InputConstants.KEY_H -> centerHorizontally(target)
+            InputConstants.KEY_V -> centerVertically(target)
+            InputConstants.KEY_LEFT -> moveBy(target, -step, 0)
+            InputConstants.KEY_RIGHT -> moveBy(target, step, 0)
+            InputConstants.KEY_UP -> moveBy(target, 0, -step)
+            InputConstants.KEY_DOWN -> moveBy(target, 0, step)
+            InputConstants.KEY_R -> {
+                val ctrl = (modifiers and InputConstants.MOD_CONTROL) != 0
+                val shift = (modifiers and InputConstants.MOD_SHIFT) != 0
                 if (ctrl && shift) resetAllPlacement() else resetPlacement(target)
             }
             else -> return super.keyPressed(input)

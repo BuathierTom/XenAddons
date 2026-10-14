@@ -4,7 +4,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import org.lwjgl.glfw.GLFW;
+import xenus.xenaddons.compat.XenInputCompat;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
@@ -35,13 +35,12 @@ public class HidePartsOnRodModule extends Module {
 
     private boolean isKeyDown(int key) {
         if (key == -1 || mc == null || mc.getWindow() == null) return false;
-        long handle = mc.getWindow().handle();
         try {
             if (key < 0) {
                 int button = -100 - key;
-                return button >= 0 && GLFW.glfwGetMouseButton(handle, button) == GLFW.GLFW_PRESS;
+                return button >= 0 && XenInputCompat.isMouseButtonDown(button);
             }
-            return GLFW.glfwGetKey(handle, key) == GLFW.GLFW_PRESS;
+            return XenInputCompat.isKeyDown(key);
         } catch (Exception ignored) {
             return false;
         }

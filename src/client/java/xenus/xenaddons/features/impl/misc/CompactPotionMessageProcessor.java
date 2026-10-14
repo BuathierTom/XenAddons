@@ -129,11 +129,11 @@ public final class CompactPotionMessageProcessor {
                 out.append(toLegacyHex(rgb));
             }
         }
-        if (Boolean.TRUE.equals(style.isBold())) out.append('§').append(ChatFormatting.BOLD.getChar());
-        if (Boolean.TRUE.equals(style.isItalic())) out.append('§').append(ChatFormatting.ITALIC.getChar());
-        if (Boolean.TRUE.equals(style.isUnderlined())) out.append('§').append(ChatFormatting.UNDERLINE.getChar());
-        if (Boolean.TRUE.equals(style.isStrikethrough())) out.append('§').append(ChatFormatting.STRIKETHROUGH.getChar());
-        if (Boolean.TRUE.equals(style.isObfuscated())) out.append('§').append(ChatFormatting.OBFUSCATED.getChar());
+        if (Boolean.TRUE.equals(style.isBold())) out.append(ChatFormatting.BOLD);
+        if (Boolean.TRUE.equals(style.isItalic())) out.append(ChatFormatting.ITALIC);
+        if (Boolean.TRUE.equals(style.isUnderlined())) out.append(ChatFormatting.UNDERLINE);
+        if (Boolean.TRUE.equals(style.isStrikethrough())) out.append(ChatFormatting.STRIKETHROUGH);
+        if (Boolean.TRUE.equals(style.isObfuscated())) out.append(ChatFormatting.OBFUSCATED);
         return out.toString();
     }
 

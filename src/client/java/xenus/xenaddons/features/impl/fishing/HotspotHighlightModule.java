@@ -1,12 +1,10 @@
 package xenus.xenaddons.features.impl.fishing;
 
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.phys.Vec3;
 import xenus.xenaddons.compat.XenCameraCompat;
 import xenus.xenaddons.features.Category;
@@ -39,7 +37,7 @@ public class HotspotHighlightModule extends Module {
         ClientTickEvents.END_CLIENT_TICK.register(client -> onTick());
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> HotspotTracker.reset());
 
-        LevelRenderEvents.END_MAIN.register(this::onWorldRender);
+        LevelRenderEvents.COLLECT_SUBMITS.register(this::onWorldRender);
     }
 
     @Override
@@ -66,25 +64,19 @@ public class HotspotHighlightModule extends Module {
         List<HotspotTracker.Hotspot> hotspots = HotspotTracker.getHotspots();
         if (hotspots.isEmpty()) return;
 
-        try (ByteBufferBuilder allocator = new ByteBufferBuilder(131072)) {
-            MultiBufferSource.BufferSource consumers = MultiBufferSource.immediate(allocator);
+        for (HotspotTracker.Hotspot hotspot : hotspots) {
+            if (hotspot.pos == null || hotspot.radius == null) continue;
+            float radius = hotspot.radius.floatValue();
+            int rgb = hotspot.type.color & 0xFFFFFF;
 
-            for (HotspotTracker.Hotspot hotspot : hotspots) {
-                if (hotspot.pos == null || hotspot.radius == null) continue;
-                float radius = hotspot.radius.floatValue();
-                int rgb = hotspot.type.color & 0xFFFFFF;
-
-                if (showSurface.getValue()) {
-                    int color = (alphaFromPercent(surfaceOpacity.getValue()) << 24) | rgb;
-                    RenderUtils.drawCircleFilled(context.poseStack(), consumers, cameraPos, hotspot.pos, radius, color, CIRCLE_SEGMENTS);
-                }
-                if (showOutline.getValue()) {
-                    int color = (alphaFromPercent(outlineOpacity.getValue()) << 24) | rgb;
-                    RenderUtils.drawCircleOutline(context.poseStack(), consumers, cameraPos, hotspot.pos, radius, color, CIRCLE_SEGMENTS);
-                }
+            if (showSurface.getValue()) {
+                int color = (alphaFromPercent(surfaceOpacity.getValue()) << 24) | rgb;
+                RenderUtils.drawCircleFilled(context.poseStack(), context.submitNodeCollector(), cameraPos, hotspot.pos, radius, color, CIRCLE_SEGMENTS);
             }
-
-            consumers.endBatch();
+            if (showOutline.getValue()) {
+                int color = (alphaFromPercent(outlineOpacity.getValue()) << 24) | rgb;
+                RenderUtils.drawCircleOutline(context.poseStack(), context.submitNodeCollector(), cameraPos, hotspot.pos, radius, color, CIRCLE_SEGMENTS);
+            }
         }
     }
 

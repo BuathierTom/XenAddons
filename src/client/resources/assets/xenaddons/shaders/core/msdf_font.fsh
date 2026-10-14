@@ -1,12 +1,23 @@
 #version 330
+//? if >=26.3 {
+//#extension GL_ARB_separate_shader_objects : require
+//?}
 
 uniform sampler2D Sampler0;
 
+//? if <26.3 {
 in vec4 vertexColor;
 in vec2 texCoord;
 in float pxRange;
 
 out vec4 fragColor;
+//?} else {
+//layout(location = 0) in vec4 vertexColor;
+//layout(location = 1) in vec2 texCoord;
+//layout(location = 2) in float pxRange;
+//
+//layout(location = 0) out vec4 fragColor;
+//?}
 
 float median(float r, float g, float b) {
     return max(min(r, g), min(max(r, g), b));

@@ -11,7 +11,11 @@ import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
+//? if <26.2 {
 import com.mojang.blaze3d.textures.TextureFormat;
+//?} else {
+/*import com.mojang.blaze3d.GpuFormat;
+*///?}
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.render.TextureSetup;
 import org.joml.Matrix3x2fc;
@@ -105,7 +109,11 @@ public final class MusicMsdfFont {
         texture = RenderSystem.getDevice().createTexture(
             "XenAddons Music MSDF Font",
             GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_TEXTURE_BINDING,
+            //? if <26.2 {
             TextureFormat.RGBA8,
+            //?} else {
+            /*GpuFormat.RGBA8_UNORM,
+            *///?}
             imageWidth,
             imageHeight,
             1,
@@ -127,7 +135,9 @@ public final class MusicMsdfFont {
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(
             texture,
             pixels,
+            //? if <26.2 {
             NativeImage.Format.RGBA,
+            //?}
             0,
             0,
             0,

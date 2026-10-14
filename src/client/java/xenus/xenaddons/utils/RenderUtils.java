@@ -4,7 +4,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -37,44 +37,43 @@ public class RenderUtils {
         return (color & 0xFF000000) | (Color.HSBtoRGB(hsv[0], hsv[1], hsv[2]) & 0x00FFFFFF);
     }
 
-    public static void drawLine(PoseStack matrices, MultiBufferSource consumers, Vec3 cameraPos, Vec3 start, Vec3 end, int color, float width) {
-        float a = ((color >> 24) & 0xFF) / 255.0f;
+    public static void drawLine(PoseStack matrices, OrderedSubmitNodeCollector collector, Vec3 cameraPos, Vec3 start, Vec3 end, int color, float width) {
+        float alpha = ((color >> 24) & 0xFF) / 255.0f;
         float r = ((color >> 16) & 0xFF) / 255.0f;
         float g = ((color >> 8) & 0xFF) / 255.0f;
         float b = (color & 0xFF) / 255.0f;
-        if (a == 0) a = 1.0f;
+        float a = alpha == 0 ? 1.0f : alpha;
 
-        VertexConsumer buffer = consumers.getBuffer(XenWorldRenderCompat.normalLineLayer());
-        
         matrices.pushPose();
         matrices.translate(start.x - cameraPos.x, start.y - cameraPos.y, start.z - cameraPos.z);
-        Matrix4f matrix = matrices.last().pose();
 
         float lineWidth = Math.max(1.0f, width);
-        buffer.addVertex(matrix, 0, 0, 0).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(lineWidth);
-        buffer.addVertex(matrix, (float)(end.x - start.x), (float)(end.y - start.y), (float)(end.z - start.z)).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(lineWidth);
+        collector.submitCustomGeometry(matrices, XenWorldRenderCompat.normalLineLayer(), (pose, buffer) -> {
+            Matrix4f matrix = pose.pose();
+            buffer.addVertex(matrix, 0, 0, 0).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(lineWidth);
+            buffer.addVertex(matrix, (float)(end.x - start.x), (float)(end.y - start.y), (float)(end.z - start.z)).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(lineWidth);
+        });
 
         matrices.popPose();
     }
 
-    public static void drawBox(PoseStack matrices, MultiBufferSource consumers, Vec3 cameraPos, AABB box, int color, boolean filled) {
-        float a = ((color >> 24) & 0xFF) / 255.0f;
+    public static void drawBox(PoseStack matrices, OrderedSubmitNodeCollector collector, Vec3 cameraPos, AABB box, int color, boolean filled) {
+        float alpha = ((color >> 24) & 0xFF) / 255.0f;
         float r = ((color >> 16) & 0xFF) / 255.0f;
         float g = ((color >> 8) & 0xFF) / 255.0f;
         float b = (color & 0xFF) / 255.0f;
-        if (a == 0) a = 0.5f;
+        float a = alpha == 0 ? 0.5f : alpha;
 
-        VertexConsumer buffer = consumers.getBuffer(filled ? XenWorldRenderCompat.normalQuadLayer() : XenWorldRenderCompat.normalLineLayer());
-        
         matrices.pushPose();
         matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
-        Matrix4f matrix = matrices.last().pose();
 
-        if (filled) {
-            drawBoxFaces(matrix, buffer, box, r, g, b, a);
-        } else {
-            drawBoxOutline(matrix, buffer, box, r, g, b, a);
-        }
+        collector.submitCustomGeometry(matrices, filled ? XenWorldRenderCompat.normalQuadLayer() : XenWorldRenderCompat.normalLineLayer(), (pose, buffer) -> {
+            if (filled) {
+                drawBoxFaces(pose.pose(), buffer, box, r, g, b, a);
+            } else {
+                drawBoxOutline(pose.pose(), buffer, box, r, g, b, a);
+            }
+        });
 
         matrices.popPose();
     }
@@ -167,61 +166,61 @@ public class RenderUtils {
         buffer.addVertex(matrix, x, y, z).setColor(r, g, b, a).setNormal(nx, ny, nz).setLineWidth(1.0f);
     }
 
-    public static void drawCircleOutline(PoseStack matrices, MultiBufferSource consumers, Vec3 cameraPos, Vec3 center, float radius, int color, int segments) {
-        float a = ((color >> 24) & 0xFF) / 255.0f;
+    public static void drawCircleOutline(PoseStack matrices, OrderedSubmitNodeCollector collector, Vec3 cameraPos, Vec3 center, float radius, int color, int segments) {
+        float alpha = ((color >> 24) & 0xFF) / 255.0f;
         float r = ((color >> 16) & 0xFF) / 255.0f;
         float g = ((color >> 8) & 0xFF) / 255.0f;
         float b = (color & 0xFF) / 255.0f;
-        if (a == 0) a = 1.0f;
-
-        VertexConsumer buffer = consumers.getBuffer(XenWorldRenderCompat.normalLineLayer());
+        float a = alpha == 0 ? 1.0f : alpha;
 
         matrices.pushPose();
         matrices.translate(center.x - cameraPos.x, center.y - cameraPos.y, center.z - cameraPos.z);
-        Matrix4f matrix = matrices.last().pose();
 
-        for (int i = 0; i < segments; i++) {
-            double angle1 = (2 * Math.PI * i) / segments;
-            double angle2 = (2 * Math.PI * (i + 1)) / segments;
-            float x1 = (float) (Math.cos(angle1) * radius);
-            float z1 = (float) (Math.sin(angle1) * radius);
-            float x2 = (float) (Math.cos(angle2) * radius);
-            float z2 = (float) (Math.sin(angle2) * radius);
+        collector.submitCustomGeometry(matrices, XenWorldRenderCompat.normalLineLayer(), (pose, buffer) -> {
+            Matrix4f matrix = pose.pose();
+            for (int i = 0; i < segments; i++) {
+                double angle1 = (2 * Math.PI * i) / segments;
+                double angle2 = (2 * Math.PI * (i + 1)) / segments;
+                float x1 = (float) (Math.cos(angle1) * radius);
+                float z1 = (float) (Math.sin(angle1) * radius);
+                float x2 = (float) (Math.cos(angle2) * radius);
+                float z2 = (float) (Math.sin(angle2) * radius);
 
-            buffer.addVertex(matrix, x1, 0, z1).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(2.0f);
-            buffer.addVertex(matrix, x2, 0, z2).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(2.0f);
-        }
+                buffer.addVertex(matrix, x1, 0, z1).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(2.0f);
+                buffer.addVertex(matrix, x2, 0, z2).setColor(r, g, b, a).setNormal(0, 1, 0).setLineWidth(2.0f);
+            }
+        });
 
         matrices.popPose();
     }
 
-    public static void drawCircleFilled(PoseStack matrices, MultiBufferSource consumers, Vec3 cameraPos, Vec3 center, float radius, int color, int segments) {
-        float a = ((color >> 24) & 0xFF) / 255.0f;
+    public static void drawCircleFilled(PoseStack matrices, OrderedSubmitNodeCollector collector, Vec3 cameraPos, Vec3 center, float radius, int color, int segments) {
+        float alpha = ((color >> 24) & 0xFF) / 255.0f;
         float r = ((color >> 16) & 0xFF) / 255.0f;
         float g = ((color >> 8) & 0xFF) / 255.0f;
         float b = (color & 0xFF) / 255.0f;
-        if (a == 0) a = 0.5f;
-
-        VertexConsumer buffer = consumers.getBuffer(XenWorldRenderCompat.normalQuadLayer());
+        float a = alpha == 0 ? 0.5f : alpha;
 
         matrices.pushPose();
         matrices.translate(center.x - cameraPos.x, center.y - cameraPos.y, center.z - cameraPos.z);
-        Matrix4f matrix = matrices.last().pose();
 
-        for (int i = 0; i < segments; i++) {
-            double angle1 = (2 * Math.PI * i) / segments;
-            double angle2 = (2 * Math.PI * (i + 1)) / segments;
-            float x1 = (float) (Math.cos(angle1) * radius);
-            float z1 = (float) (Math.sin(angle1) * radius);
-            float x2 = (float) (Math.cos(angle2) * radius);
-            float z2 = (float) (Math.sin(angle2) * radius);
+        collector.submitCustomGeometry(matrices, XenWorldRenderCompat.normalQuadLayer(), (pose, buffer) -> {
+            Matrix4f matrix = pose.pose();
+            for (int i = 0; i < segments; i++) {
+                double angle1 = (2 * Math.PI * i) / segments;
+                double angle2 = (2 * Math.PI * (i + 1)) / segments;
+                float x1 = (float) (Math.cos(angle1) * radius);
+                float z1 = (float) (Math.sin(angle1) * radius);
+                float x2 = (float) (Math.cos(angle2) * radius);
+                float z2 = (float) (Math.sin(angle2) * radius);
 
-            // Degenerate quad (last two vertices repeated) draws as a triangle wedge from the center.
-            buffer.addVertex(matrix, 0, 0, 0).setColor(r, g, b, a).setNormal(0, 1, 0);
-            buffer.addVertex(matrix, x1, 0, z1).setColor(r, g, b, a).setNormal(0, 1, 0);
-            buffer.addVertex(matrix, x2, 0, z2).setColor(r, g, b, a).setNormal(0, 1, 0);
-            buffer.addVertex(matrix, x2, 0, z2).setColor(r, g, b, a).setNormal(0, 1, 0);
-        }
+                // Degenerate quad (last two vertices repeated) draws as a triangle wedge from the center.
+                buffer.addVertex(matrix, 0, 0, 0).setColor(r, g, b, a).setNormal(0, 1, 0);
+                buffer.addVertex(matrix, x1, 0, z1).setColor(r, g, b, a).setNormal(0, 1, 0);
+                buffer.addVertex(matrix, x2, 0, z2).setColor(r, g, b, a).setNormal(0, 1, 0);
+                buffer.addVertex(matrix, x2, 0, z2).setColor(r, g, b, a).setNormal(0, 1, 0);
+            }
+        });
 
         matrices.popPose();
     }
