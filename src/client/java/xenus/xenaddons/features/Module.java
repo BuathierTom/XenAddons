@@ -1,6 +1,7 @@
 package xenus.xenaddons.features;
 
 import net.minecraft.client.Minecraft;
+import xenus.xenaddons.hud.HudElement;
 
 public abstract class Module {
     public final String name;
@@ -9,6 +10,7 @@ public abstract class Module {
     private boolean enabled = false;
     protected final Minecraft mc = Minecraft.getInstance();
     public final java.util.List<xenus.xenaddons.settings.Setting<?>> settings = new java.util.ArrayList<>();
+    public final java.util.List<HudElement> hudElements = new java.util.ArrayList<>();
 
     public Module(String name, String description, Category category) {
         this.name = name;
@@ -47,5 +49,11 @@ public abstract class Module {
 
     protected void registerSetting(xenus.xenaddons.settings.Setting<?> setting) {
         settings.add(setting);
+    }
+
+    protected HudElement hudElement(String name, HudElement.Renderer renderer) {
+        HudElement element = new HudElement(name, this::isEnabled, renderer);
+        hudElements.add(element);
+        return element;
     }
 }

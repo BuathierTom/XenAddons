@@ -6,96 +6,10 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
-import xenus.xenaddons.features.ModuleManager;
-import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule;
-import xenus.xenaddons.features.impl.dungeons.MilestoneDisplayModule;
 import xenus.xenaddons.features.impl.misc.CooldownItemsTracker;
-import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule;
-import xenus.xenaddons.hud.HudState;
-import xenus.xenaddons.hud.PetNotification;
 
 public final class XenHudCompat {
     private XenHudCompat() {}
-
-    public static void renderEarlyHudOverlays(GuiGraphicsExtractor context) {
-        SpotifyOverlayModule spotify = ModuleManager.getModule(SpotifyOverlayModule.class);
-        if (spotify != null) {
-            spotify.renderInGameHud(context);
-        }
-
-        MilestoneDisplayModule milestoneDisplay = ModuleManager.getModule(MilestoneDisplayModule.class);
-        if (milestoneDisplay != null && milestoneDisplay.isEnabled()) {
-            milestoneDisplay.renderInGameHud(context);
-        }
-    }
-
-    public static void renderPetNotification(GuiGraphicsExtractor context) {
-        AutoPetRuleTitleModule autoPet = ModuleManager.getModule(AutoPetRuleTitleModule.class);
-        renderTitleNotification(
-            context,
-            HudState.PET_NOTIFICATION,
-            autoPet == null ? 0 : autoPet.getHudOffsetX(),
-            autoPet == null ? HudState.PET_NOTIFICATION.yOffset : autoPet.getHudOffsetY(),
-            autoPet == null ? HudState.PET_NOTIFICATION.scale : (float) autoPet.getHudScale()
-        );
-    }
-
-    private static void renderTitleNotification(
-        GuiGraphicsExtractor context,
-        PetNotification notif,
-        int hudOffsetX,
-        int hudOffsetY,
-        float titleScale
-    ) {
-        if (!notif.isActive()) return;
-
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options.hideGui) return;
-
-        Font textRenderer = mc.font;
-        Component title = notif.getTitle();
-        Component subtitle = notif.getSubtitle();
-
-        int screenWidth = XenDrawContextCompat.scaledWidth(context);
-        int screenHeight = XenDrawContextCompat.scaledHeight(context);
-        int titleWidth = textRenderer.width(title);
-        int centerX = screenWidth / 2;
-
-        context.pose().pushMatrix();
-        context.pose().scale(titleScale, titleScale);
-
-        int baseYRaw = screenHeight / 2 + hudOffsetY;
-        int minCenterX = (int) Math.ceil((titleWidth * titleScale) / 2.0f) + 2;
-        int maxCenterX = screenWidth - minCenterX;
-        int clampedCenterX = Mth.clamp(centerX + hudOffsetX, minCenterX, Math.max(minCenterX, maxCenterX));
-        int maxBaseY = screenHeight - (int) Math.ceil(textRenderer.lineHeight * titleScale) - 2;
-        int baseY = Mth.clamp(baseYRaw, 2, Math.max(2, maxBaseY));
-
-        float titleInv = 1.0f / titleScale;
-        int drawTitleX = (int) ((clampedCenterX * titleInv) - (titleWidth / 2));
-        int drawTitleY = (int) (baseY * titleInv);
-        XenDrawContextCompat.text(context, textRenderer, title, drawTitleX, drawTitleY, 0xFFFFFFFF);
-        context.pose().popMatrix();
-
-        float subScale = titleScale * 0.6f;
-        context.pose().pushMatrix();
-        context.pose().scale(subScale, subScale);
-
-        int subtitleWidth = textRenderer.width(subtitle);
-        float subInv = 1.0f / subScale;
-        int subScreenY = baseY + 25;
-        int minSubCenterX = (int) Math.ceil((subtitleWidth * subScale) / 2.0f) + 2;
-        int maxSubCenterX = screenWidth - minSubCenterX;
-        int subCenterX = Mth.clamp(clampedCenterX, minSubCenterX, Math.max(minSubCenterX, maxSubCenterX));
-        int maxSubY = screenHeight - (int) Math.ceil(textRenderer.lineHeight * subScale) - 2;
-        subScreenY = Mth.clamp(subScreenY, 2, Math.max(2, maxSubY));
-
-        int drawSubX = (int) ((subCenterX * subInv) - (subtitleWidth / 2));
-        int drawSubY = (int) (subScreenY * subInv);
-        XenDrawContextCompat.text(context, textRenderer, subtitle, drawSubX, drawSubY, 0xFFFFFFFF);
-        context.pose().popMatrix();
-    }
 
     public static void renderHotbarCooldown(GuiGraphicsExtractor context, int x, int y, Player player, ItemStack stack) {
         CooldownItemsTracker.renderBackground(context, stack, x, y, false);

@@ -21,7 +21,7 @@ public class SlayerMiniBossAlertModule extends SlayerAlertModule {
 
     public SlayerMiniBossAlertModule() {
         super("Mini-Boss Alert", "Alerts when a slayer mini-boss spawns",
-                "slayer_miniboss_hud", "&6Mini-Boss!", 165, 3.0);
+                "&6Mini-Boss!", 165.0f, 3.0f);
 
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             if (!this.isEnabled() || overlay) return;

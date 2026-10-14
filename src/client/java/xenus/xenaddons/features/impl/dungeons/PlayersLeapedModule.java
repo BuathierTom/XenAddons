@@ -1,17 +1,14 @@
 package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.resources.Identifier;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
-import xenus.xenaddons.settings.NumberSetting;
+import xenus.xenaddons.hud.HudElement;
+import xenus.xenaddons.hud.HudRender;
 import xenus.xenaddons.utils.DungeonUtils;
 
 public class PlayersLeapedModule extends Module {
@@ -30,10 +27,7 @@ public class PlayersLeapedModule extends Module {
     private static final AABB CORE_BOX = new AABB(52, 113, 49, 57, 117, 53);
     private static final AABB GOLDOR_TUNNEL_BOX = new AABB(41, 110, 59, 68, 150, 117);
     private static final AABB P5_BOX = new AABB(3, 5, 0, 128, 48, 140);
-
-    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting hudY = new NumberSetting("HUD Y", 68, -1000, 1000, 1);
-    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 1.0, 0.5, 6.0, 0.05);
+    private static final String PREVIEW_TEXT = "§42§9/4 Players Leaped";
 
     private int leapedCount = 0;
     private int currentSpot = 0;
@@ -44,13 +38,6 @@ public class PlayersLeapedModule extends Module {
     public PlayersLeapedModule() {
         super("Players Leaped", "Shows how many players leaped in F7/M7 terms", Category.DUNGEON);
 
-        hudOffsetX.setVisibility(() -> false);
-        hudY.setVisibility(() -> false);
-        hudScale.setVisibility(() -> false);
-        this.registerSetting(hudOffsetX);
-        this.registerSetting(hudY);
-        this.registerSetting(hudScale);
-
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!this.isEnabled()) {
                 inBounds = false;
@@ -59,10 +46,10 @@ public class PlayersLeapedModule extends Module {
             tick();
         });
 
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "players_leaped_hud"), (drawContext, tickDelta) -> {
-            if (!this.isEnabled() || !shouldDisplay()) return;
-            renderHud(drawContext);
-        });
+        hudElement("Players Leaped", (context, example) -> HudRender.centeredText(context, example ? PREVIEW_TEXT : getHudText(), 0xFFFFFFFF))
+            .visibleWhen(this::shouldDisplay)
+            .centered()
+            .defaults(HudElement.CENTER, 68.0f, 1.0f);
     }
 
     private void tick() {
@@ -147,35 +134,14 @@ public class PlayersLeapedModule extends Module {
         return inBounds && DungeonUtils.inDungeon();
     }
 
-    private void renderHud(GuiGraphicsExtractor drawContext) {
+    private String getHudText() {
         String startColor;
         if (currentSpot == 3) {
             startColor = leapedCount > 2 ? "§9" : "§4";
         } else {
             startColor = leapedCount > 3 ? "§9" : "§4";
         }
-
-        String text = startColor + leapedCount + "§9/4 Players Leaped";
-        int width = mc.getWindow().getGuiScaledWidth();
-        int height = mc.getWindow().getGuiScaledHeight();
-        int textWidth = mc.font.width(text);
-        int textHeight = mc.font.lineHeight;
-        float scale = (float) hudScale.getValue().doubleValue();
-        float inv = 1.0f / scale;
-        int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
-        int yRaw = hudY.getValue().intValue();
-        int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
-        int maxCenterX = width - minCenterX;
-        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
-        int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
-
-        drawContext.pose().pushMatrix();
-        drawContext.pose().scale(scale, scale);
-        int x = (int) ((centerX * inv) - (textWidth / 2f));
-        int drawY = (int) (y * inv);
-        drawContext.text(mc.font, text, x, drawY, 0xFFFFFFFF);
-        drawContext.pose().popMatrix();
+        return startColor + leapedCount + "§9/4 Players Leaped";
     }
 
     @Override
@@ -185,29 +151,5 @@ public class PlayersLeapedModule extends Module {
         inBounds = false;
         mageSeenAtCoreThisRun = false;
         p5HiddenAfterFullCount = false;
-    }
-
-    public int getHudOffsetX() {
-        return hudOffsetX.getValue().intValue();
-    }
-
-    public int getHudY() {
-        return hudY.getValue().intValue();
-    }
-
-    public double getHudScale() {
-        return hudScale.getValue();
-    }
-
-    public void setHudOffsetX(int value) {
-        hudOffsetX.setValue((double) value);
-    }
-
-    public void setHudY(int value) {
-        hudY.setValue((double) value);
-    }
-
-    public void setHudScale(double value) {
-        hudScale.setValue(value);
     }
 }

@@ -1,150 +1,100 @@
 package xenus.xenaddons.gui
 
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
-import net.minecraft.client.input.KeyEvent
 import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.network.chat.Component
-import net.minecraft.util.Mth as Mth
-import com.mojang.blaze3d.platform.InputConstants
 import xenus.xenaddons.config.ConfigManager
-import xenus.xenaddons.features.ModuleManager
-import xenus.xenaddons.features.impl.dungeons.AutoPetRuleTitleModule
-import xenus.xenaddons.features.impl.fishing.FishingHookDisplayModule
-import xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule
-import xenus.xenaddons.features.impl.dungeons.MilestoneDisplayModule
-import xenus.xenaddons.features.impl.dungeons.PlayersLeapedModule
-import xenus.xenaddons.features.impl.dungeons.PosTitlesModule
-import xenus.xenaddons.features.impl.dungeons.ReminderGateModule
-import xenus.xenaddons.features.impl.misc.SpotifyOverlayModule
-import xenus.xenaddons.features.impl.slayer.SlayerAlertModule
-import xenus.xenaddons.features.impl.slayer.SlayerBossAlertModule
-import xenus.xenaddons.features.impl.slayer.SlayerBossHudModule
-import xenus.xenaddons.features.impl.slayer.SlayerCocoonAlertModule
-import xenus.xenaddons.features.impl.slayer.SlayerMiniBossAlertModule
-import xenus.xenaddons.hud.HudState
+import xenus.xenaddons.gui.ui.Theme
+import xenus.xenaddons.hud.HudElement
+import xenus.xenaddons.hud.HudManager
+import xenus.xenaddons.hud.HudResolution
 import xenus.xenaddons.utils.RenderUtils
 import java.util.Locale
-
-private val textRenderer: Font
-    get() = Minecraft.getInstance().font
-
-private fun Font.getWidth(text: String): Int = width(text)
-
-private val Font.fontHeight: Int
-    get() = lineHeight
-
-private val GuiGraphicsExtractor.matrices
-    get() = pose()
-
-private fun GuiGraphicsExtractor.drawTextWithShadow(font: Font, text: String, x: Int, y: Int, color: Int) {
-    text(font, text, x, y, color, true)
-}
-
-private fun GuiGraphicsExtractor.drawCenteredTextWithShadow(font: Font, text: String, centerX: Int, y: Int, color: Int) {
-    text(font, text, centerX - font.width(text) / 2, y, color, true)
-}
+import kotlin.math.roundToInt
 
 open class HudEditorScreen(private val parent: Screen?) : Screen(Component.literal("Edit HUD")) {
-    private var posTitlesModule: PosTitlesModule? = null
-    private var autoPetModule: AutoPetRuleTitleModule? = null
-    private var playersLeapedModule: PlayersLeapedModule? = null
-    private var invisibilityTimerModule: InvisibilityTimerModule? = null
-    private var fishingHookDisplayModule: FishingHookDisplayModule? = null
-    private var milestoneDisplayModule: MilestoneDisplayModule? = null
-    private var reminderGateModule: ReminderGateModule? = null
-    private var spotifyOverlayModule: SpotifyOverlayModule? = null
-    private var slayerBossHudModule: SlayerBossHudModule? = null
-    private var cocoonAlertModule: SlayerCocoonAlertModule? = null
-    private var miniBossAlertModule: SlayerMiniBossAlertModule? = null
-    private var bossAlertModule: SlayerBossAlertModule? = null
+    private val elements = HudManager.elements().filter { it.isEnabled }
+    private val buttons = mutableListOf<EditorButton>()
 
-    private var dragging: ComponentType? = null
-    private var dragOffsetX = 0
-    private var dragOffsetY = 0
-    private var lastMouseX = 0
-    private var lastMouseY = 0
-
+    private var dragging: HudElement? = null
+    private var dragOffsetX = 0f
+    private var dragOffsetY = 0f
     private var gridEnabled = false
-    private var snapToGrid = false
-    private var showHelp = false
+    private var gridSize = 10
+    private var resetConfirm = false
 
     override fun init() {
-        posTitlesModule = ModuleManager.getModule(PosTitlesModule::class.java)
-        autoPetModule = ModuleManager.getModule(AutoPetRuleTitleModule::class.java)
-        playersLeapedModule = ModuleManager.getModule(PlayersLeapedModule::class.java)
-        invisibilityTimerModule = ModuleManager.getModule(InvisibilityTimerModule::class.java)
-        fishingHookDisplayModule = ModuleManager.getModule(FishingHookDisplayModule::class.java)
-        milestoneDisplayModule = ModuleManager.getModule(MilestoneDisplayModule::class.java)
-        reminderGateModule = ModuleManager.getModule(ReminderGateModule::class.java)
-        spotifyOverlayModule = ModuleManager.getModule(SpotifyOverlayModule::class.java)
-        slayerBossHudModule = ModuleManager.getModule(SlayerBossHudModule::class.java)
-        cocoonAlertModule = ModuleManager.getModule(SlayerCocoonAlertModule::class.java)
-        miniBossAlertModule = ModuleManager.getModule(SlayerMiniBossAlertModule::class.java)
-        bossAlertModule = ModuleManager.getModule(SlayerBossAlertModule::class.java)
+        HudManager.setEditing(true)
+        buttons.clear()
+
+        var x = width / 2 - BUTTONS_WIDTH / 2
+        val y = height - 30
+        buttons += EditorButton(x, y, GRID_BUTTON_WIDTH, {
+            if (gridEnabled) "§aGrid: ON §7(${gridSize}px)" else "§7Grid: OFF"
+        }) { gridEnabled = !gridEnabled }
+        x += GRID_BUTTON_WIDTH + BUTTON_GAP
+        buttons += EditorButton(x, y, STEP_BUTTON_WIDTH, { "§7-" }) {
+            gridSize = (gridSize - GRID_STEP).coerceAtLeast(MIN_GRID_SIZE)
+            gridEnabled = true
+        }
+        x += STEP_BUTTON_WIDTH + BUTTON_GAP
+        buttons += EditorButton(x, y, STEP_BUTTON_WIDTH, { "§7+" }) {
+            gridSize = (gridSize + GRID_STEP).coerceAtMost(MAX_GRID_SIZE)
+            gridEnabled = true
+        }
+        x += STEP_BUTTON_WIDTH + BUTTON_GAP
+        buttons += EditorButton(x, y, RESET_BUTTON_WIDTH, { if (resetConfirm) "§c§lConfirm?" else "§cReset" }) {
+            if (resetConfirm) HudManager.resetAll()
+            resetConfirm = !resetConfirm
+        }
+    }
+
+    override fun extractBackground(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, delta: Float) {
+        context.fill(0, 0, width, height, BACKGROUND_COLOR)
     }
 
     override fun extractRenderState(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, delta: Float) {
-        lastMouseX = mouseX
-        lastMouseY = mouseY
+        HudResolution.push(context)
+        val virtualX = HudResolution.toVirtual(mouseX.toDouble())
+        val virtualY = HudResolution.toVirtual(mouseY.toDouble())
 
-        if (dragging != null) applyDrag(mouseX, mouseY)
+        if (gridEnabled) drawGrid(context)
+        dragging?.let { drag(it, virtualX, virtualY) }
 
-        context.fill(0, 0, width, height, 0x8A000000.toInt())
-        if (gridEnabled) renderGrid(context)
+        val active = dragging ?: elements.lastOrNull { it.contains(virtualX, virtualY) }
+        for (element in elements) {
+            drawFrame(context, element, element === active)
+            element.render(context, true)
+        }
+        HudResolution.pop(context)
 
-        context.drawCenteredTextWithShadow(textRenderer, "HUD Editor", width / 2, 12, 0xFFFFFFFF.toInt())
-        context.drawTextWithShadow(textRenderer, "Left click drag | Scroll = scale | ESC = save", 8, height - 14, 0xFFD0D0D0.toInt())
-
-        renderComponent(context, mouseX, mouseY, ComponentType.POS_TITLES, getPosTitlesBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.AUTOPET_TITLE, getAutoPetBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.PLAYERS_LEAPED, getPlayersLeapedBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.INVISIBILITY_TIMER, getInvisibilityTimerBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.FISHING_HOOK_DISPLAY, getFishingHookDisplayBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.MILESTONE_DISPLAY, getMilestoneDisplayBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.MASK_PROC_ALERT, getMaskProcAlertBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.REMINDER_GATE, getReminderGateBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.SPOTIFY_OVERLAY, getSpotifyBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.SLAYER_BOSS_HUD, getSlayerBossBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.BOSS_ALERT, getBossAlertBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.MINIBOSS_ALERT, getMiniBossAlertBounds())
-        renderComponent(context, mouseX, mouseY, ComponentType.COCOON_ALERT, getCocoonAlertBounds())
-
-        renderResetButton(context, mouseX, mouseY)
-        renderHelpButton(context, mouseX, mouseY)
-        renderActiveTooltip(context, mouseX, mouseY)
-        if (showHelp) renderHelpPanel(context)
+        active?.let { drawInfo(context, it) }
+        val font = Minecraft.getInstance().font
+        context.text(font, HINT, 8, height - font.lineHeight - 8, HINT_COLOR)
+        buttons.forEach { it.render(context, mouseX, mouseY) }
         super.extractRenderState(context, mouseX, mouseY, delta)
     }
 
     override fun mouseClicked(click: MouseButtonEvent, doubled: Boolean): Boolean {
         if (click.button() != 0) return super.mouseClicked(click, doubled)
 
-        val mouseX = click.x.toInt()
-        val mouseY = click.y.toInt()
-
-        if (isOverHelpButton(mouseX, mouseY)) {
-            showHelp = !showHelp
+        val button = buttons.firstOrNull { it.contains(click.x, click.y) }
+        if (button != null) {
+            if (button !== buttons.last()) resetConfirm = false
+            button.onClick()
             return true
         }
+        resetConfirm = false
 
-        if (isOverResetButton(mouseX, mouseY)) {
-            resetAllPlacement()
-            return true
-        }
-
-        val target = getActiveComponent(mouseX, mouseY)
-        if (target != null) {
-            val bounds = getBounds(target)
-            dragging = target
-            dragOffsetX = mouseX - bounds.x
-            dragOffsetY = mouseY - bounds.y
-            return true
-        }
-
-        return super.mouseClicked(click, doubled)
+        val virtualX = HudResolution.toVirtual(click.x)
+        val virtualY = HudResolution.toVirtual(click.y)
+        val target = elements.lastOrNull { it.contains(virtualX, virtualY) } ?: return super.mouseClicked(click, doubled)
+        dragging = target
+        dragOffsetX = virtualX - target.x()
+        dragOffsetY = virtualY - target.y()
+        return true
     }
 
     override fun mouseReleased(click: MouseButtonEvent): Boolean {
@@ -152,62 +102,24 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         return super.mouseReleased(click)
     }
 
-    override fun mouseDragged(click: MouseButtonEvent, deltaX: Double, deltaY: Double): Boolean {
-        if (dragging == null) return super.mouseDragged(click, deltaX, deltaY)
-        applyDrag(click.x.toInt(), click.y.toInt())
-        return true
-    }
-
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
         if (verticalAmount == 0.0) return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
 
-        val target = dragging ?: getActiveComponent(mouseX.toInt(), mouseY.toInt())
-        if (target == null) return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
-
-        val scaleStep = if (verticalAmount > 0) 0.05 else -0.05
-        setScale(target, getScale(target) + scaleStep)
-        return true
-    }
-
-    override fun keyPressed(input: KeyEvent): Boolean {
-        val keyCode = input.key
-        val modifiers = input.modifiers
-
-        if (keyCode == InputConstants.KEY_ESCAPE) {
-            onClose()
+        val virtualX = HudResolution.toVirtual(mouseX)
+        val virtualY = HudResolution.toVirtual(mouseY)
+        val target = dragging ?: elements.lastOrNull { it.contains(virtualX, virtualY) }
+        if (target != null) {
+            target.setScale(target.scale() + (verticalAmount * SCALE_STEP).toFloat())
             return true
         }
 
-        if (keyCode == InputConstants.KEY_G) {
-            if ((modifiers and InputConstants.MOD_CONTROL) != 0) snapToGrid = !snapToGrid
-            else gridEnabled = !gridEnabled
+        if (gridEnabled) {
+            val step = if (verticalAmount > 0) GRID_STEP else -GRID_STEP
+            gridSize = (gridSize + step).coerceIn(MIN_GRID_SIZE, MAX_GRID_SIZE)
             return true
         }
 
-        if (keyCode == InputConstants.KEY_F1) {
-            showHelp = !showHelp
-            return true
-        }
-
-        val target = dragging ?: getActiveComponent(lastMouseX, lastMouseY)
-        if (target == null) return super.keyPressed(input)
-
-        val step = if ((modifiers and InputConstants.MOD_SHIFT) != 0) 8 else 1
-        when (keyCode) {
-            InputConstants.KEY_H -> centerHorizontally(target)
-            InputConstants.KEY_V -> centerVertically(target)
-            InputConstants.KEY_LEFT -> moveBy(target, -step, 0)
-            InputConstants.KEY_RIGHT -> moveBy(target, step, 0)
-            InputConstants.KEY_UP -> moveBy(target, 0, -step)
-            InputConstants.KEY_DOWN -> moveBy(target, 0, step)
-            InputConstants.KEY_R -> {
-                val ctrl = (modifiers and InputConstants.MOD_CONTROL) != 0
-                val shift = (modifiers and InputConstants.MOD_SHIFT) != 0
-                if (ctrl && shift) resetAllPlacement() else resetPlacement(target)
-            }
-            else -> return super.keyPressed(input)
-        }
-        return true
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 
     override fun onClose() {
@@ -215,769 +127,107 @@ open class HudEditorScreen(private val parent: Screen?) : Screen(Component.liter
         Minecraft.getInstance().setScreen(parent)
     }
 
-    private fun renderGrid(context: GuiGraphicsExtractor) {
-        for (x in 0..width step GRID_SIZE) context.fill(x, 0, x + 1, height, 0x33FFFFFF)
-        for (y in 0..height step GRID_SIZE) context.fill(0, y, width, y + 1, 0x33FFFFFF)
+    override fun removed() {
+        HudManager.setEditing(false)
+        super.removed()
     }
 
-    private fun renderComponent(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
-        // An element that cannot show up in game has no business cluttering the editor either.
-        if (!isComponentEnabled(type)) return
-
-        if (type == ComponentType.SPOTIFY_OVERLAY && spotifyOverlayModule?.isBetterDisplayEnabled == true) {
-            renderSpotifyPreview(context, bounds)
-            renderComponentBox(context, mouseX, mouseY, type, bounds)
-            return
+    private fun drag(element: HudElement, mouseX: Float, mouseY: Float) {
+        var x = mouseX - dragOffsetX
+        var y = mouseY - dragOffsetY
+        if (gridEnabled) {
+            x = (x / gridSize).roundToInt() * gridSize.toFloat()
+            y = (y / gridSize).roundToInt() * gridSize.toFloat()
         }
 
-        renderComponentBox(context, mouseX, mouseY, type, bounds)
-        when (type) {
-            ComponentType.POS_TITLES -> renderPosTitlesPreview(context, bounds)
-            ComponentType.AUTOPET_TITLE -> renderAutoPetPreview(context, bounds)
-            ComponentType.PLAYERS_LEAPED -> renderPlayersLeapedPreview(context, bounds)
-            ComponentType.INVISIBILITY_TIMER -> renderInvisibilityTimerPreview(context, bounds)
-            ComponentType.FISHING_HOOK_DISPLAY -> renderFishingHookDisplayPreview(context, bounds)
-            ComponentType.MILESTONE_DISPLAY -> renderMilestoneDisplayPreview(context, bounds)
-            ComponentType.MASK_PROC_ALERT -> renderMaskProcAlertPreview(context, bounds)
-            ComponentType.REMINDER_GATE -> renderReminderGatePreview(context, bounds)
-            ComponentType.SPOTIFY_OVERLAY -> renderSpotifyPreview(context, bounds)
-            ComponentType.SLAYER_BOSS_HUD -> renderSlayerBossPreview(context, bounds)
-            ComponentType.COCOON_ALERT -> renderCocoonAlertPreview(context, bounds)
-            ComponentType.MINIBOSS_ALERT -> renderMiniBossAlertPreview(context, bounds)
-            ComponentType.BOSS_ALERT -> renderBossAlertPreview(context, bounds)
-        }
+        val anchorOffset = if (element.isCentered) element.scaledWidth() / 2f else 0f
+        val maxX = (HudResolution.width() - element.scaledWidth() + anchorOffset).coerceAtLeast(anchorOffset)
+        val maxY = (HudResolution.height() - element.scaledHeight()).coerceAtLeast(0f)
+        element.setPosition(x.coerceIn(anchorOffset, maxX), y.coerceIn(0f, maxY))
     }
 
-    private fun applyDrag(mouseX: Int, mouseY: Int) {
-        val target = dragging ?: return
-        val current = getBounds(target)
-        var newX = mouseX - dragOffsetX
-        var newY = mouseY - dragOffsetY
+    private fun drawGrid(context: GuiGraphicsExtractor) {
+        val gridWidth = HudResolution.width().toInt()
+        val gridHeight = HudResolution.height().toInt()
 
-        if (snapToGrid) {
-            newX = snap(newX)
-            newY = snap(newY)
+        var x = 0
+        while (x <= gridWidth) {
+            context.fill(x, 0, x + 1, gridHeight, GRID_COLOR)
+            x += gridSize
         }
 
-        setTopLeft(target, newX, newY, current, true)
-    }
-
-    private fun snap(value: Int): Int {
-        return ((value - SNAP_PADDING + (GRID_SIZE / 2)) / GRID_SIZE) * GRID_SIZE + SNAP_PADDING
-    }
-
-    private fun moveBy(type: ComponentType, dx: Int, dy: Int) {
-        val bounds = getBounds(type)
-        setTopLeft(type, bounds.x + dx, bounds.y + dy, bounds, true)
-    }
-
-    private fun centerHorizontally(type: ComponentType) {
-        val bounds = getBounds(type)
-        setTopLeft(type, (width - bounds.w) / 2, bounds.y, bounds, true)
-    }
-
-    private fun centerVertically(type: ComponentType) {
-        val bounds = getBounds(type)
-        setTopLeft(type, bounds.x, (height - bounds.h) / 2, bounds, true)
-    }
-
-    private fun resetPlacement(type: ComponentType) {
-        when (type) {
-            ComponentType.POS_TITLES -> {
-                posTitlesModule?.setHudOffsetX(0)
-                posTitlesModule?.setHudY(30)
-                posTitlesModule?.setHudScale(1.0)
-            }
-            ComponentType.AUTOPET_TITLE -> {
-                autoPetModule?.setHudOffsetX(0)
-                autoPetModule?.setHudOffsetY(-20)
-                autoPetModule?.setHudScale(2.5)
-            }
-            ComponentType.PLAYERS_LEAPED -> {
-                playersLeapedModule?.setHudOffsetX(0)
-                playersLeapedModule?.setHudY(68)
-                playersLeapedModule?.setHudScale(1.0)
-            }
-            ComponentType.INVISIBILITY_TIMER -> {
-                invisibilityTimerModule?.setHudOffsetX(0)
-                invisibilityTimerModule?.setHudY(100)
-                invisibilityTimerModule?.setHudScale(1.0)
-            }
-            ComponentType.FISHING_HOOK_DISPLAY -> {
-                fishingHookDisplayModule?.setHudOffsetX(0)
-                fishingHookDisplayModule?.setHudY(130)
-                fishingHookDisplayModule?.setHudScale(2.0)
-            }
-            ComponentType.MILESTONE_DISPLAY -> {
-                milestoneDisplayModule?.setHudOffsetX(0)
-                milestoneDisplayModule?.setHudY(30)
-                milestoneDisplayModule?.setHudScale(1.0)
-            }
-            ComponentType.MASK_PROC_ALERT -> {
-                invisibilityTimerModule?.setAlertHudOffsetX(0)
-                invisibilityTimerModule?.setAlertHudY(120)
-                invisibilityTimerModule?.setAlertHudScale(4.0)
-            }
-            ComponentType.REMINDER_GATE -> {
-                reminderGateModule?.setHudOffsetX(0)
-                reminderGateModule?.setHudY(84)
-                reminderGateModule?.setHudScale(5.0)
-            }
-            ComponentType.SPOTIFY_OVERLAY -> {
-                spotifyOverlayModule?.setHudOffsetX(0)
-                spotifyOverlayModule?.setHudY(84)
-                spotifyOverlayModule?.setHudScale(1.0)
-            }
-            ComponentType.SLAYER_BOSS_HUD -> {
-                slayerBossHudModule?.setHudOffsetX(0)
-                slayerBossHudModule?.setHudY(60)
-                slayerBossHudModule?.setHudScale(1.0)
-            }
-            ComponentType.COCOON_ALERT -> {
-                cocoonAlertModule?.setHudOffsetX(0)
-                cocoonAlertModule?.setHudY(190)
-                cocoonAlertModule?.setHudScale(3.0)
-            }
-            ComponentType.MINIBOSS_ALERT -> {
-                miniBossAlertModule?.setHudOffsetX(0)
-                miniBossAlertModule?.setHudY(165)
-                miniBossAlertModule?.setHudScale(3.0)
-            }
-            ComponentType.BOSS_ALERT -> {
-                bossAlertModule?.setHudOffsetX(0)
-                bossAlertModule?.setHudY(140)
-                bossAlertModule?.setHudScale(3.0)
-            }
-        }
-    }
-
-    private fun resetAllPlacement() {
-        ComponentType.entries.forEach { resetPlacement(it) }
-    }
-
-    private fun getScale(type: ComponentType): Double {
-        return when (type) {
-            ComponentType.POS_TITLES -> posTitlesModule?.hudScale ?: 1.0
-            ComponentType.AUTOPET_TITLE -> autoPetModule?.hudScale ?: 2.5
-            ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.hudScale ?: 1.0
-            ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.hudScale ?: 1.0
-            ComponentType.FISHING_HOOK_DISPLAY -> fishingHookDisplayModule?.hudScale ?: 2.0
-            ComponentType.MILESTONE_DISPLAY -> milestoneDisplayModule?.hudScale ?: 1.0
-            ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.alertHudScale ?: 4.0
-            ComponentType.REMINDER_GATE -> reminderGateModule?.hudScale ?: 5.0
-            ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.hudScale ?: 1.0
-            ComponentType.SLAYER_BOSS_HUD -> slayerBossHudModule?.hudScale ?: 1.0
-            ComponentType.COCOON_ALERT -> cocoonAlertModule?.hudScale ?: 3.0
-            ComponentType.MINIBOSS_ALERT -> miniBossAlertModule?.hudScale ?: 3.0
-            ComponentType.BOSS_ALERT -> bossAlertModule?.hudScale ?: 3.0
-        }
-    }
-
-    private fun setScale(type: ComponentType, value: Double) {
-        val clamped = Mth.clamp(value, 0.5, 6.0)
-        when (type) {
-            ComponentType.POS_TITLES -> posTitlesModule?.setHudScale(clamped)
-            ComponentType.AUTOPET_TITLE -> autoPetModule?.setHudScale(clamped)
-            ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.setHudScale(clamped)
-            ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.setHudScale(clamped)
-            ComponentType.FISHING_HOOK_DISPLAY -> fishingHookDisplayModule?.setHudScale(clamped)
-            ComponentType.MILESTONE_DISPLAY -> milestoneDisplayModule?.setHudScale(clamped)
-            ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.setAlertHudScale(clamped)
-            ComponentType.REMINDER_GATE -> reminderGateModule?.setHudScale(clamped)
-            ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.setHudScale(clamped)
-            ComponentType.SLAYER_BOSS_HUD -> slayerBossHudModule?.setHudScale(clamped)
-            ComponentType.COCOON_ALERT -> cocoonAlertModule?.setHudScale(clamped)
-            ComponentType.MINIBOSS_ALERT -> miniBossAlertModule?.setHudScale(clamped)
-            ComponentType.BOSS_ALERT -> bossAlertModule?.setHudScale(clamped)
-        }
-    }
-
-    private fun getActiveComponent(mouseX: Int, mouseY: Int): ComponentType? {
-        val priority = listOf(
-            ComponentType.COCOON_ALERT,
-            ComponentType.MINIBOSS_ALERT,
-            ComponentType.BOSS_ALERT,
-            ComponentType.SLAYER_BOSS_HUD,
-            ComponentType.FISHING_HOOK_DISPLAY,
-            ComponentType.SPOTIFY_OVERLAY,
-            ComponentType.MASK_PROC_ALERT,
-            ComponentType.INVISIBILITY_TIMER,
-            ComponentType.MILESTONE_DISPLAY,
-            ComponentType.REMINDER_GATE,
-            ComponentType.PLAYERS_LEAPED,
-            ComponentType.AUTOPET_TITLE,
-            ComponentType.POS_TITLES
-        )
-        return priority.firstOrNull { isComponentEnabled(it) && getBounds(it).contains(mouseX, mouseY) }
-    }
-
-    private fun isComponentEnabled(type: ComponentType): Boolean = when (type) {
-        ComponentType.POS_TITLES -> posTitlesModule?.isEnabled == true
-        ComponentType.AUTOPET_TITLE -> autoPetModule?.isEnabled == true
-        ComponentType.PLAYERS_LEAPED -> playersLeapedModule?.isEnabled == true
-        ComponentType.INVISIBILITY_TIMER -> invisibilityTimerModule?.isEnabled == true
-        ComponentType.FISHING_HOOK_DISPLAY -> fishingHookDisplayModule?.isEnabled == true
-        ComponentType.MILESTONE_DISPLAY -> milestoneDisplayModule?.isEnabled == true
-        ComponentType.MASK_PROC_ALERT -> invisibilityTimerModule?.let { it.isEnabled && it.isProcAlertEnabled } == true
-        ComponentType.REMINDER_GATE -> reminderGateModule?.isEnabled == true
-        ComponentType.SPOTIFY_OVERLAY -> spotifyOverlayModule?.isEnabled == true
-        ComponentType.SLAYER_BOSS_HUD -> slayerBossHudModule?.isEnabled == true
-        ComponentType.COCOON_ALERT -> alertEnabled(cocoonAlertModule)
-        ComponentType.MINIBOSS_ALERT -> alertEnabled(miniBossAlertModule)
-        ComponentType.BOSS_ALERT -> alertEnabled(bossAlertModule)
-    }
-
-    private fun alertEnabled(module: SlayerAlertModule?): Boolean =
-        module?.let { it.isEnabled && it.isHudEnabled } == true
-
-    private fun getBounds(type: ComponentType): Bounds {
-        return when (type) {
-            ComponentType.POS_TITLES -> getPosTitlesBounds()
-            ComponentType.AUTOPET_TITLE -> getAutoPetBounds()
-            ComponentType.PLAYERS_LEAPED -> getPlayersLeapedBounds()
-            ComponentType.INVISIBILITY_TIMER -> getInvisibilityTimerBounds()
-            ComponentType.FISHING_HOOK_DISPLAY -> getFishingHookDisplayBounds()
-            ComponentType.MILESTONE_DISPLAY -> getMilestoneDisplayBounds()
-            ComponentType.MASK_PROC_ALERT -> getMaskProcAlertBounds()
-            ComponentType.REMINDER_GATE -> getReminderGateBounds()
-            ComponentType.SPOTIFY_OVERLAY -> getSpotifyBounds()
-            ComponentType.SLAYER_BOSS_HUD -> getSlayerBossBounds()
-            ComponentType.COCOON_ALERT -> getCocoonAlertBounds()
-            ComponentType.MINIBOSS_ALERT -> getMiniBossAlertBounds()
-            ComponentType.BOSS_ALERT -> getBossAlertBounds()
-        }
-    }
-
-    private fun setTopLeft(type: ComponentType, newX: Int, newY: Int, referenceBounds: Bounds, clampToScreen: Boolean) {
-        var x = newX
-        var y = newY
-        if (clampToScreen) {
-            x = Mth.clamp(x, 0, (width - referenceBounds.w).coerceAtLeast(0))
-            y = Mth.clamp(y, 0, (height - referenceBounds.h).coerceAtLeast(0))
+        var y = 0
+        while (y <= gridHeight) {
+            context.fill(0, y, gridWidth, y + 1, GRID_COLOR)
+            y += gridSize
         }
 
-        when (type) {
-            ComponentType.POS_TITLES -> {
-                val centerX = x + (referenceBounds.w / 2)
-                posTitlesModule?.setHudOffsetX(centerX - (width / 2))
-                posTitlesModule?.setHudY(y)
-            }
-            ComponentType.AUTOPET_TITLE -> {
-                val centerX = x + (referenceBounds.w / 2)
-                autoPetModule?.setHudOffsetX(centerX - (width / 2))
-                autoPetModule?.setHudOffsetY(y - (height / 2))
-            }
-            ComponentType.PLAYERS_LEAPED -> {
-                val centerX = x + (referenceBounds.w / 2)
-                playersLeapedModule?.setHudOffsetX(centerX - (width / 2))
-                playersLeapedModule?.setHudY(y)
-            }
-            ComponentType.INVISIBILITY_TIMER -> {
-                val centerX = x + (referenceBounds.w / 2)
-                invisibilityTimerModule?.setHudOffsetX(centerX - (width / 2))
-                invisibilityTimerModule?.setHudY(y)
-            }
-            ComponentType.FISHING_HOOK_DISPLAY -> {
-                val centerX = x + (referenceBounds.w / 2)
-                fishingHookDisplayModule?.setHudOffsetX(centerX - (width / 2))
-                fishingHookDisplayModule?.setHudY(y)
-            }
-            ComponentType.MILESTONE_DISPLAY -> {
-                val centerX = x + (referenceBounds.w / 2)
-                milestoneDisplayModule?.setHudOffsetX(centerX - (width / 2))
-                milestoneDisplayModule?.setHudY(y)
-            }
-            ComponentType.MASK_PROC_ALERT -> {
-                val centerX = x + (referenceBounds.w / 2)
-                invisibilityTimerModule?.setAlertHudOffsetX(centerX - (width / 2))
-                invisibilityTimerModule?.setAlertHudY(y)
-            }
-            ComponentType.REMINDER_GATE -> {
-                val centerX = x + (referenceBounds.w / 2)
-                reminderGateModule?.setHudOffsetX(centerX - (width / 2))
-                reminderGateModule?.setHudY(y)
-            }
-            ComponentType.SPOTIFY_OVERLAY -> {
-                spotifyOverlayModule?.setHudOffsetX(x - (width / 2))
-                spotifyOverlayModule?.setHudY(y)
-            }
-            ComponentType.SLAYER_BOSS_HUD -> {
-                val centerX = x + (referenceBounds.w / 2)
-                slayerBossHudModule?.setHudOffsetX(centerX - (width / 2))
-                slayerBossHudModule?.setHudY(y)
-            }
-            ComponentType.COCOON_ALERT -> {
-                val centerX = x + (referenceBounds.w / 2)
-                cocoonAlertModule?.setHudOffsetX(centerX - (width / 2))
-                cocoonAlertModule?.setHudY(y)
-            }
-            ComponentType.MINIBOSS_ALERT -> {
-                val centerX = x + (referenceBounds.w / 2)
-                miniBossAlertModule?.setHudOffsetX(centerX - (width / 2))
-                miniBossAlertModule?.setHudY(y)
-            }
-            ComponentType.BOSS_ALERT -> {
-                val centerX = x + (referenceBounds.w / 2)
-                bossAlertModule?.setHudOffsetX(centerX - (width / 2))
-                bossAlertModule?.setHudY(y)
-            }
-        }
+        context.fill(0, gridHeight / 2, gridWidth, gridHeight / 2 + 1, CENTER_LINE_COLOR)
+        context.fill(gridWidth / 2, 0, gridWidth / 2 + 1, gridHeight, CENTER_LINE_COLOR)
     }
 
-    private fun renderResetButton(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) {
-        val x = width - RESET_BTN_W - RESET_BTN_MARGIN
-        val y = height - RESET_BTN_H - RESET_BTN_MARGIN
-        val hovered = isOverResetButton(mouseX, mouseY)
-        val bg = if (hovered) 0xCC8A2525.toInt() else 0xCC5E1C1C.toInt()
-        val border = if (hovered) 0xFFFF8A8A.toInt() else 0xFFE07070.toInt()
+    private fun drawFrame(context: GuiGraphicsExtractor, element: HudElement, active: Boolean) {
+        val left = element.left().roundToInt()
+        val top = element.top().roundToInt()
+        val right = (element.left() + element.scaledWidth()).roundToInt().coerceAtLeast(left + 1)
+        val bottom = (element.top() + element.scaledHeight()).roundToInt().coerceAtLeast(top + 1)
+        val border = if (active) Theme.Primary.color else IDLE_BORDER_COLOR
 
-        context.fill(x, y, x + RESET_BTN_W, y + RESET_BTN_H, bg)
-        RenderUtils.drawBorder(context, x, y, RESET_BTN_W, RESET_BTN_H, border)
-        context.drawCenteredTextWithShadow(textRenderer, "Reset all", x + RESET_BTN_W / 2, y + 5, 0xFFFFFFFF.toInt())
+        context.fill(left, top, right, bottom, FRAME_COLOR)
+        context.fill(left, top, right, top + 1, border)
+        context.fill(left, bottom - 1, right, bottom, border)
     }
 
-    private fun isOverResetButton(mouseX: Int, mouseY: Int): Boolean {
-        val x = width - RESET_BTN_W - RESET_BTN_MARGIN
-        val y = height - RESET_BTN_H - RESET_BTN_MARGIN
-        return mouseX in x..(x + RESET_BTN_W) && mouseY in y..(y + RESET_BTN_H)
+    private fun drawInfo(context: GuiGraphicsExtractor, element: HudElement) {
+        val font = Minecraft.getInstance().font
+        val scale = String.format(Locale.US, "%.2f", element.scale())
+        val text = "${element.name()} §7(${element.x().roundToInt()}, ${element.y().roundToInt()}) @ §f${scale}x"
+        context.text(font, text, width / 2 - font.width(text) / 2, 10, 0xFFFFFFFF.toInt())
     }
 
-    private fun renderHelpButton(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) {
-        val x = width - HELP_BTN_W - RESET_BTN_MARGIN
-        val y = height - RESET_BTN_H - RESET_BTN_MARGIN - HELP_BTN_H - 6
-        val hovered = isOverHelpButton(mouseX, mouseY)
-        val active = showHelp
+    private class EditorButton(
+        private val x: Int,
+        private val y: Int,
+        private val width: Int,
+        private val label: () -> String,
+        val onClick: () -> Unit
+    ) {
+        fun contains(mouseX: Double, mouseY: Double): Boolean =
+            mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + BUTTON_HEIGHT
 
-        val bg = when {
-            active -> 0xCC24406E.toInt()
-            hovered -> 0xCC293A52.toInt()
-            else -> 0xCC1C2633.toInt()
-        }
-        val border = if (active) 0xFF7AA2FF.toInt() else 0xFF6D7A8A.toInt()
+        fun render(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) {
+            val hovered = contains(mouseX.toDouble(), mouseY.toDouble())
+            val font = Minecraft.getInstance().font
+            val text = label()
 
-        context.fill(x, y, x + HELP_BTN_W, y + HELP_BTN_H, bg)
-        RenderUtils.drawBorder(context, x, y, HELP_BTN_W, HELP_BTN_H, border)
-        context.drawCenteredTextWithShadow(textRenderer, "Help", x + HELP_BTN_W / 2, y + 5, 0xFFFFFFFF.toInt())
-    }
-
-    private fun isOverHelpButton(mouseX: Int, mouseY: Int): Boolean {
-        val x = width - HELP_BTN_W - RESET_BTN_MARGIN
-        val y = height - RESET_BTN_H - RESET_BTN_MARGIN - HELP_BTN_H - 6
-        return mouseX in x..(x + HELP_BTN_W) && mouseY in y..(y + HELP_BTN_H)
-    }
-
-    private fun renderActiveTooltip(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) {
-        val target = dragging ?: getActiveComponent(mouseX, mouseY) ?: return
-        val bounds = getBounds(target)
-        val text = "${target.label} | x=${bounds.x} y=${bounds.y} | scale=${String.format(Locale.US, "%.2f", getScale(target))}"
-        val textW = textRenderer.getWidth(text)
-        val textH = textRenderer.fontHeight
-
-        val boxX = (mouseX + 12).coerceAtMost(width - textW - 10)
-        val boxY = (mouseY - 4).coerceAtLeast(6)
-
-        context.fill(boxX - 4, boxY - 4, boxX + textW + 4, boxY + textH + 4, 0xD0101010.toInt())
-        RenderUtils.drawBorder(context, boxX - 4, boxY - 4, textW + 8, textH + 8, 0xFFCCCCCC.toInt())
-        context.drawTextWithShadow(textRenderer, text, boxX, boxY, 0xFFFFFFFF.toInt())
-    }
-
-    private fun renderHelpPanel(context: GuiGraphicsExtractor) {
-        val lines = arrayOf(
-            "Left click: drag component",
-            "Scroll on component: scale",
-            "Arrow keys: move selected component",
-            "Shift + arrows: move by 8px",
-            "H / V: center horizontal / vertical",
-            "R: reset selected component",
-            "Ctrl + Shift + R: reset all",
-            "G: toggle grid",
-            "Ctrl + G: toggle snap",
-            "F1: toggle this help"
-        )
-
-        val panelX = 10
-        val panelY = 42
-        val rowHeight = textRenderer.fontHeight + 1
-        var maxWidth = 0
-        lines.forEach { maxWidth = maxWidth.coerceAtLeast(textRenderer.getWidth(it)) }
-
-        val panelW = maxWidth + 14
-        val panelH = lines.size * rowHeight + 10
-        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xAA111111.toInt())
-        RenderUtils.drawBorder(context, panelX, panelY, panelW, panelH, 0xFF6A8DFF.toInt())
-
-        var y = panelY + 5
-        lines.forEach { line ->
-            val color = when {
-                line.contains("grid") && gridEnabled -> 0xFF7CFF8A.toInt()
-                line.contains("snap") && snapToGrid -> 0xFF7CFF8A.toInt()
-                else -> 0xFFE0E0E0.toInt()
-            }
-            context.drawTextWithShadow(textRenderer, line, panelX + 7, y, color)
-            y += rowHeight
-        }
-    }
-
-    private fun getPosTitlesBounds(): Bounds {
-        val textWidth = textRenderer.getWidth(POS_TITLES_PREVIEW)
-        val scale = (posTitlesModule?.hudScale ?: 1.0).toFloat()
-        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
-        var x = (width - scaledWidth) / 2
-        var y = 30
-        posTitlesModule?.let {
-            x += it.hudOffsetX
-            y = it.hudY
-        }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
-    }
-
-    private fun getAutoPetBounds(): Bounds {
-        var centerX = width / 2
-        var baseY = height / 2 + HudState.PET_NOTIFICATION.yOffset
-        autoPetModule?.let {
-            centerX += it.hudOffsetX
-            baseY = (height / 2) + it.hudOffsetY
-        }
-
-        val titleScale = (autoPetModule?.hudScale ?: HudState.PET_NOTIFICATION.scale.toDouble()).toFloat()
-        val subScale = titleScale * 0.6f
-        val titleW = textRenderer.getWidth(AUTOPET_TITLE_PREVIEW)
-        val subW = textRenderer.getWidth(AUTOPET_SUB_PREVIEW)
-
-        val widthPx = kotlin.math.ceil(maxOf(titleW * titleScale, subW * subScale).toDouble()).toInt()
-        val titleH = kotlin.math.ceil(textRenderer.fontHeight * titleScale).toInt()
-        val subBottom = kotlin.math.ceil(25 + (textRenderer.fontHeight * subScale).toDouble()).toInt()
-        val heightPx = maxOf(titleH, subBottom)
-
-        val left = centerX - (widthPx / 2)
-        return Bounds(left, baseY, widthPx, heightPx)
-    }
-
-    private fun getPlayersLeapedBounds(): Bounds {
-        val textWidth = textRenderer.getWidth(PLAYERS_LEAPED_PREVIEW)
-        val scale = (playersLeapedModule?.hudScale ?: 1.0).toFloat()
-        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
-        var x = (width - scaledWidth) / 2
-        var y = 68
-        playersLeapedModule?.let {
-            x += it.hudOffsetX
-            y = it.hudY
-        }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
-    }
-
-    private fun getSpotifyBounds(): Bounds {
-        val scale = (spotifyOverlayModule?.hudScale ?: 1.0).toFloat()
-        val unscaledWidth = spotifyOverlayModule?.getPreviewWidth() ?: textRenderer.getWidth(SPOTIFY_PREVIEW)
-        val unscaledHeight = spotifyOverlayModule?.getPreviewHeight() ?: textRenderer.fontHeight
-        val scaledWidth = kotlin.math.ceil(unscaledWidth * scale).toInt()
-        var x = width / 2
-        var y = 84
-        spotifyOverlayModule?.let {
-            x += it.hudOffsetX
-            y = it.hudY
-        }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(unscaledHeight * scale).toInt())
-    }
-
-    private fun getInvisibilityTimerBounds(): Bounds {
-        val preview = invisibilityTimerModule?.getDisplayText(true) ?: "2500"
-        val textWidth = textRenderer.getWidth(preview)
-        val scale = (invisibilityTimerModule?.hudScale ?: 1.0).toFloat()
-        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
-        var x = (width - scaledWidth) / 2
-        var y = 100
-        invisibilityTimerModule?.let {
-            x += it.hudOffsetX
-            y = it.hudY
-        }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
-    }
-
-    private fun getFishingHookDisplayBounds(): Bounds {
-        val preview = fishingHookDisplayModule?.previewText ?: "§e§l3.0"
-        val textWidth = textRenderer.getWidth(preview)
-        val scale = (fishingHookDisplayModule?.hudScale ?: 2.0).toFloat()
-        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
-        var x = (width - scaledWidth) / 2
-        var y = 130
-        fishingHookDisplayModule?.let {
-            x += it.hudOffsetX
-            y = it.hudY
-        }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
-    }
-
-    private fun getMilestoneDisplayBounds(): Bounds {
-        val preview = milestoneDisplayModule?.let { "§bMilestone§f: §c2" } ?: "§bMilestone§f: §c2"
-        val textWidth = textRenderer.getWidth(preview)
-        val scale = (milestoneDisplayModule?.hudScale ?: 1.0).toFloat()
-        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
-        var x = (width - scaledWidth) / 2
-        var y = 30
-        milestoneDisplayModule?.let {
-            x += it.hudOffsetX
-            y = it.hudY
-        }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
-    }
-
-    private fun getMaskProcAlertBounds(): Bounds {
-        val preview = "BONZO"
-        val textWidth = textRenderer.getWidth(preview)
-        val scale = (invisibilityTimerModule?.alertHudScale ?: 4.0).toFloat()
-        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
-        var x = (width - scaledWidth) / 2
-        var y = 120
-        invisibilityTimerModule?.let {
-            x += it.alertHudOffsetX
-            y = it.alertHudY
-        }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
-    }
-
-    private fun getReminderGateBounds(): Bounds {
-        val textWidth = textRenderer.getWidth(REMINDER_GATE_PREVIEW)
-        val scale = (reminderGateModule?.hudScale ?: 5.0).toFloat()
-        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
-        var x = (width - scaledWidth) / 2
-        var y = 84
-        reminderGateModule?.let {
-            x += it.hudOffsetX
-            y = it.hudY
-        }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
-    }
-
-    private fun renderPosTitlesPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        val scale = (posTitlesModule?.hudScale ?: 1.0).toFloat()
-        val inv = 1.0f / scale
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, POS_TITLES_PREVIEW, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFFFFF.toInt())
-        context.matrices.popMatrix()
-    }
-
-    private fun renderAutoPetPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        val centerX = bounds.x + (bounds.w / 2)
-        val baseY = bounds.y
-        val titleScale = (autoPetModule?.hudScale ?: HudState.PET_NOTIFICATION.scale.toDouble()).toFloat()
-        val subScale = titleScale * 0.6f
-
-        val titleW = textRenderer.getWidth(AUTOPET_TITLE_PREVIEW)
-        val subW = textRenderer.getWidth(AUTOPET_SUB_PREVIEW)
-
-        context.matrices.pushMatrix()
-        context.matrices.scale(titleScale, titleScale)
-        val titleInv = 1.0f / titleScale
-        val drawTitleX = ((centerX * titleInv) - (titleW / 2f)).toInt()
-        val drawTitleY = (baseY * titleInv).toInt()
-        context.drawTextWithShadow(textRenderer, AUTOPET_TITLE_PREVIEW, drawTitleX, drawTitleY, 0xFFFFAA00.toInt())
-        context.matrices.popMatrix()
-
-        context.matrices.pushMatrix()
-        context.matrices.scale(subScale, subScale)
-        val subInv = 1.0f / subScale
-        val drawSubX = ((centerX * subInv) - (subW / 2f)).toInt()
-        val drawSubY = ((baseY + 25) * subInv).toInt()
-        context.drawTextWithShadow(textRenderer, AUTOPET_SUB_PREVIEW, drawSubX, drawSubY, 0xFFFF5555.toInt())
-        context.matrices.popMatrix()
-    }
-
-    private fun renderPlayersLeapedPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        val scale = (playersLeapedModule?.hudScale ?: 1.0).toFloat()
-        val inv = 1.0f / scale
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, PLAYERS_LEAPED_PREVIEW, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFF55AAFF.toInt())
-        context.matrices.popMatrix()
-    }
-
-    private fun renderSpotifyPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        spotifyOverlayModule?.renderPreviewAt(context, bounds.x, bounds.y)
-    }
-
-    private fun renderInvisibilityTimerPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        val preview = invisibilityTimerModule?.getDisplayText(true) ?: "2500"
-        val scale = (invisibilityTimerModule?.hudScale ?: 1.0).toFloat()
-        val inv = 1.0f / scale
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, preview, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFAA00.toInt())
-        context.matrices.popMatrix()
-    }
-
-    private fun renderFishingHookDisplayPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        val preview = fishingHookDisplayModule?.previewText ?: "§e§l3.0"
-        val scale = (fishingHookDisplayModule?.hudScale ?: 2.0).toFloat()
-        val inv = 1.0f / scale
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, preview, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFFFFF.toInt())
-        context.matrices.popMatrix()
-    }
-
-    private fun renderMilestoneDisplayPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        val preview = "§bMilestone§f: §c2"
-        val scale = (milestoneDisplayModule?.hudScale ?: 1.0).toFloat()
-        val inv = 1.0f / scale
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, preview, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFF5555.toInt())
-        context.matrices.popMatrix()
-    }
-
-    private fun renderMaskProcAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        val scale = (invisibilityTimerModule?.alertHudScale ?: 4.0).toFloat()
-        val inv = 1.0f / scale
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, "BONZO", (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFF2B2B.toInt())
-        context.matrices.popMatrix()
-    }
-
-    private fun renderReminderGatePreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        val scale = (reminderGateModule?.hudScale ?: 5.0).toFloat()
-        val inv = 1.0f / scale
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, REMINDER_GATE_PREVIEW, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFF5555.toInt())
-        context.matrices.popMatrix()
-    }
-
-    private fun getSlayerBossBounds(): Bounds {
-        val lines = slayerBossHudModule?.previewLines ?: listOf(Component.literal(SLAYER_BOSS_PREVIEW))
-        val scale = (slayerBossHudModule?.hudScale ?: 1.0).toFloat()
-        val widest = lines.maxOfOrNull { textRenderer.width(it) } ?: 0
-        val scaledWidth = kotlin.math.ceil(widest * scale).toInt()
-        var x = (width - scaledWidth) / 2
-        var y = 60
-        slayerBossHudModule?.let {
-            x += it.hudOffsetX
-            y = it.hudY
-        }
-        val lineHeight = textRenderer.fontHeight + 1
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(lineHeight * lines.size * scale).toInt())
-    }
-
-    // The three slayer alerts are the same widget with a different trigger, so they share these.
-    private fun alertBounds(module: SlayerAlertModule?, defaultY: Int, fallbackText: String): Bounds {
-        val preview = module?.alertText ?: fallbackText
-        val textWidth = textRenderer.getWidth(preview)
-        val scale = (module?.hudScale ?: 3.0).toFloat()
-        val scaledWidth = kotlin.math.ceil(textWidth * scale).toInt()
-        var x = (width - scaledWidth) / 2
-        var y = defaultY
-        module?.let {
-            x += it.hudOffsetX
-            y = it.hudY
-        }
-        return Bounds(x, y, scaledWidth, kotlin.math.ceil(textRenderer.fontHeight * scale).toInt())
-    }
-
-    private fun renderAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds, module: SlayerAlertModule?, fallbackText: String) {
-        val preview = module?.alertText ?: fallbackText
-        val scale = (module?.hudScale ?: 3.0).toFloat()
-        val inv = 1.0f / scale
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.drawTextWithShadow(textRenderer, preview, (bounds.x * inv).toInt(), (bounds.y * inv).toInt(), 0xFFFFFFFF.toInt())
-        context.matrices.popMatrix()
-    }
-
-    private fun getCocoonAlertBounds(): Bounds = alertBounds(cocoonAlertModule, 190, COCOON_PREVIEW)
-
-    private fun getMiniBossAlertBounds(): Bounds = alertBounds(miniBossAlertModule, 165, MINIBOSS_PREVIEW)
-
-    private fun getBossAlertBounds(): Bounds = alertBounds(bossAlertModule, 140, BOSS_ALERT_PREVIEW)
-
-    private fun renderSlayerBossPreview(context: GuiGraphicsExtractor, bounds: Bounds) {
-        val lines = slayerBossHudModule?.previewLines ?: listOf(Component.literal(SLAYER_BOSS_PREVIEW))
-        val scale = (slayerBossHudModule?.hudScale ?: 1.0).toFloat()
-        val inv = 1.0f / scale
-        val centerX = bounds.x + (bounds.w / 2)
-        val lineHeight = textRenderer.fontHeight + 1
-
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        lines.forEachIndexed { index, line ->
-            val x = ((centerX * inv) - (textRenderer.width(line) / 2f)).toInt()
-            val y = (bounds.y * inv).toInt() + (index * lineHeight)
-            context.text(textRenderer, line, x, y, 0xFFFFFFFF.toInt(), true)
-        }
-        context.matrices.popMatrix()
-    }
-
-    private fun renderCocoonAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds) =
-        renderAlertPreview(context, bounds, cocoonAlertModule, COCOON_PREVIEW)
-
-    private fun renderMiniBossAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds) =
-        renderAlertPreview(context, bounds, miniBossAlertModule, MINIBOSS_PREVIEW)
-
-    private fun renderBossAlertPreview(context: GuiGraphicsExtractor, bounds: Bounds) =
-        renderAlertPreview(context, bounds, bossAlertModule, BOSS_ALERT_PREVIEW)
-
-    private fun renderComponentBox(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, type: ComponentType, bounds: Bounds) {
-        val hovered = bounds.contains(mouseX, mouseY)
-        val active = dragging == type
-        val fillColor = when {
-            active -> 0x443E8EFF
-            hovered -> 0x333E8EFF
-            else -> 0x22111111
-        }
-        val borderColor = when {
-            active -> 0xFF7AA2FF.toInt()
-            hovered -> 0xFF9FB8FF.toInt()
-            else -> 0xFF7F7F7F.toInt()
-        }
-
-        context.fill(bounds.x - 2, bounds.y - 2, bounds.x + bounds.w + 2, bounds.y + bounds.h + 2, fillColor)
-        RenderUtils.drawBorder(context, bounds.x - 2, bounds.y - 2, bounds.w + 4, bounds.h + 4, borderColor)
-        context.drawTextWithShadow(textRenderer, type.label, bounds.x, bounds.y - 12, 0xFFE0E0E0.toInt())
-    }
-
-    private enum class ComponentType(val label: String) {
-        POS_TITLES("Pos Titles"),
-        AUTOPET_TITLE("AutoPet / Loadout Titles"),
-        PLAYERS_LEAPED("Players Leaped"),
-        INVISIBILITY_TIMER("Invisibility timer"),
-        FISHING_HOOK_DISPLAY("Fishing Hook Display"),
-        MILESTONE_DISPLAY("Milestone Reminder"),
-        MASK_PROC_ALERT("Mask proc alert"),
-        REMINDER_GATE("Reminder Gate"),
-        SPOTIFY_OVERLAY("Spotify Overlay"),
-        SLAYER_BOSS_HUD("Slayer Boss HUD"),
-        COCOON_ALERT("Cocoon Alert"),
-        MINIBOSS_ALERT("Mini-Boss Alert"),
-        BOSS_ALERT("Boss Alert")
-    }
-
-    private data class Bounds(val x: Int, val y: Int, val w: Int, val h: Int) {
-        fun contains(px: Int, py: Int): Boolean {
-            return px >= x && px <= x + w.coerceAtLeast(1) && py >= y && py <= y + h.coerceAtLeast(1)
+            context.fill(x, y, x + width, y + BUTTON_HEIGHT, if (hovered) BUTTON_HOVER_COLOR else BUTTON_COLOR)
+            RenderUtils.drawBorder(context, x, y, width, BUTTON_HEIGHT, if (hovered) Theme.Primary.color else IDLE_BORDER_COLOR)
+            context.text(font, text, x + width / 2 - font.width(text) / 2, y + (BUTTON_HEIGHT - font.lineHeight) / 2 + 1, 0xFFFFFFFF.toInt())
         }
     }
 
     companion object {
-        private const val POS_TITLES_PREVIEW = "Player (M) At P2!"
-        private const val AUTOPET_TITLE_PREVIEW = "Golden Dragon"
-        private const val AUTOPET_SUB_PREVIEW = "Autopet"
-        private const val PLAYERS_LEAPED_PREVIEW = "2/4 Players Leaped"
-        private const val REMINDER_GATE_PREVIEW = "GATEEEEEE !!!!!!!"
-        private const val SPOTIFY_PREVIEW = "Spotify > Author - Song Title"
-        private const val SLAYER_BOSS_PREVIEW = "§c☠ §bRevenant Horror I §a500§c❤"
-        private const val COCOON_PREVIEW = "§cCocoon!"
-        private const val MINIBOSS_PREVIEW = "§6Mini-Boss!"
-        private const val BOSS_ALERT_PREVIEW = "§cBoss!"
+        private const val HINT = "Drag to move | Scroll to scale | Esc to save"
 
-        private const val RESET_BTN_W = 120
-        private const val RESET_BTN_H = 16
-        private const val RESET_BTN_MARGIN = 10
+        private const val GRID_BUTTON_WIDTH = 100
+        private const val STEP_BUTTON_WIDTH = 24
+        private const val RESET_BUTTON_WIDTH = 70
+        private const val BUTTON_GAP = 6
+        private const val BUTTON_HEIGHT = 20
+        private const val BUTTONS_WIDTH = GRID_BUTTON_WIDTH + STEP_BUTTON_WIDTH * 2 + RESET_BUTTON_WIDTH + BUTTON_GAP * 3
 
-        private const val HELP_BTN_W = 80
-        private const val HELP_BTN_H = 16
+        private const val GRID_STEP = 5
+        private const val MIN_GRID_SIZE = 5
+        private const val MAX_GRID_SIZE = 50
+        private const val SCALE_STEP = 0.1
 
-        private const val GRID_SIZE = 8
-        private const val SNAP_PADDING = 4
+        private const val BACKGROUND_COLOR = 0x40000000
+        private const val GRID_COLOR = 0x1EFFFFFF
+        private const val CENTER_LINE_COLOR = 0x80FFFFFF.toInt()
+        private const val FRAME_COLOR = 0x960A0A0A.toInt()
+        private const val IDLE_BORDER_COLOR = 0x28FFFFFF
+        private const val BUTTON_COLOR = 0xC0101010.toInt()
+        private const val BUTTON_HOVER_COLOR = 0xE0202020.toInt()
+        private const val HINT_COLOR = 0xFFB0B0B0.toInt()
     }
 }

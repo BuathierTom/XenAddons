@@ -1,12 +1,10 @@
 package xenus.xenaddons.features.impl.slayer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
+import xenus.xenaddons.hud.HudElement;
+import xenus.xenaddons.hud.HudRender;
 import xenus.xenaddons.settings.ActionSetting;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ModeSetting;
@@ -31,19 +29,14 @@ public abstract class SlayerAlertModule extends Module {
     private final NumberSetting soundVolume = new NumberSetting("Sound Volume", 2.0, 0.0, 5.0, 0.1);
     private final NumberSetting soundPitch = new NumberSetting("Sound Pitch", 0.9, 0.0, 2.0, 0.1);
     private final ActionSetting notePlay = new ActionSetting("Note play", this::playAlertSound);
-    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting hudY;
-    private final NumberSetting hudScale;
 
     private int hudTicks = 0;
 
-    protected SlayerAlertModule(String name, String description, String hudId, String defaultText, int defaultY, double defaultScale) {
+    protected SlayerAlertModule(String name, String description, String defaultText, float defaultY, float defaultScale) {
         super(name, description, Category.SLAYER);
 
         this.defaultText = defaultText;
         this.alertText = new StringSetting("Alert Component", defaultText, 64);
-        this.hudY = new NumberSetting("HUD Y", defaultY, -1000, 1000, 1);
-        this.hudScale = new NumberSetting("HUD Scale", defaultScale, 0.5, 6.0, 0.05);
 
         this.registerSetting(showHud);
         this.registerSetting(alertText);
@@ -52,12 +45,6 @@ public abstract class SlayerAlertModule extends Module {
         this.registerSetting(soundVolume);
         this.registerSetting(soundPitch);
         this.registerSetting(notePlay);
-        hudOffsetX.setVisibility(() -> false);
-        hudY.setVisibility(() -> false);
-        hudScale.setVisibility(() -> false);
-        this.registerSetting(hudOffsetX);
-        this.registerSetting(hudY);
-        this.registerSetting(hudScale);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!this.isEnabled()) {
@@ -67,11 +54,11 @@ public abstract class SlayerAlertModule extends Module {
             if (hudTicks > 0) hudTicks--;
         });
 
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", hudId), (drawContext, tickDelta) -> {
-            if (!this.isEnabled() || !showHud.getValue()) return;
-            if (hudTicks <= 0) return;
-            renderText(drawContext, getAlertText());
-        });
+        hudElement(name, (context, example) -> HudRender.centeredText(context, getAlertText(), 0xFFFFFFFF))
+            .enabledWhen(() -> isEnabled() && showHud.getValue())
+            .visibleWhen(() -> hudTicks > 0)
+            .centered()
+            .defaults(HudElement.CENTER, defaultY, defaultScale);
     }
 
     /** Flashes the HUD line and plays the ping, honouring both toggles. */
@@ -89,61 +76,5 @@ public abstract class SlayerAlertModule extends Module {
 
     private void playAlertSound() {
         AlertSounds.play(alertSound.getValue(), soundVolume.getValue(), soundPitch.getValue());
-    }
-
-    private void renderText(GuiGraphicsExtractor drawContext, String text) {
-        if (text == null || text.isEmpty()) return;
-
-        int screenWidth = mc.getWindow().getGuiScaledWidth();
-        int screenHeight = mc.getWindow().getGuiScaledHeight();
-        int textWidth = mc.font.width(text);
-
-        float scale = (float) hudScale.getValue().doubleValue();
-        float inv = 1.0f / scale;
-
-        int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
-        int maxCenterX = screenWidth - minCenterX;
-        int centerX = Mth.clamp((screenWidth / 2) + hudOffsetX.getValue().intValue(), minCenterX, Math.max(minCenterX, maxCenterX));
-
-        int maxY = screenHeight - (int) Math.ceil(mc.font.lineHeight * scale) - 2;
-        int y = Mth.clamp(hudY.getValue().intValue(), 2, Math.max(2, maxY));
-
-        drawContext.pose().pushMatrix();
-        drawContext.pose().scale(scale, scale);
-        drawContext.text(mc.font, text, (int) ((centerX * inv) - (textWidth / 2f)), (int) (y * inv), 0xFFFFFFFF, true);
-        drawContext.pose().popMatrix();
-    }
-
-    public void renderPreview(GuiGraphicsExtractor drawContext) {
-        renderText(drawContext, getAlertText());
-    }
-
-    /** The alert HUD only draws when this is on, so the HUD editor hides it too. */
-    public boolean isHudEnabled() {
-        return showHud.getValue();
-    }
-
-    public int getHudOffsetX() {
-        return hudOffsetX.getValue().intValue();
-    }
-
-    public int getHudY() {
-        return hudY.getValue().intValue();
-    }
-
-    public double getHudScale() {
-        return hudScale.getValue();
-    }
-
-    public void setHudOffsetX(int value) {
-        hudOffsetX.setValue((double) value);
-    }
-
-    public void setHudY(int value) {
-        hudY.setValue((double) value);
-    }
-
-    public void setHudScale(double value) {
-        hudScale.setValue(value);
     }
 }

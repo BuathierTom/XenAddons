@@ -2,16 +2,13 @@ package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.resources.Identifier;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
-import xenus.xenaddons.settings.NumberSetting;
+import xenus.xenaddons.hud.HudElement;
+import xenus.xenaddons.hud.HudRender;
 import xenus.xenaddons.utils.ChatUtils;
 import xenus.xenaddons.utils.DungeonUtils;
 
@@ -32,19 +29,10 @@ public class PosTitlesModule extends Module {
     // Custom HUD Rendering
     private String currentTitle = null;
     private int titleTimer = 0;
-    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting hudY = new NumberSetting("HUD Y", 30, -1000, 1000, 1);
-    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 1.0, 0.5, 6.0, 0.05);
 
     public PosTitlesModule() {
         super("Pos Titles", "Shows titles when teammates reach specific points", Category.DUNGEON);
-        hudOffsetX.setVisibility(() -> false);
-        hudY.setVisibility(() -> false);
-        hudScale.setVisibility(() -> false);
-        this.registerSetting(hudOffsetX);
-        this.registerSetting(hudY);
-        this.registerSetting(hudScale);
-        
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (this.isEnabled()) {
                 onTick();
@@ -57,35 +45,10 @@ public class PosTitlesModule extends Module {
             if (this.isEnabled()) handleChat(message.getString());
         });
 
-        // Use HudRenderCallback for TOP-MIDDLE position
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "pos_titles_hud"), (drawContext, tickDelta) -> {
-            if (currentTitle == null || titleTimer <= 0) return;
-            renderTopTitle(drawContext);
-        });
-    }
-
-    private void renderTopTitle(GuiGraphicsExtractor drawContext) {
-        int width = mc.getWindow().getGuiScaledWidth();
-        int height = mc.getWindow().getGuiScaledHeight();
-        int textWidth = mc.font.width(currentTitle);
-        int textHeight = mc.font.lineHeight;
-        float scale = (float) hudScale.getValue().doubleValue();
-        float inv = 1.0f / scale;
-        int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
-        int yRaw = hudY.getValue().intValue();
-        int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
-        int maxCenterX = width - minCenterX;
-        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
-        int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
-
-        drawContext.pose().pushMatrix();
-        drawContext.pose().scale(scale, scale);
-        int x = (int) ((centerX * inv) - (textWidth / 2f));
-        int drawY = (int) (y * inv);
-        drawContext.text(mc.font, currentTitle, x, drawY, 0xFFFFFFFF);
-        drawContext.pose().popMatrix();
-
+        hudElement("Pos Titles", (context, example) -> HudRender.centeredText(context, example ? "Player (M) At P2!" : currentTitle, 0xFFFFFFFF))
+            .visibleWhen(() -> currentTitle != null && titleTimer > 0)
+            .centered()
+            .defaults(HudElement.CENTER, 30.0f, 1.0f);
     }
 
     private void onTick() {
@@ -203,29 +166,5 @@ public class PosTitlesModule extends Module {
         lastLocations.clear();
         currentTitle = null;
         titleTimer = 0;
-    }
-
-    public int getHudOffsetX() {
-        return hudOffsetX.getValue().intValue();
-    }
-
-    public int getHudY() {
-        return hudY.getValue().intValue();
-    }
-
-    public void setHudOffsetX(int value) {
-        hudOffsetX.setValue((double) value);
-    }
-
-    public void setHudY(int value) {
-        hudY.setValue((double) value);
-    }
-
-    public double getHudScale() {
-        return hudScale.getValue();
-    }
-
-    public void setHudScale(double value) {
-        hudScale.setValue(value);
     }
 }

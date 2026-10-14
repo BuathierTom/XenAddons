@@ -7,9 +7,6 @@ public final class PetNotification {
     private Component subtitle = Component.empty();
     private int ticksLeft = 0;
 
-    // Réglages
-    public float scale = 2.5f;   // Larger scale to mimic title size (was 0.85f which is tiny)
-    public int yOffset = -20;    // ajustable
     public boolean enabled = true;
 
     public void show(Component title, Component subtitle, int durationTicks) {

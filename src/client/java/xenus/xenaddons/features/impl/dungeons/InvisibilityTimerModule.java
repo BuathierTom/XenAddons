@@ -2,16 +2,14 @@ package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.resources.Identifier;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
+import xenus.xenaddons.hud.HudElement;
+import xenus.xenaddons.hud.HudRender;
 import xenus.xenaddons.settings.ActionSetting;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ModeSetting;
@@ -33,12 +31,6 @@ public class InvisibilityTimerModule extends Module {
     private static final long PROC_MESSAGE_DEBOUNCE_MS = 10_000L;
 
     private final BooleanSetting maskProcsAlert = new BooleanSetting("Mask procs alert", true);
-    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting hudY = new NumberSetting("HUD Y", 100, -1000, 1000, 1);
-    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 1.0, 0.5, 6.0, 0.05);
-    private final NumberSetting alertHudOffsetX = new NumberSetting("Alert HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting alertHudY = new NumberSetting("Alert HUD Y", 120, -1000, 1000, 1);
-    private final NumberSetting alertHudScale = new NumberSetting("Alert HUD Scale", 4.0, 0.5, 6.0, 0.05);
     private final ModeSetting displayMode = new ModeSetting("Display Mode", "Seconds", "Seconds", "Ticks");
     private final ModeSetting procSound = new ModeSetting(
             "Proc Sound",
@@ -69,18 +61,6 @@ public class InvisibilityTimerModule extends Module {
         super("Invisibility timer", "Shows invincibility duration after mask/phoenix procs", Category.DUNGEON);
 
         this.registerSetting(maskProcsAlert);
-        hudOffsetX.setVisibility(() -> false);
-        hudY.setVisibility(() -> false);
-        hudScale.setVisibility(() -> false);
-        alertHudOffsetX.setVisibility(() -> false);
-        alertHudY.setVisibility(() -> false);
-        alertHudScale.setVisibility(() -> false);
-        this.registerSetting(hudOffsetX);
-        this.registerSetting(hudY);
-        this.registerSetting(hudScale);
-        this.registerSetting(alertHudOffsetX);
-        this.registerSetting(alertHudY);
-        this.registerSetting(alertHudScale);
         this.registerSetting(displayMode);
         this.registerSetting(procSound);
         this.registerSetting(procSoundVolume);
@@ -110,13 +90,18 @@ public class InvisibilityTimerModule extends Module {
             return true;
         });
 
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "invisibility_timer_hud"), (drawContext, tickDelta) -> {
-            if (!this.isEnabled()) return;
-            if (activeTicks > 0 && activeType != null) {
-                renderLine(drawContext, getDisplayText(false));
-            }
-            renderProcAlert(drawContext);
-        });
+        hudElement("Invisibility Timer", (context, example) ->
+            HudRender.centeredText(context, getDisplayText(example), getDisplayColor(example)))
+            .visibleWhen(() -> activeTicks > 0 && activeType != null)
+            .centered()
+            .defaults(HudElement.CENTER, 100.0f, 1.0f);
+
+        hudElement("Mask Proc Alert", (context, example) ->
+            HudRender.centeredText(context, example ? "Bonzo" : alertText, 0xFFFF2B2B))
+            .enabledWhen(() -> isEnabled() && maskProcsAlert.getValue())
+            .visibleWhen(() -> alertTicks > 0 && alertText != null && !alertText.isBlank())
+            .centered()
+            .defaults(HudElement.CENTER, 120.0f, 4.0f);
     }
 
     private void handleChat(String rawMessage) {
@@ -156,7 +141,7 @@ public class InvisibilityTimerModule extends Module {
         }
     }
 
-    public String getDisplayText(boolean preview) {
+    private String getDisplayText(boolean preview) {
         if (preview) return isTicksDisplay() ? formatTicks(50) : formatMillis(2500);
         if (activeTicks <= 0 || activeType == null) return "";
         return isTicksDisplay() ? formatTicks(activeTicks) : formatMillis(activeTicks * 50);
@@ -182,68 +167,6 @@ public class InvisibilityTimerModule extends Module {
 
     private boolean isTicksDisplay() {
         return "Ticks".equals(displayMode.getValue());
-    }
-
-    private void renderLine(GuiGraphicsExtractor drawContext, String line) {
-        renderLine(drawContext, line, getDisplayColor(false));
-    }
-
-    private void renderLine(GuiGraphicsExtractor drawContext, String line, int color) {
-        if (line == null || line.isBlank()) return;
-
-        int width = mc.getWindow().getGuiScaledWidth();
-        int height = mc.getWindow().getGuiScaledHeight();
-        int textWidth = mc.font.width(line);
-        int textHeight = mc.font.lineHeight;
-
-        float scale = (float) hudScale.getValue().doubleValue();
-        float inv = 1.0f / scale;
-        int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
-        int yRaw = hudY.getValue().intValue();
-
-        int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
-        int maxCenterX = width - minCenterX;
-        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
-
-        int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
-
-        drawContext.pose().pushMatrix();
-        drawContext.pose().scale(scale, scale);
-        int x = (int) ((centerX * inv) - (textWidth / 2f));
-        int drawY = (int) (y * inv);
-        drawContext.text(mc.font, line, x, drawY, color);
-        drawContext.pose().popMatrix();
-    }
-
-    public void renderPreview(GuiGraphicsExtractor drawContext) {
-        renderLine(drawContext, getDisplayText(true), getDisplayColor(true));
-    }
-
-    public void renderAlertPreview(GuiGraphicsExtractor drawContext) {
-        renderProcAlertText(drawContext, "Bonzo");
-    }
-
-    private void renderProcAlert(GuiGraphicsExtractor drawContext) {
-        if (!maskProcsAlert.getValue()) return;
-        if (alertTicks <= 0 || alertText == null || alertText.isBlank()) return;
-        renderProcAlertText(drawContext, alertText);
-    }
-
-    private void renderProcAlertText(GuiGraphicsExtractor drawContext, String text) {
-        int width = mc.getWindow().getGuiScaledWidth();
-        int textWidth = mc.font.width(text);
-        float scale = (float) alertHudScale.getValue().doubleValue();
-        float inv = 1.0f / scale;
-        int centerX = (width / 2) + alertHudOffsetX.getValue().intValue();
-        int yRaw = alertHudY.getValue().intValue();
-        int x = (int) ((centerX * inv) - (textWidth / 2f));
-        int y = (int) (yRaw * inv);
-
-        drawContext.pose().pushMatrix();
-        drawContext.pose().scale(scale, scale);
-        drawContext.text(mc.font, text, x, y, 0xFFFF2B2B);
-        drawContext.pose().popMatrix();
     }
 
     public void debugTriggerProcAlert() {
@@ -314,58 +237,5 @@ public class InvisibilityTimerModule extends Module {
         return BuiltInRegistries.SOUND_EVENT.get(id)
                 .map(holder -> holder.value())
                 .orElse(SoundEvent.createVariableRangeEvent(id));
-    }
-
-    /** The proc alert HUD only draws when this is on, so the HUD editor hides it too. */
-    public boolean isProcAlertEnabled() {
-        return maskProcsAlert.getValue();
-    }
-
-    public int getHudOffsetX() {
-        return hudOffsetX.getValue().intValue();
-    }
-
-    public int getHudY() {
-        return hudY.getValue().intValue();
-    }
-
-    public double getHudScale() {
-        return hudScale.getValue();
-    }
-
-    public void setHudOffsetX(int value) {
-        hudOffsetX.setValue((double) value);
-    }
-
-    public void setHudY(int value) {
-        hudY.setValue((double) value);
-    }
-
-    public void setHudScale(double value) {
-        hudScale.setValue(value);
-    }
-
-    public int getAlertHudOffsetX() {
-        return alertHudOffsetX.getValue().intValue();
-    }
-
-    public int getAlertHudY() {
-        return alertHudY.getValue().intValue();
-    }
-
-    public double getAlertHudScale() {
-        return alertHudScale.getValue();
-    }
-
-    public void setAlertHudOffsetX(int value) {
-        alertHudOffsetX.setValue((double) value);
-    }
-
-    public void setAlertHudY(int value) {
-        alertHudY.setValue((double) value);
-    }
-
-    public void setAlertHudScale(double value) {
-        alertHudScale.setValue(value);
     }
 }

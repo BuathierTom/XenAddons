@@ -19,7 +19,7 @@ public class SlayerBossAlertModule extends SlayerAlertModule {
 
     public SlayerBossAlertModule() {
         super("Boss Alert", "Alerts when your slayer boss spawns",
-                "slayer_boss_alert_hud", "&cBoss!", 140, 3.0);
+                "&cBoss!", 140.0f, 3.0f);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!this.isEnabled()) {

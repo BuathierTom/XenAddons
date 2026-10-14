@@ -32,6 +32,7 @@ public class XenAddonsClient implements ClientModInitializer {
 
 		// Initialize Modules
 		xenus.xenaddons.features.ModuleManager.init();
+		xenus.xenaddons.hud.HudManager.init();
 
 		MusicRenderPipelines.init();
 		PictureInPictureRendererRegistry.register(context -> new XenNvgSpecialElementRenderer(context.bufferSource()));

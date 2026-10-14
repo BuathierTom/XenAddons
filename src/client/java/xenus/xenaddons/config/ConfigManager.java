@@ -10,6 +10,7 @@ import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.features.impl.misc.CustomSizeModule;
 import xenus.xenaddons.features.impl.misc.InvButtonsModule;
+import xenus.xenaddons.hud.HudManager;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ColorSetting;
 import xenus.xenaddons.settings.KeybindSetting;
@@ -58,6 +59,7 @@ public class ConfigManager {
         }
 
         json.add("Modules", modulesObj);
+        json.add("Hud", HudManager.save());
 
         try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
             GSON.toJson(json, writer);
@@ -77,6 +79,9 @@ public class ConfigManager {
             if (!rootElement.isJsonObject()) return;
             
             JsonObject root = rootElement.getAsJsonObject();
+            if (root.has("Hud") && root.get("Hud").isJsonObject()) {
+                HudManager.load(root.getAsJsonObject("Hud"));
+            }
             if (!root.has("Modules")) return;
             
             JsonObject modulesObj = root.getAsJsonObject("Modules");

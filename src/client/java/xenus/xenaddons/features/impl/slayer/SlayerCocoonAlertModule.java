@@ -23,7 +23,7 @@ public class SlayerCocoonAlertModule extends SlayerAlertModule {
 
     public SlayerCocoonAlertModule() {
         super("Cocoon Alert", "Alerts when you cocoon a slayer mob",
-                "slayer_cocoon_hud", "&cCocoon!", 190, 3.0);
+                "&cCocoon!", 190.0f, 3.0f);
 
         this.registerSetting(announceInParty);
 

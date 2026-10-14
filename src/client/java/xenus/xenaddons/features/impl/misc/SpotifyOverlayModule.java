@@ -13,8 +13,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import org.joml.Matrix3x2f;
+import org.joml.Vector2f;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
+import xenus.xenaddons.hud.HudElement;
+import xenus.xenaddons.hud.HudRender;
 import xenus.xenaddons.render.music.MusicCaptureManager;
 import xenus.xenaddons.render.music.MusicRenderPipelines;
 import xenus.xenaddons.render.music.font.MusicMsdfFont;
@@ -24,7 +27,6 @@ import xenus.xenaddons.render.music.state.MusicImageState;
 import xenus.xenaddons.render.music.state.MusicLiquidGlassState;
 import xenus.xenaddons.render.music.state.MusicRoundedRectState;
 import xenus.xenaddons.settings.BooleanSetting;
-import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.utils.SpotifyCoverCache;
 import xenus.xenaddons.utils.SpotifyNowPlaying;
 
@@ -33,6 +35,18 @@ public class SpotifyOverlayModule extends Module {
     public static final int BETTER_DISPLAY_HEIGHT = 58;
 
     private static final String STANDARD_PREVIEW_LINE = "§6Spotify §7> §aAuthor §7- §bSong Title";
+    private static final HudElement.Size BETTER_DISPLAY_SIZE = new HudElement.Size(BETTER_DISPLAY_WIDTH, BETTER_DISPLAY_HEIGHT);
+    private static final SpotifyNowPlaying.Snapshot PREVIEW_SNAPSHOT = new SpotifyNowPlaying.Snapshot(
+        "Music",
+        "kotlola, Haranczykov",
+        "MEWA",
+        "Playing",
+        "",
+        null,
+        "",
+        74,
+        151
+    );
     private static final int BACKGROUND_COLOR = ARGB.color(100, 12, 12, 12);
     private static final int TITLE_COLOR = ARGB.color(255, 255, 255, 255);
     private static final int DETAIL_COLOR = ARGB.color(145, 255, 255, 255);
@@ -52,9 +66,6 @@ public class SpotifyOverlayModule extends Module {
 
     private final BooleanSetting betterDisplay = new BooleanSetting("Better Display", false);
     private final BooleanSetting hideWhenNotPlaying = new BooleanSetting("Hide When Not Playing", false);
-    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting hudY = new NumberSetting("HUD Y", 84, -1000, 1000, 1);
-    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 1.0, 0.5, 6.0, 0.05);
 
     private MusicMsdfFont titleFont;
     private MusicMsdfFont detailFont;
@@ -67,123 +78,50 @@ public class SpotifyOverlayModule extends Module {
     private String lastProgressTrack = "";
 
     private boolean displayBoundsValid;
-    private int displayLeft;
-    private int displayTop;
-    private float displayScale = 1.0f;
+    private final Matrix3x2f displayInverse = new Matrix3x2f();
 
     public SpotifyOverlayModule() {
         super("Spotify Overlay", "Displays the current Spotify or compatible media track", Category.MISC);
         hideWhenNotPlaying.setVisibility(betterDisplay::getValue);
-        hudOffsetX.setVisibility(() -> false);
-        hudY.setVisibility(() -> false);
-        hudScale.setVisibility(() -> false);
         registerSetting(betterDisplay);
         registerSetting(hideWhenNotPlaying);
-        registerSetting(hudOffsetX);
-        registerSetting(hudY);
-        registerSetting(hudScale);
+
+        hudElement("Spotify Overlay", this::renderHud)
+            .visibleWhen(this::shouldRenderInGameHud)
+            .defaults(HudElement.CENTER, 84.0f, 1.0f);
     }
 
-    public void renderInGameHud(GuiGraphicsExtractor graphics) {
-        displayBoundsValid = false;
-        if (!shouldRenderInGameHud()) return;
+    private HudElement.Size renderHud(GuiGraphicsExtractor graphics, boolean example) {
         boolean useBetterDisplay = isBetterDisplayEnabled();
+        if (example) {
+            if (!useBetterDisplay) return HudRender.text(graphics, STANDARD_PREVIEW_LINE, 0xFFFFFFFF);
+            renderBetterDisplay(graphics, PREVIEW_SNAPSHOT, false);
+            return BETTER_DISPLAY_SIZE;
+        }
+
+        displayBoundsValid = false;
         SpotifyNowPlaying.requestRefreshIfNeeded(useBetterDisplay);
 
         if (useBetterDisplay) {
             SpotifyNowPlaying.Snapshot snapshot = SpotifyNowPlaying.getSnapshot();
-            if (isHiddenWhenNotPlaying(snapshot)) return;
-            renderBetterDisplay(graphics, snapshot);
-            return;
+            if (isHiddenWhenNotPlaying(snapshot)) return HudElement.Size.NONE;
+            renderBetterDisplay(graphics, snapshot, true);
+            return BETTER_DISPLAY_SIZE;
         }
 
         String line = SpotifyNowPlaying.getFormattedLine();
-        if (line == null || line.isBlank()) return;
-        renderLine(graphics, line);
+        if (line == null || line.isBlank()) return HudElement.Size.NONE;
+        return HudRender.text(graphics, line, 0xFFFFFFFF);
     }
 
-    public void renderPreview(GuiGraphicsExtractor graphics) {
-        int left = (mc.getWindow().getGuiScaledWidth() / 2) + hudOffsetX.getValue().intValue();
-        renderPreviewAt(graphics, left, hudY.getValue().intValue());
-    }
-
-    public void renderPreviewAt(GuiGraphicsExtractor graphics, int left, int top) {
-        float scale = hudScale.getValue().floatValue();
-        if (!isBetterDisplayEnabled()) {
-            renderLineAt(graphics, STANDARD_PREVIEW_LINE, left, top, scale);
-            return;
-        }
-
-        SpotifyNowPlaying.Snapshot preview = new SpotifyNowPlaying.Snapshot(
-            "Music",
-            "kotlola, Haranczykov",
-            "MEWA",
-            "Playing",
-            "",
-            null,
-            "",
-            74,
-            151
-        );
-        renderBetterDisplayAt(graphics, preview, left, top, scale, false);
-    }
-
-    private void renderLine(GuiGraphicsExtractor graphics, String line) {
-        int screenWidth = mc.getWindow().getGuiScaledWidth();
-        int screenHeight = mc.getWindow().getGuiScaledHeight();
-        float scale = hudScale.getValue().floatValue();
-        int maxLeft = screenWidth - (int) Math.ceil(mc.font.width(line) * scale) - 2;
-        int left = Mth.clamp(
-            (screenWidth / 2) + hudOffsetX.getValue().intValue(),
-            2,
-            Math.max(2, maxLeft)
-        );
-        int maxTop = screenHeight - (int) Math.ceil(mc.font.lineHeight * scale) - 2;
-        int top = Mth.clamp(hudY.getValue().intValue(), 2, Math.max(2, maxTop));
-        renderLineAt(graphics, line, left, top, scale);
-    }
-
-    private void renderLineAt(GuiGraphicsExtractor graphics, String line, int left, int top, float scale) {
-        graphics.pose().pushMatrix();
-        graphics.pose().translate(left, top);
-        graphics.pose().scale(scale, scale);
-        graphics.text(mc.font, line, 0, 0, 0xFFFFFFFF);
-        graphics.pose().popMatrix();
-    }
-
-    private void renderBetterDisplay(GuiGraphicsExtractor graphics, SpotifyNowPlaying.Snapshot snapshot) {
-        int screenWidth = mc.getWindow().getGuiScaledWidth();
-        int screenHeight = mc.getWindow().getGuiScaledHeight();
-        float scale = hudScale.getValue().floatValue();
-        int maxLeft = screenWidth - (int) Math.ceil(BETTER_DISPLAY_WIDTH * scale) - 2;
-        int left = Mth.clamp(
-            (screenWidth / 2) + hudOffsetX.getValue().intValue(),
-            2,
-            Math.max(2, maxLeft)
-        );
-        int maxTop = screenHeight - (int) Math.ceil(BETTER_DISPLAY_HEIGHT * scale) - 2;
-        int top = Mth.clamp(hudY.getValue().intValue(), 2, Math.max(2, maxTop));
-
-        displayBoundsValid = true;
-        displayLeft = left;
-        displayTop = top;
-        displayScale = scale;
-        renderBetterDisplayAt(graphics, snapshot, left, top, scale, true);
-    }
-
-    private void renderBetterDisplayAt(
-        GuiGraphicsExtractor graphics,
-        SpotifyNowPlaying.Snapshot snapshot,
-        int left,
-        int top,
-        float scale,
-        boolean interactive
-    ) {
+    private void renderBetterDisplay(GuiGraphicsExtractor graphics, SpotifyNowPlaying.Snapshot snapshot, boolean interactive) {
         loadFonts();
 
-        Matrix3x2f pose = new Matrix3x2f(graphics.pose())
-            .translate(left, top)
-            .scale(scale, scale);
+        Matrix3x2f pose = new Matrix3x2f(graphics.pose());
+        if (interactive) {
+            displayInverse.set(pose).invert();
+            displayBoundsValid = true;
+        }
         ScreenRectangle parentScissor = graphics.scissorStack.peek();
         ScreenRectangle cardBounds = new ScreenRectangle(
             0,
@@ -213,7 +151,7 @@ public class SpotifyOverlayModule extends Module {
         drawCover(graphics, snapshot, pose, scissor);
         drawTrackInformation(graphics, snapshot, pose, scissor);
         drawProgress(graphics, snapshot, pose, scissor);
-        drawControls(graphics, snapshot, pose, scissor, left, top, scale, interactive);
+        drawControls(graphics, snapshot, pose, scissor, interactive);
     }
 
     private void drawCover(
@@ -341,16 +279,12 @@ public class SpotifyOverlayModule extends Module {
         SpotifyNowPlaying.Snapshot snapshot,
         Matrix3x2f pose,
         ScreenRectangle scissor,
-        int left,
-        int top,
-        float scale,
         boolean interactive
     ) {
         if (controlFont == null) return;
-        double mouseX = mc.mouseHandler.getScaledXPos(mc.getWindow());
-        double mouseY = mc.mouseHandler.getScaledYPos(mc.getWindow());
-        float localMouseX = (float) ((mouseX - left) / scale);
-        float localMouseY = (float) ((mouseY - top) / scale);
+        Vector2f localMouse = toDisplaySpace(mc.mouseHandler.getScaledXPos(mc.getWindow()), mc.mouseHandler.getScaledYPos(mc.getWindow()));
+        float localMouseX = localMouse.x;
+        float localMouseY = localMouse.y;
         boolean canHover = interactive && isInteractiveScreen(mc.screen);
 
         float middleX = (BETTER_DISPLAY_WIDTH / 2.0f) + 2.0f;
@@ -513,8 +447,9 @@ public class SpotifyOverlayModule extends Module {
             return false;
         }
 
-        float localX = (float) ((mouseX - displayLeft) / displayScale);
-        float localY = (float) ((mouseY - displayTop) / displayScale);
+        Vector2f local = toDisplaySpace(mouseX, mouseY);
+        float localX = local.x;
+        float localY = local.y;
         if (localX < 0.0f || localX > BETTER_DISPLAY_WIDTH || localY < 40.0f || localY > 58.0f) {
             return false;
         }
@@ -544,6 +479,10 @@ public class SpotifyOverlayModule extends Module {
         return true;
     }
 
+    private Vector2f toDisplaySpace(double mouseX, double mouseY) {
+        return displayInverse.transformPosition(new Vector2f((float) mouseX, (float) mouseY));
+    }
+
     public boolean shouldRenderInGameHud() {
         if (!isEnabled()
             || mc.level == null
@@ -561,18 +500,6 @@ public class SpotifyOverlayModule extends Module {
         return screen instanceof ChatScreen || screen instanceof AbstractContainerScreen<?>;
     }
 
-    public int getHudOffsetX() {
-        return hudOffsetX.getValue().intValue();
-    }
-
-    public int getHudY() {
-        return hudY.getValue().intValue();
-    }
-
-    public double getHudScale() {
-        return hudScale.getValue();
-    }
-
     public boolean isBetterDisplayEnabled() {
         return betterDisplay.getValue() && MusicRenderPipelines.isAvailable();
     }
@@ -584,25 +511,5 @@ public class SpotifyOverlayModule extends Module {
 
     private boolean isHiddenWhenNotPlaying(SpotifyNowPlaying.Snapshot snapshot) {
         return hideWhenNotPlaying.getValue() && !snapshot.isPlaying();
-    }
-
-    public int getPreviewWidth() {
-        return isBetterDisplayEnabled() ? BETTER_DISPLAY_WIDTH : mc.font.width(STANDARD_PREVIEW_LINE);
-    }
-
-    public int getPreviewHeight() {
-        return isBetterDisplayEnabled() ? BETTER_DISPLAY_HEIGHT : mc.font.lineHeight;
-    }
-
-    public void setHudOffsetX(int value) {
-        hudOffsetX.setValue((double) value);
-    }
-
-    public void setHudY(int value) {
-        hudY.setValue((double) value);
-    }
-
-    public void setHudScale(double value) {
-        hudScale.setValue(value);
     }
 }

@@ -1,18 +1,16 @@
 package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.resources.Identifier;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
+import xenus.xenaddons.hud.HudElement;
+import xenus.xenaddons.hud.HudRender;
 import xenus.xenaddons.settings.ActionSetting;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ModeSetting;
-import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.StringSetting;
 import xenus.xenaddons.utils.DungeonUtils;
 
@@ -51,12 +49,6 @@ public class MilestoneDisplayModule extends Module {
             "Airhorn"
     );
     private final ActionSetting playSound = new ActionSetting("Play Sound", this::playSelectedSoundPreview);
-    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting hudY = new NumberSetting("HUD Y", 30, -1000, 1000, 1);
-    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 1.0, 0.5, 6.0, 0.05);
-    private final NumberSetting alertHudOffsetX = new NumberSetting("Alert HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting alertHudY = new NumberSetting("Alert HUD Y", 120, -1000, 1000, 1);
-    private final NumberSetting alertHudScale = new NumberSetting("Alert HUD Scale", 4.0, 0.5, 6.0, 0.05);
 
     private int milestoneCount = -1;
     private int runTicks = 0;
@@ -78,18 +70,6 @@ public class MilestoneDisplayModule extends Module {
         playSound.setVisibility(enableCustomSound::getValue);
         this.registerSetting(sound);
         this.registerSetting(playSound);
-        hudOffsetX.setVisibility(() -> false);
-        hudY.setVisibility(() -> false);
-        hudScale.setVisibility(() -> false);
-        alertHudOffsetX.setVisibility(() -> false);
-        alertHudY.setVisibility(() -> false);
-        alertHudScale.setVisibility(() -> false);
-        this.registerSetting(hudOffsetX);
-        this.registerSetting(hudY);
-        this.registerSetting(hudScale);
-        this.registerSetting(alertHudOffsetX);
-        this.registerSetting(alertHudY);
-        this.registerSetting(alertHudScale);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (alertTicks > 0) alertTicks--;
@@ -103,11 +83,19 @@ public class MilestoneDisplayModule extends Module {
             updateRuntime();
         });
 
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "milestone_display_hud"), (drawContext, tickDelta) -> {
-            if (!this.isEnabled()) return;
-            renderInGameHud(drawContext);
-            renderReminderAlert(drawContext);
-        });
+        hudElement("Milestone Display", (context, example) -> example
+            ? HudRender.centeredText(context, getPreviewText(), getPreviewColor())
+            : HudRender.centeredText(context, getDisplayText(), getDisplayColor()))
+            .enabledWhen(() -> isEnabled() && showHud.getValue())
+            .visibleWhen(() -> mc.level != null && mc.player != null && DungeonUtils.inDungeon())
+            .centered()
+            .defaults(HudElement.CENTER, 30.0f, 1.0f);
+
+        hudElement("Milestone Alert", (context, example) ->
+            HudRender.centeredText(context, example ? formatReminderText("2") : getActiveAlertText(), 0xFFFF5555))
+            .visibleWhen(() -> getActiveAlertText() != null)
+            .centered()
+            .defaults(HudElement.CENTER, 120.0f, 4.0f);
     }
 
     private void updateRuntime() {
@@ -149,17 +137,6 @@ public class MilestoneDisplayModule extends Module {
         playReminderSound();
     }
 
-    public void renderInGameHud(GuiGraphicsExtractor drawContext) {
-        if (!this.isEnabled()) return;
-        if (!showHud.getValue()) return;
-        if (mc.level == null || mc.player == null || !DungeonUtils.inDungeon()) return;
-        renderLine(drawContext, getDisplayText(), getDisplayColor());
-    }
-
-    public void renderPreview(GuiGraphicsExtractor drawContext) {
-        renderLine(drawContext, getPreviewText(), getPreviewColor());
-    }
-
     public void debugTriggerReminder() {
         if (!this.isEnabled()) this.setEnabled(true);
         showNotification.setValue(true);
@@ -169,13 +146,10 @@ public class MilestoneDisplayModule extends Module {
         playReminderSound();
     }
 
-    private void renderReminderAlert(GuiGraphicsExtractor drawContext) {
-        if (debugAlertTicks > 0 && debugAlertText != null && !debugAlertText.isBlank()) {
-            renderAlertLine(drawContext, debugAlertText, 0xFFFF5555);
-            return;
-        }
-        if (alertTicks <= 0 || alertText == null || alertText.isBlank()) return;
-        renderAlertLine(drawContext, alertText, 0xFFFF5555);
+    private String getActiveAlertText() {
+        if (debugAlertTicks > 0 && debugAlertText != null && !debugAlertText.isBlank()) return debugAlertText;
+        if (alertTicks <= 0 || alertText == null || alertText.isBlank()) return null;
+        return alertText;
     }
 
     private boolean shouldReminderFire() {
@@ -213,60 +187,6 @@ public class MilestoneDisplayModule extends Module {
         if (milestoneCount < 0) return "§7";
         if (milestoneCount < MIN_SAFE_MILESTONE) return "§c";
         return "§a";
-    }
-
-    private void renderLine(GuiGraphicsExtractor drawContext, String line, int color) {
-        if (line == null || line.isBlank()) return;
-
-        int width = mc.getWindow().getGuiScaledWidth();
-        int height = mc.getWindow().getGuiScaledHeight();
-        int textWidth = mc.font.width(line);
-        int textHeight = mc.font.lineHeight;
-        float scale = (float) hudScale.getValue().doubleValue();
-        float inv = 1.0f / scale;
-        int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
-        int yRaw = hudY.getValue().intValue();
-
-        int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
-        int maxCenterX = width - minCenterX;
-        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
-
-        int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
-
-        drawContext.pose().pushMatrix();
-        drawContext.pose().scale(scale, scale);
-        int x = (int) ((centerX * inv) - (textWidth / 2f));
-        int drawY = (int) (y * inv);
-        drawContext.text(mc.font, line, x, drawY, color);
-        drawContext.pose().popMatrix();
-    }
-
-    private void renderAlertLine(GuiGraphicsExtractor drawContext, String line, int color) {
-        if (line == null || line.isBlank()) return;
-
-        int width = mc.getWindow().getGuiScaledWidth();
-        int textWidth = mc.font.width(line);
-        int textHeight = mc.font.lineHeight;
-
-        float scale = (float) alertHudScale.getValue().doubleValue();
-        float inv = 1.0f / scale;
-        int centerXRaw = (width / 2) + alertHudOffsetX.getValue().intValue();
-        int yRaw = alertHudY.getValue().intValue();
-
-        int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
-        int maxCenterX = width - minCenterX;
-        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
-
-        int maxY = mc.getWindow().getGuiScaledHeight() - (int) Math.ceil(textHeight * scale) - 2;
-        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
-
-        drawContext.pose().pushMatrix();
-        drawContext.pose().scale(scale, scale);
-        int x = (int) ((centerX * inv) - (textWidth / 2f));
-        int drawY = (int) (y * inv);
-        drawContext.text(mc.font, line, x, drawY, color);
-        drawContext.pose().popMatrix();
     }
 
     private void resetRuntime() {
@@ -325,30 +245,6 @@ public class MilestoneDisplayModule extends Module {
         resetAllRuntime();
     }
 
-    public int getHudOffsetX() {
-        return hudOffsetX.getValue().intValue();
-    }
-
-    public int getHudY() {
-        return hudY.getValue().intValue();
-    }
-
-    public double getHudScale() {
-        return hudScale.getValue();
-    }
-
-    public int getAlertHudOffsetX() {
-        return alertHudOffsetX.getValue().intValue();
-    }
-
-    public int getAlertHudY() {
-        return alertHudY.getValue().intValue();
-    }
-
-    public double getAlertHudScale() {
-        return alertHudScale.getValue();
-    }
-
     public boolean isShowNotification() {
         return showNotification.getValue();
     }
@@ -363,30 +259,6 @@ public class MilestoneDisplayModule extends Module {
 
     public boolean isEnableCustomSound() {
         return enableCustomSound.getValue();
-    }
-
-    public void setHudOffsetX(int value) {
-        hudOffsetX.setValue((double) value);
-    }
-
-    public void setHudY(int value) {
-        hudY.setValue((double) value);
-    }
-
-    public void setHudScale(double value) {
-        hudScale.setValue(value);
-    }
-
-    public void setAlertHudOffsetX(int value) {
-        alertHudOffsetX.setValue((double) value);
-    }
-
-    public void setAlertHudY(int value) {
-        alertHudY.setValue((double) value);
-    }
-
-    public void setAlertHudScale(double value) {
-        alertHudScale.setValue(value);
     }
 
     public void setShowNotification(boolean value) {

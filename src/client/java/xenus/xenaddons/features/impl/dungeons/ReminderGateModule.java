@@ -2,22 +2,20 @@ package xenus.xenaddons.features.impl.dungeons;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.resources.Identifier;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.util.Mth;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.settings.ActionSetting;
 import xenus.xenaddons.settings.BooleanSetting;
 import xenus.xenaddons.settings.ModeSetting;
-import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.settings.StringSetting;
 import xenus.xenaddons.compat.XenChatHudCompat;
+import xenus.xenaddons.hud.HudElement;
+import xenus.xenaddons.hud.HudRender;
 import xenus.xenaddons.utils.DungeonUtils;
 
 import java.util.List;
@@ -64,9 +62,6 @@ public class ReminderGateModule extends Module {
             "Airhorn"
     );
     private final ActionSetting playSound = new ActionSetting("Play Sound", this::playSelectedSoundPreview);
-    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting hudY = new NumberSetting("HUD Y", 84, -1000, 1000, 1);
-    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 5.0, 0.5, 6.0, 0.05);
 
     private int phaseIndex = 0;
     private int lastDenominator = 0;
@@ -89,13 +84,6 @@ public class ReminderGateModule extends Module {
         this.registerSetting(sound);
         this.registerSetting(playSound);
 
-        hudOffsetX.setVisibility(() -> false);
-        hudY.setVisibility(() -> false);
-        hudScale.setVisibility(() -> false);
-        this.registerSetting(hudOffsetX);
-        this.registerSetting(hudY);
-        this.registerSetting(hudScale);
-
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             if (this.isEnabled()) handleChat(message.getString());
         });
@@ -115,11 +103,10 @@ public class ReminderGateModule extends Module {
             updateRuntimeState();
         });
 
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("xenaddons", "reminder_gate_hud"), (drawContext, tickDelta) -> {
-            if (!this.isEnabled()) return;
-            if (debugDisplayTicks <= 0 && !notificationActive) return;
-            renderHud(drawContext, getDisplayText());
-        });
+        hudElement("Reminder Gate", (context, example) -> HudRender.centeredText(context, getDisplayText(), 0xFFFF5555))
+            .visibleWhen(() -> debugDisplayTicks > 0 || notificationActive)
+            .centered()
+            .defaults(HudElement.CENTER, 84.0f, 5.0f);
     }
 
     private void handleChat(String rawMessage) {
@@ -273,33 +260,6 @@ public class ReminderGateModule extends Module {
         return (text == null || text.isBlank()) ? "GATEEEEEE !!!!!!!" : text;
     }
 
-    private void renderHud(GuiGraphicsExtractor drawContext, String text) {
-        int width = mc.getWindow().getGuiScaledWidth();
-        int height = mc.getWindow().getGuiScaledHeight();
-        int textWidth = mc.font.width(text);
-        int textHeight = mc.font.lineHeight;
-        float scale = (float) hudScale.getValue().doubleValue();
-        float inv = 1.0f / scale;
-        int centerXRaw = (width / 2) + hudOffsetX.getValue().intValue();
-        int yRaw = hudY.getValue().intValue();
-        int minCenterX = (int) Math.ceil((textWidth * scale) / 2.0f) + 2;
-        int maxCenterX = width - minCenterX;
-        int centerX = Mth.clamp(centerXRaw, minCenterX, Math.max(minCenterX, maxCenterX));
-        int maxY = height - (int) Math.ceil(textHeight * scale) - 2;
-        int y = Mth.clamp(yRaw, 2, Math.max(2, maxY));
-
-        drawContext.pose().pushMatrix();
-        drawContext.pose().scale(scale, scale);
-        int x = (int) ((centerX * inv) - (textWidth / 2f));
-        int drawY = (int) (y * inv);
-        drawContext.text(mc.font, text, x, drawY, 0xFFFF5555);
-        drawContext.pose().popMatrix();
-    }
-
-    public void renderPreview(GuiGraphicsExtractor drawContext) {
-        renderHud(drawContext, getDisplayText());
-    }
-
     private void playSelectedSoundPreview() {
         playSelectedSound();
     }
@@ -361,29 +321,5 @@ public class ReminderGateModule extends Module {
     @Override
     public void onDisable() {
         resetRuntime();
-    }
-
-    public int getHudOffsetX() {
-        return hudOffsetX.getValue().intValue();
-    }
-
-    public int getHudY() {
-        return hudY.getValue().intValue();
-    }
-
-    public double getHudScale() {
-        return hudScale.getValue();
-    }
-
-    public void setHudOffsetX(int value) {
-        hudOffsetX.setValue((double) value);
-    }
-
-    public void setHudY(int value) {
-        hudY.setValue((double) value);
-    }
-
-    public void setHudScale(double value) {
-        hudScale.setValue(value);
     }
 }

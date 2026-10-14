@@ -1,31 +1,59 @@
 package xenus.xenaddons.features.impl.dungeons;
 
+import xenus.xenaddons.hud.HudElement;
 import xenus.xenaddons.hud.HudState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import xenus.xenaddons.features.Category;
 import xenus.xenaddons.features.Module;
 import xenus.xenaddons.features.ModuleManager;
 import xenus.xenaddons.settings.BooleanSetting;
-import xenus.xenaddons.settings.NumberSetting;
 import xenus.xenaddons.utils.DungeonUtils;
 
 public class AutoPetRuleTitleModule extends Module {
+    private static final Component PREVIEW_TITLE = Component.literal("§6Golden Dragon");
+    private static final Component PREVIEW_SUBTITLE = Component.literal("§cAutopet");
+    private static final float SUBTITLE_SCALE = 0.6f;
+
     private final BooleanSetting inDungeonsOnly = new BooleanSetting("In Dungeons Only", false);
-    private final NumberSetting hudOffsetX = new NumberSetting("HUD Offset X", 0, -1000, 1000, 1);
-    private final NumberSetting hudOffsetY = new NumberSetting("HUD Offset Y", -20, -1000, 1000, 1);
-    private final NumberSetting hudScale = new NumberSetting("HUD Scale", 2.5, 0.5, 6.0, 0.05);
 
     public AutoPetRuleTitleModule() {
         super("AutoPet Title", "Shows a title when AutoPet equips a pet", Category.DUNGEON);
-        hudOffsetX.setVisibility(() -> false);
-        hudOffsetY.setVisibility(() -> false);
-        hudScale.setVisibility(() -> false);
         this.registerSetting(inDungeonsOnly);
-        this.registerSetting(hudOffsetX);
-        this.registerSetting(hudOffsetY);
-        this.registerSetting(hudScale);
+
+        hudElement("AutoPet / Loadout Title", this::renderNotification)
+            .enabledWhen(() -> isEnabled() || isLoadoutTitleEnabled())
+            .visibleWhen(() -> HudState.PET_NOTIFICATION.isActive() && !mc.options.hideGui)
+            .centered()
+            .defaults(HudElement.CENTER, 250.0f, 2.5f);
+    }
+
+    private HudElement.Size renderNotification(GuiGraphicsExtractor context, boolean example) {
+        Font font = mc.font;
+        Component title = example ? PREVIEW_TITLE : HudState.PET_NOTIFICATION.getTitle();
+        Component subtitle = example ? PREVIEW_SUBTITLE : HudState.PET_NOTIFICATION.getSubtitle();
+
+        int titleWidth = font.width(title);
+        context.text(font, title, -titleWidth / 2, 0, 0xFFFFFFFF);
+
+        int subtitleWidth = font.width(subtitle);
+        float subtitleTop = font.lineHeight + 1.0f;
+        context.pose().pushMatrix();
+        context.pose().translate(0.0f, subtitleTop);
+        context.pose().scale(SUBTITLE_SCALE, SUBTITLE_SCALE);
+        context.text(font, subtitle, -subtitleWidth / 2, 0, 0xFFFFFFFF);
+        context.pose().popMatrix();
+
+        float width = Math.max(titleWidth, subtitleWidth * SUBTITLE_SCALE);
+        return new HudElement.Size(width, subtitleTop + font.lineHeight * SUBTITLE_SCALE);
+    }
+
+    private static boolean isLoadoutTitleEnabled() {
+        LoadoutTitleModule loadout = ModuleManager.getModule(LoadoutTitleModule.class);
+        return loadout != null && loadout.isEnabled();
     }
 
     public static void init() {
@@ -115,29 +143,5 @@ public class AutoPetRuleTitleModule extends Module {
         if (mc.player != null) {
             mc.player.sendSystemMessage(Component.literal("§cAutopet §7> " + colorCode + petName));
         }
-    }
-
-    public int getHudOffsetX() {
-        return hudOffsetX.getValue().intValue();
-    }
-
-    public int getHudOffsetY() {
-        return hudOffsetY.getValue().intValue();
-    }
-
-    public void setHudOffsetX(int value) {
-        hudOffsetX.setValue((double) value);
-    }
-
-    public void setHudOffsetY(int value) {
-        hudOffsetY.setValue((double) value);
-    }
-
-    public double getHudScale() {
-        return hudScale.getValue();
-    }
-
-    public void setHudScale(double value) {
-        hudScale.setValue(value);
     }
 }
