@@ -223,16 +223,16 @@ public class XenAddonsClient implements ClientModInitializer {
                             return 1;
                         }))
                     .then(literal("procs").requires(source -> DebugModule.allows(debug -> debug.enableProcsTest.getValue())).executes(context -> {
-                        xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule module =
-                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule.class);
+                        xenus.xenaddons.features.impl.dungeons.InvincibilityTimerModule module =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.InvincibilityTimerModule.class);
                         if (module == null) return 0;
                         if (!module.isEnabled()) module.setEnabled(true);
 
                         module.debugTriggerProcAlert();
                         return 1;
                     }).then(ClientCommands.argument("type", StringArgumentType.word()).executes(context -> {
-                        xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule module =
-                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule.class);
+                        xenus.xenaddons.features.impl.dungeons.InvincibilityTimerModule module =
+                                xenus.xenaddons.features.ModuleManager.getModule(xenus.xenaddons.features.impl.dungeons.InvincibilityTimerModule.class);
                         if (module == null) return 0;
                         if (!module.isEnabled()) module.setEnabled(true);
 

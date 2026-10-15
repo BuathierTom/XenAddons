@@ -20,7 +20,7 @@ import xenus.xenaddons.utils.DungeonUtils;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-public class InvisibilityTimerModule extends Module {
+public class InvincibilityTimerModule extends Module {
     private static final Pattern SPIRIT_REGEX = Pattern.compile("^Second Wind Activated! Your Spirit Mask saved your life!$");
     private static final Pattern BONZO_REGEX = Pattern.compile("^Your (?:. )?Bonzo's Mask saved your life!$");
     private static final Pattern PHOENIX_REGEX = Pattern.compile("^Your Phoenix Pet saved you from certain death!$");
@@ -57,8 +57,8 @@ public class InvisibilityTimerModule extends Module {
     private String lastProcKey = "";
     private long lastProcAt = 0L;
 
-    public InvisibilityTimerModule() {
-        super("Invisibility timer", "Shows invincibility duration after mask/phoenix procs", Category.DUNGEON);
+    public InvincibilityTimerModule() {
+        super("Invincibility Timer", "Shows invincibility duration after mask/phoenix procs", Category.DUNGEON);
 
         this.registerSetting(maskProcsAlert);
         this.registerSetting(displayMode);
@@ -90,7 +90,7 @@ public class InvisibilityTimerModule extends Module {
             return true;
         });
 
-        hudElement("Invisibility Timer", (context, example) ->
+        hudElement("Invincibility Timer", (context, example) ->
             HudRender.centeredText(context, getDisplayText(example), getDisplayColor(example)))
             .visibleWhen(() -> activeTicks > 0 && activeType != null)
             .centered()
