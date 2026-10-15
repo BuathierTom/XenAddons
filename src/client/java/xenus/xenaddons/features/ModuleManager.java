@@ -19,6 +19,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.misc.CopyChatModule());
         modules.add(new xenus.xenaddons.features.impl.misc.PeekChatModule());
         modules.add(new xenus.xenaddons.features.impl.misc.CompactPotionMessageModule());
+        modules.add(new xenus.xenaddons.features.impl.misc.CompactStashModule());
         modules.add(new xenus.xenaddons.features.impl.misc.CooldownItemsModule());
         modules.add(new xenus.xenaddons.features.impl.misc.CustomHyperionSoundModule());
         modules.add(new xenus.xenaddons.features.impl.misc.ExperimentationTableSolverModule());

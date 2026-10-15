@@ -42,6 +42,7 @@ hidden from `/xa` autocompletion:
 - **Bazaar/AH Quick Search** → Search hovered items instantly.
 - **Command Aliases** → Useful SkyBlock shortcuts.
 - **Compact Potion Message** → Cleaner potion effect messages.
+- **Compact Stash** → Replaces the stash reminders with one clickable `Item/Material Stash >` line that runs `/pickupstash`.
 - **Cooldown Items** → Item ability cooldown overlay.
 - **Copy Chat** → Right-click messages to copy chat text.
 - **Cursor 1.8.9** → Legacy-style inventory cursor behavior.
@@ -133,26 +134,6 @@ https://addons.xenus.fr/login
 
 ---
 
-## Warp Shortcuts
-
-### Primary API
-
-```txt
-https://api.xenus.fr/v1/skyblock/warpshortcuts
-```
-
-### Fallback Source
-
-```txt
-assets/xenaddons/skyblock/warpShortcuts.json
-```
-
-The list maps a shortcut to a warp, so a shortcut can point elsewhere: `/atoll` warps to `lotus`,
-`/ch` to `crystals`. The list is fetched once per launch, and a shortcut whose name is already used
-by another XenAddons command is skipped.
-
----
-
 ## Update Checker
 
 - Runs once on first connection each launch
@@ -160,14 +141,6 @@ by another XenAddons command is skipped.
 - Shows update status in chat:
   - Checking update
   - Update available / Up-to-date
-
----
-
-## Config File
-
-```txt
-.minecraft/config/xenaddons_config.json
-```
 
 ---
 
@@ -191,41 +164,8 @@ The project uses [Stonecutter](https://stonecutter.kikugie.dev/) to build one ja
 ## Run
 
 ```bash
+vim ~/.devauth/config.toml
+
 ./gradlew :26.1.2:runClient
 ./gradlew :26.1.2:runClient -P devauth_account=<pseudo>
 ```
-
-Always prefix the task with the version: `./gradlew runClient` would launch the three versions one after the other.
-Each version has its own game folder in `versions/<version>/run`.
-
----
-
-## Build
-
-```bash
-./gradlew build
-```
-
-Output, one jar per version (no sources jar):
-
-```txt
-versions/26.1.2/build/libs/xenaddons-<mod_version>-mc26.1.2.jar
-versions/26.2/build/libs/xenaddons-<mod_version>-mc26.2.jar
-versions/26.3/build/libs/xenaddons-<mod_version>-mc26.3.jar
-```
-
-The release workflow publishes these three jars.
-
----
-
-## DevAuth (Dev only)
-
-```bash
-vim ~/.devauth/config.toml
-
-[accounts.<pseudo>]
-type = "microsoft"
-```
-
-Pick the account with `-P devauth_account=<pseudo>` (see Run), or `export XENADDONS_DEVAUTH_ACCOUNT=<pseudo>`.
-Without either, DevAuth uses `defaultAccount` from `~/.devauth/config.toml`.
