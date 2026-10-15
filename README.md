@@ -68,6 +68,7 @@ hidden from `/xa` autocompletion:
 - **Better Party Finder** → Enhanced PF stats and quick actions.
 - **Dungeon Not Full Alert** → Warns if your party is incomplete.
 - **Highlight Pressure Plate** → Highlights the I4 room's Light Weighted Pressure Plate in green while it's pressed.
+- **Invincibility Display** → HUD with the Spirit Mask, Bonzo Mask and Phoenix Pet icons showing their invincibility time, cooldown or ready state, and which mask you are wearing.
 - **Invisibility Timer** → Tracks Bonzo, Spirit, and Phoenix invulnerability.
 - **Item Quality** → Dungeon item quality tooltip.
 - **Loadout Title** → Replaces loadout equip messages with a compact chat line and an optional HUD title, and highlights the equipped loadout in `/loadout` with a pickable color.
