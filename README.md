@@ -4,7 +4,7 @@
 
 [![Downloads](https://img.shields.io/modrinth/dt/xenaddons?style=for-the-badge&logo=modrinth&logoColor=007F43&label=Downloads&color=00AF5C)](https://modrinth.com/mod/xenaddons)
 [![Discord](https://img.shields.io/discord/1473269453213925492?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=1E3A8A)](https://discord.gg/yRbJJwGTPG)
-[![GitHub Version](https://img.shields.io/badge/GitHub-v1.4.11-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
+[![GitHub Version](https://img.shields.io/badge/GitHub-v1.5.0-E67E22?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BuathierTom/XenAddons/releases)
 [![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-Portal-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
 ### A Fabric mod for Minecraft 26.1.2, 26.2 and 26.3 focused on Hypixel SkyBlock QoL
@@ -101,66 +101,6 @@ hidden from `/xa` autocompletion:
 - **Cosmetics** → Custom names, player scaling, dragon wings, and cosmetics refresh with a 30s cooldown.
 - **Edit HUD** → Move, scale, and reset HUD elements.
 - **Debug** → Internal testing and debugging tools.
-
----
-
-## Visual Words / Custom Data
-
-The mod uses a unified cosmetics snapshot.
-
-### Primary API
-
-```txt
-https://api.xenus.fr/public/cosmetics
-```
-
-### Fallback Source
-
-```txt
-assets/xenaddons/visual/cosmeticPeople.json
-```
-
-Features:
-
-- Visual name replacements, static or animated
-- Custom player scale
-- Dragon wings, with a per-player size and color
-- UUID-based mapping for stable behavior across nick/display changes
-
-### Cosmetics Portal
-
-```txt
-https://addons.xenus.fr/login
-```
-
----
-
-## Update Checker
-
-- Runs once on first connection each launch
-- Checks latest release on Modrinth
-- Shows update status in chat:
-  - Checking update
-  - Update available / Up-to-date
-
----
-
-## Multi-version
-
-The project uses [Stonecutter](https://stonecutter.kikugie.dev/) to build one jar per Minecraft version from the same sources.
-
-| Minecraft | Fabric API     | Folder            |
-|-----------|----------------|-------------------|
-| 26.1.2    | 0.155.3+26.1.2 | `versions/26.1.2` |
-| 26.2      | 0.161.0+26.2   | `versions/26.2`   |
-| 26.3      | 0.162.0+26.3   | `versions/26.3`   |
-
-- The code in `src/` is the active version, **26.1.2**.
-- API renames between versions are declared in `stonecutter.gradle.kts`, per-version dependencies in `versions/<version>/gradle.properties`.
-- Code that differs between versions uses Stonecutter blocks (`//? if >=26.2 {`).
-- Switch the active version: `./gradlew "Set active project to 26.3"`, then `./gradlew "Reset active project"` before committing.
-
----
 
 ## Run
 

@@ -7,11 +7,11 @@
 [![Version](https://img.shields.io/modrinth/v/xenaddons?style=for-the-badge&logo=modrinth&logoColor=white&label=Version&color=E67E22)](https://modrinth.com/mod/xenaddons)
 [![Cosmetics Portal](https://img.shields.io/badge/Cosmetics-click_here-00AF5C?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.xenus.fr/login)
 
-**A Fabric mod for Minecraft 26.1.2 focused on Hypixel SkyBlock QoL**
+**A Fabric mod for Minecraft 26.1.2, 26.2 and 26.3 focused on Hypixel SkyBlock QoL**
 
 </div>
 
-XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock quality-of-life features.
+XenAddons is a Fabric mod for Minecraft **26.1.2**, **26.2** and **26.3** focused on Hypixel SkyBlock quality-of-life features. Download the jar that matches your Minecraft version: every feature is available on all three.
 
 ## Main Commands
 
@@ -27,6 +27,7 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Bazaar/AH Quick Search**: Search hovered items instantly on the Bazaar or Auction House.
 - **Command Aliases**: Adds useful SkyBlock command shortcuts.
 - **Compact Potion Message**: Shortens potion effect chat messages.
+- **Compact Stash**: Replaces the stash reminders with one clickable `Item/Material Stash >` line that runs `/pickupstash`.
 - **Cooldown Items**: Displays item ability cooldowns.
 - **Copy Chat**: Right-click chat messages to copy their content.
 - **Cursor 1.8.9**: Restores inventory cursor behavior closer to Minecraft 1.8.9.
@@ -36,7 +37,7 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Hide Parts on Rod**: Hides the empty Hook, Line, and Sinker lines from fishing rod tooltips.
 - **Inventory Buttons**: Adds configurable inventory buttons.
 - **No Glint**: Removes the enchantment glint from every item.
-- **Item Price**: Shows item prices in tooltips, including shards and sack contents.
+- **Item Price**: Shows item prices in tooltips, including shards, runes, and sack contents.
 - **Pet Level**: Shows a pet's level in the corner of its slot, hidden once it is maxed, with a color picker for the text.
 - **Peek Chat**: Temporarily displays expanded chat without opening chat.
 - **Private Message Format**: Rewrites private messages as `Msg > To/From <player>: message` with the text in white.
@@ -52,16 +53,17 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 - **Better Party Finder**: Improves Party Finder messages with player stats and quick actions.
 - **Dungeon Not Full Alert**: Warns at dungeon start if the party is not full.
 - **Highlight Pressure Plate**: Highlights the I4 room's Light Weighted Pressure Plate in green while it's pressed.
-- **Invisibility Timer**: Tracks Bonzo's Mask, Spirit Mask, and Phoenix Pet invulnerability timers.
+- **Invincibility Display**: HUD with the Spirit Mask, Bonzo's Mask, and Phoenix Pet heads showing their invincibility time, cooldown, or ready state, a marker on what will save you, and your skins on the heads.
+- **Invincibility Timer**: Tracks Bonzo's Mask, Spirit Mask, and Phoenix Pet invulnerability timers.
 - **Item Quality**: Adds dungeon item quality information to item tooltips.
-- **Loadout Title**: Replaces loadout equip messages with a compact chat line and an optional HUD title, and highlights the equipped loadout in `/loadout` with a pickable color.
+- **Loadout Title**: Replaces loadout equip messages with a compact chat line and an optional HUD title, highlights the equipped loadout in `/loadout` with a pickable color, and can hide the `None` lines in loadout tooltips.
 - **Milestone Reminder**: Displays dungeon milestone progress and sends reminders when needed.
 - **Mute Bark Rune**: Mutes the wolf growl and bark sounds of the Bark Rune, optionally only in dungeons.
-- **Players Leaped**: Displays leap progress in F7 terminal-related zones.
+- **Players Leaped**: Displays how many teammates leaped to you in the F7/M7 Phase 3 zones and at the Relic, with an "Everyone Leaped!" title and sound.
 - **Pos Message**: Sends party callouts when reaching configured dungeon spots.
 - **Pos Titles**: Displays teammate callouts as movable HUD text.
 - **Refill**: Checks your inventory and requests only the missing items up to the default or custom target amount.
-- **Reminder Gate**: Shows gate reminders based on lever progress messages.
+- **Reminder Gate**: Reminds you when a lever is pulled in F7/M7 Phase 3 while your section's gate is still standing.
 - **SecretRoutes**: Renders dungeon routes, secrets, waypoints, and room helpers, with current and legacy route sets.
 - **Show Ultimate Enchant**: Marks a Terminator or Hyperion carrying a tracked ultimate enchant directly on its item slot, with a customizable label color.
 
@@ -80,24 +82,8 @@ XenAddons is a Fabric mod for Minecraft **26.1.2** focused on Hypixel SkyBlock q
 
 ### Category: DEV
 
-- **Config GUI**: Customize the GUI appearance and theme settings.
+- **Config GUI**: Customize the GUI appearance and theme settings. Always on.
 - **Cosmetics**: Applies custom names, player scaling, dragon wings, and cosmetics refresh with a 30s cooldown.
-- **Edit HUD**: Move, scale, and reset HUD elements.
+- **Edit HUD**: Move, scale, and reset every HUD element from one editor, with an optional snap grid.
 - **Debug**: Internal testing and debugging tools.
-
-## Visual Words / Custom Data
-
-XenAddons uses a unified cosmetics snapshot.
-
-### Features:
-
-- Visual name replacements, static or animated
-- Custom player scale
-- Dragon wings, with a per-player size and color
-
-### Cosmetics Portal
-
-```txt
-https://addons.xenus.fr/login
-```
 
