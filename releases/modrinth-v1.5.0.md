@@ -1,7 +1,7 @@
 ## Added
 
 - **Minecraft 26.2 and 26.3 support**
-  - One jar per Minecraft version (26.1.2, 26.2 and 26.3), with every feature on all three.
+  - Minecraft version (26.1.2, 26.2 and 26.3), with every feature on all three.
 
 - **Compact Stash** (MISC)
   - Replaces the stash reminders with one clickable `Item/Material Stash >` line that runs `/pickupstash`.
