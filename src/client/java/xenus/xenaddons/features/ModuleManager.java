@@ -41,6 +41,7 @@ public class ModuleManager {
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosMsgModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.PosTitlesModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.InvisibilityTimerModule());
+        modules.add(new xenus.xenaddons.features.impl.dungeons.InvincibilityDisplayModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.MilestoneDisplayModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.ItemQualityModule());
         modules.add(new xenus.xenaddons.features.impl.dungeons.DungeonNotFullAlertModule());
